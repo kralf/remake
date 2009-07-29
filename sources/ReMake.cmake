@@ -389,8 +389,9 @@ endmacro(remake_moc)
 # Generate packages from the ReMake project.
 macro(remake_pack)
   set(CPACK_GENERATOR ${REMAKE_PROJECT_PACKAGE_GENERATORS})
-  set(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR} 
+  set(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR}
     ${REMAKE_PROJECT_NAME} ALL /)
+  set(CPACK_SET_DESTDIR TRUE)
 
   set(CPACK_PACKAGE_NAME ${REMAKE_PROJECT_NAME})
   set(CPACK_PACKAGE_VERSION ${REMAKE_PROJECT_VERSION})
@@ -398,13 +399,28 @@ macro(remake_pack)
   set(CPACK_PACKAGE_CONTACT ${REMAKE_PROJECT_CONTACT})
 
   include(CPack)
+
+  add_custom_command(OUTPUT package COMMAND make package)
 endmacro(remake_pack)
 
 # Generate Debian packages from the ReMake project.
 macro(remake_pack_deb)
+  remake_parse_arguments(VAR ARCH ARGN argn ${ARGN})
+
+  execute_process(COMMAND dpkg --print-architecture OUTPUT_VARIABLE DEB_ARCH
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  remake_assign(ARCH DEFAULT ${DEB_ARCH})
+  set(DEB_FILE ${REMAKE_PROJECT_LOWER_NAME}-${REMAKE_PROJECT_VERSION}-${ARCH})
+
   list(APPEND REMAKE_PROJECT_PACKAGE_GENERATORS DEB)
-  string(REPLACE ";" ", " replace "${ARGN}")
+  string(REPLACE ";" ", " replace "${argn}")
   set(CPACK_DEBIAN_PACKAGE_DEPENDS ${replace})
+  set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${ARCH})
+  set(CPACK_PACKAGE_FILE_NAME ${DEB_FILE})
 
   remake_pack()
+
+  add_custom_target(package_install 
+    COMMAND sudo dpkg --install ${DEB_FILE}.deb
+    DEPENDS package)
 endmacro(remake_pack_deb)

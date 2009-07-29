@@ -16,5 +16,6 @@ remake_project(
 add_subdirectory(sources)
 
 remake_pack_deb(
+  ARCH all
   "cmake (>= 2.6)"
 )
