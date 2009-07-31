@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.6)
 
-include(sources/ReMake.cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src)
+include(ReMake)
 
 remake_project(
   ReMake
@@ -11,9 +12,13 @@ remake_project(
   "ralf.kaestner@gmail.com"
   "http://aslforge.ethz.ch/projects/remake"
   GPL
+  INSTALL /usr
 )
 
-add_subdirectory(sources)
+remake_doc(
+  "man pages"
+  INSTALL share
+)
 
 remake_pack_deb(
   ARCH all
