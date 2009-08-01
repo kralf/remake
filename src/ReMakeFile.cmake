@@ -33,16 +33,16 @@ macro(remake_file file_name var_name)
 endmacro(remake_file)
 
 # Output a valid filename from a string.
-macro(remake_file_name string var_name)
-  string(TOLOWER "${string}" lower_string)
-  string(REPLACE " " "_" ${var_name} "${lower_string}")
+macro(remake_file_name var_name)
+  string(TOLOWER "${ARGN}" lower_string)
+  string(REGEX REPLACE "[ ;]" "_" ${var_name} "${lower_string}")
 endmacro(remake_file_name)
 
 # Find files using a glob expression, omit hidden files from the list.
 macro(remake_file_glob var_name)
-  remake_arguments(OPTION HIDDEN ARGN argn ${ARGN})
+  remake_arguments(OPTION HIDDEN ARGN glob_expressions ${ARGN})
 
-  file(GLOB ${var_name} ${argn})
+  file(GLOB ${var_name} ${glob_expressions})
   if(NOT HIDDEN)
     foreach(file_name ${${var_name}})
       string(REGEX MATCH "^.*/[.].*$" regex_matched ${file_name})

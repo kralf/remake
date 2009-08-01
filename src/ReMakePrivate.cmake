@@ -19,7 +19,11 @@
 ############################################################################
 
 # Parse macro arguments. Return optional arguments and the list of arguments
-# given pass the last optional argument.
+# given after the last optional argument. If an argument is specified, two
+# output variables will be created. For an existing argument named ${NAME}, 
+# the first variable ${NAME} will be defined to contain the parameters passed 
+# for this argument. The second variable ARG_${NAME} will be of the form
+# ${NAME} ${VALUE} and may thus easily be passed on to other macros.
 macro(remake_arguments)
   set(var_names)
   set(opt_names)
@@ -46,9 +50,11 @@ macro(remake_arguments)
   
   foreach(var_name ${var_names})
     set(${var_name})
+    set(ARG_${var_name})
   endforeach(var_name)
   foreach(opt_name ${opt_names})
     set(${opt_name} OFF)
+    set(ARG_${opt_name})
   endforeach(opt_name)
   if(argn_name)
     set(${argn_name})
@@ -58,6 +64,10 @@ macro(remake_arguments)
   foreach(arg ${arguments})
     if(var_name)
       list(APPEND ${var_name} ${arg})
+      if(NOT ARG_${var_name})
+        set(ARG_${var_name} ${var_name})
+      endif(NOT ARG_${var_name})
+      list(APPEND ARG_${var_name} ${arg})
       set(var_name)
     else(var_name)
       list(FIND var_names ${arg} var_found)
@@ -67,7 +77,8 @@ macro(remake_arguments)
         list(GET var_names ${var_found} var_name)
       elseif(opt_found GREATER -1)
         list(GET opt_names ${opt_found} opt_name)
-        set(${opt_name} ${opt_name})
+        set(${opt_name} ON)
+        set(ARG_${opt_name} ${opt_name})
       else(var_found GREATER -1)
         list(APPEND ${argn_name} ${arg})
       endif(var_found GREATER -1)
@@ -76,30 +87,42 @@ macro(remake_arguments)
 endmacro(remake_arguments)
 
 # Output a valid variable name from a string.
-macro(remake_var_name string var_name)
-  string(TOUPPER "${string}" upper_string)
-  string(REPLACE " " "_" ${var_name} "${upper_string}")
+macro(remake_var_name var_name)
+  string(TOUPPER "${ARGN}" upper_string)
+  string(REGEX REPLACE "[ ;]" "_" ${var_name} "${upper_string}")
 endmacro(remake_var_name)
+
+# Find defined variables using regular expressions.
+macro(remake_var_regex var_name regex)
+  get_cmake_property(variables VARIABLES)
+
+  foreach(var ${variables})
+    string(REGEX MATCH ${regex} matched ${var})
+    if(matched)
+      remake_list_push(${var_name} ${var})
+    endif(matched)
+  endforeach(var)
+endmacro(remake_var_regex)
 
 # Define the value of a variable. Optionally, set the variable value from
 # another variable. Use a given default value if the variable value is 
 # undefined.
 macro(remake_set var_name)
-  remake_arguments(VAR FROM VAR DEFAULT ARGN argn ${ARGN})
+  remake_arguments(VAR FROM VAR DEFAULT ARGN var_values ${ARGN})
 
   if(FROM)
     if(${FROM})
-      set(${var_name} ${${FROM}} ${argn})
+      set(${var_name} ${${FROM}} ${var_values})
     else(${FROM})
-      set(${var_name} ${DEFAULT} ${argn})
+      set(${var_name} ${DEFAULT} ${var_values})
     endif(${FROM})
   else(FROM)
     if(DEFINED DEFAULT)
       if(NOT ${var_name})
-       set(${var_name} ${DEFAULT} ${argn})
+        set(${var_name} ${DEFAULT} ${var_values})
       endif(NOT ${var_name})
     else(DEFINED DEFAULT)
-      set(${var_name} ${argn})
+      set(${var_name} ${var_values})
     endif(DEFINED DEFAULT)
   endif(FROM)
 endmacro(remake_set)

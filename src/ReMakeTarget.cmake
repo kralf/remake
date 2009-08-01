@@ -24,14 +24,20 @@ remake_set(REMAKE_TARGET_DIR ReMakeTargets)
 
 # Define a top-level target. If commands have been stored for that target,
 # they will be automatically added.
-macro(remake_target target)
-  add_custom_target(${target} ${ARGN})
+macro(remake_target target_name)
+  add_custom_target(${target_name} ${ARGN})
 
-  remake_file_read(${REMAKE_TARGET_DIR}/${target}.commands commands)
+  remake_file_read(${REMAKE_TARGET_DIR}/${target_name}.commands commands)
   if(commands)
-    add_custom_command(TARGET ${target} ${commands})
+    add_custom_command(TARGET ${target_name} ${commands})
   endif(commands)  
 endmacro(remake_target)
+
+# Output a valid target name from a string.
+macro(remake_target_name var_name)
+  string(TOLOWER "${ARGN}" lower_string)
+  string(REGEX REPLACE "[ ;]" "_" ${var_name} "${lower_string}")
+endmacro(remake_target_name)
 
 # Add command to a top-level target. This macro also works in directories
 # below the top-level directory. Commands will be stored for later collection

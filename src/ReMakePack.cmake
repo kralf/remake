@@ -20,46 +20,79 @@
 
 include(ReMakePrivate)
 
-# Generate packages from the ReMake project.
-macro(remake_pack)
-  remake_set(CPACK_GENERATOR ${REMAKE_PACK_GENERATORS})
+remake_set(REMAKE_PACK_ALL_TARGET packages)
+remake_set(REMAKE_PACK_TARGET package)
+remake_set(REMAKE_PACK_INSTALL_TARGET package_install)
+
+remake_set(REMAKE_PACK_DIR ReMakePackages)
+remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
+
+# Generate packages from the ReMake project. This macro takes optional
+# arguments giving the package name and the project component the package 
+# will be generated from.
+macro(remake_pack generator)
+  if(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
+    remake_target(${REMAKE_PACK_ALL_TARGET})
+  endif(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
+
+  remake_arguments(VAR NAME VAR COMPONENT ${ARGN})
+  remake_set(NAME DEFAULT ${REMAKE_PROJECT_NAME})
+
+  remake_set(component FROM COMPONENT DEFAULT default)
+  remake_file(${REMAKE_PACK_DIR}/${component}.cpack pack_config)
+  remake_file(${REMAKE_PACK_SOURCE_DIR}/${component}.cpack src_pack_config)
+  remake_set(CPACK_OUTPUT_CONFIG_FILE ${pack_config})
+  remake_set(CPACK_SOURCE_OUTPUT_CONFIG_FILE ${src_pack_config})
+
+  remake_set(CPACK_GENERATOR ${generator})
   remake_set(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR}
-    ${REMAKE_PROJECT_NAME} ALL /)
+    ${REMAKE_PROJECT_NAME} ${component} /)
   remake_set(CPACK_SET_DESTDIR TRUE)
 
-  remake_set(CPACK_PACKAGE_NAME ${REMAKE_PROJECT_NAME})
+  remake_set(CPACK_PACKAGE_NAME ${NAME})
   remake_set(CPACK_PACKAGE_VERSION ${REMAKE_PROJECT_VERSION})
   remake_set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${REMAKE_PROJECT_SUMMARY})
   remake_set(CPACK_PACKAGE_CONTACT ${REMAKE_PROJECT_CONTACT})
 
   include(CPack)
 
-  remake_set(REMAKE_PACK_TARGET package)
-  remake_set(REMAKE_PACK_INSTALL_TARGET package_install)
+  remake_target_name(target ${COMPONENT} ${REMAKE_PACK_TARGET})
+  remake_target(${target} COMMAND cpack --config ${pack_config})
+  add_dependencies(${REMAKE_PACK_ALL_TARGET} ${target})
 
-  add_custom_command(OUTPUT ${REMAKE_PACK_TARGET} 
-    COMMAND make ${REMAKE_PACK_TARGET})
+  remake_var_regex(cpack_variables "^CPACK_")
+  foreach(cpack_var ${cpack_variables})
+    remake_set(${cpack_var})
+  endforeach(cpack_var)
 endmacro(remake_pack)
 
 # Generate Debian package from the ReMake project.
 macro(remake_pack_deb)
-  remake_arguments(VAR ARCH ARGN argn ${ARGN})
+  remake_arguments(VAR ARCH VAR COMPONENT ARGN dependencies ${ARGN})
 
   execute_process(COMMAND dpkg --print-architecture OUTPUT_VARIABLE deb_arch
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   remake_set(ARCH DEFAULT ${deb_arch})
-  remake_set(deb_file 
-    ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_VERSION}-${ARCH})
+  if(COMPONENT)
+    remake_file_name(package_name ${REMAKE_PROJECT_FILENAME}-${COMPONENT})
+    remake_file_name(file_name ${REMAKE_PROJECT_FILENAME}-${COMPONENT}
+      ${REMAKE_PROJECT_VERSION} ${ARCH})
+  else(COMPONENT)
+    remake_file_name(package_name ${REMAKE_PROJECT_FILENAME})
+    remake_file_name(file_name ${REMAKE_PROJECT_FILENAME}
+      ${REMAKE_PROJECT_VERSION} ${ARCH})
+  endif(COMPONENT)
 
-  list(APPEND REMAKE_PACK_GENERATORS DEB)
-  string(REPLACE ";" ", " replace "${argn}")
+  string(REPLACE ";" ", " replace "${dependencies}")
   remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${replace})
   remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${ARCH})
-  remake_set(CPACK_PACKAGE_FILE_NAME ${deb_file})
+  remake_set(CPACK_PACKAGE_FILE_NAME deb/${file_name})
 
-  remake_pack()
+  remake_pack(DEB ${ARG_COMPONENT} NAME ${package_name})
 
-  remake_target(${REMAKE_PACK_INSTALL_TARGET}
-    COMMAND sudo dpkg --install ${deb_file}.deb
-    DEPENDS ${REMAKE_PACK_TARGET})
+  remake_target_name(target ${COMPONENT} ${REMAKE_PACK_TARGET})
+  remake_target_name(install_target ${COMPONENT} ${REMAKE_PACK_INSTALL_TARGET})
+  remake_target(${install_target}
+    COMMAND sudo dpkg --install deb/${file_name}.deb
+    DEPENDS ${target})
 endmacro(remake_pack_deb)

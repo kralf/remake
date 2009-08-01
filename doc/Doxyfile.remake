@@ -1095,13 +1095,13 @@ RTF_EXTENSIONS_FILE    =
 # If the GENERATE_MAN tag is set to YES (the default) Doxygen will 
 # generate man pages
 
-GENERATE_MAN           = ${REMAKE_DOC_MAN_PAGES}
+GENERATE_MAN           = ${REMAKE_DOC_MAN}
 
 # The MAN_OUTPUT tag is used to specify where the man pages will be put. 
 # If a relative path is entered the value of OUTPUT_DIRECTORY will be 
 # put in front of it. If left blank `man' will be used as the default path.
 
-MAN_OUTPUT             = ${REMAKE_DOC_MAN_PAGES_OUTPUT}
+MAN_OUTPUT             = ${REMAKE_DOC_MAN_OUTPUT}
 
 # The MAN_EXTENSION tag determines the extension that is added to 
 # the generated man pages (default is the subroutine's section .3)

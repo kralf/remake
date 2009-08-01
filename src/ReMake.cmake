@@ -119,46 +119,10 @@ macro(remake_add_headers)
 endmacro(remake_add_headers)
 
 # Add a documentation target.
-macro(remake_add_documentation)
-  remake_arguments(OPTION DOXYGEN ARGN glob_expressions ${ARGN})
-  
-  if(DOXYGEN)
-    remake_doc_doxygen(${glob_expressions})
-  endif(DOXYGEN)
-
-#   remake_set(INSTALL 
-#     DEFAULT ${REMAKE_PROJECT_DOCUMENTATION_DESTINATION})
-#   if(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
-#     remake_set(TARGET DEFAULT ${REMAKE_PROJECT_DOCUMENTATION_TARGET})
-#   endif(${CMAKE_CURRENT_SOURCE_DIR} STREQUAL ${CMAKE_SOURCE_DIR})
-# 
-#   if(WITH_DOCUMENTATION)
-#     if(NOT TARGET ${REMAKE_PROJECT_DOCUMENTATION_TARGET})
-#       add_custom_target(${REMAKE_PROJECT_DOCUMENTATION_TARGET} ALL)
-#     endif(NOT TARGET ${REMAKE_PROJECT_DOCUMENTATION_TARGET})
-# 
-#     remake_file_glob(doc_files ${glob_expressions})
-#     foreach(doc_file ${doc_files})
-#       if(DOXYGEN)
-#         remake_doc_doxygen()
-#       endif(DOXYGEN)
-# 
-#       configure_file(${doc_file} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-# 
-#       if(TARGET)
-#         add_custom_target(${TARGET}
-#           COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-#         add_dependencies(${REMAKE_PROJECT_DOCUMENTATION_TARGET} ${TARGET})
-#       else(TARGET)
-#         add_custom_command(TARGET ${REMAKE_PROJECT_DOCUMENTATION_TARGET}
-#           COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
-#       endif(TARGET)
-# 
-#       if(REMAKE_PROJECT_DOCUMENTATION_MAN)
-#         install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/man DESTINATION share)
-#       endif(REMAKE_PROJECT_DOCUMENTATION_MAN)
-#     endforeach(doc_file)
-#   endif(WITH_DOCUMENTATION)
+macro(remake_add_documentation doc_type)
+  if(${doc_type} MATCHES "DOXYGEN")
+    remake_doc_doxygen(${ARGN})
+  endif(${doc_type} MATCHES "DOXYGEN")
 endmacro(remake_add_documentation)
 
 # Add include directories to the current ReMake branch.

@@ -25,7 +25,7 @@ macro(remake_project name version release summary vendor contact home license)
   remake_arguments(VAR INSTALL VAR SOURCES ${ARGN})
 
   remake_set(REMAKE_PROJECT_NAME ${name})
-  remake_file_name(${REMAKE_PROJECT_NAME} REMAKE_PROJECT_FILENAME)
+  remake_file_name(REMAKE_PROJECT_FILENAME ${REMAKE_PROJECT_NAME})
 
   remake_set(regex_replace "^([0-9]+)[.]?([0-9]*)[.]?([0-9]*)$")
   string(REGEX REPLACE ${regex_replace} "\\1" REMAKE_PROJECT_MAJOR ${version})
@@ -44,6 +44,8 @@ macro(remake_project name version release summary vendor contact home license)
   remake_set(REMAKE_PROJECT_HOME ${home})
   remake_set(REMAKE_PROJECT_LICENSE ${license})
 
+  remake_set(REMAKE_PROJECT_COMPONENT_DEV dev)
+
   remake_set(REMAKE_PROJECT_BUILD_SYSTEM ${CMAKE_SYSTEM_NAME})
   remake_set(REMAKE_PROJECT_BUILD_ARCH ${CMAKE_SYSTEM_PROCESSOR})
   remake_set(REMAKE_PROJECT_BUILD_TYPE ${CMAKE_BUILD_TYPE})
@@ -57,7 +59,7 @@ macro(remake_project name version release summary vendor contact home license)
     "Install destination of project libraries.")
   remake_project_set(EXECUTABLE_DESTINATION bin CACHE PATH 
     "Install destination of project executables.")
-  remake_project_set(PROJECT_PLUGIN_DESTINATION 
+  remake_project_set(PLUGIN_DESTINATION 
     lib/${REMAKE_PROJECT_FILENAME} CACHE PATH
     "Install destination of project plugins.")
   remake_project_set(SCRIPT_DESTINATION bin CACHE PATH
@@ -87,7 +89,7 @@ endmacro(remake_project)
 # automatically be prefixed with an upper-case conversion of the project name.
 # Thus, variables may appear in the cache as ${PROJECT_NAME}_${VAR_NAME}.
 macro(remake_project_set var_name)
-  remake_var_name(${REMAKE_PROJECT_NAME}_${var_name} project_var)
+  remake_var_name(project_var ${REMAKE_PROJECT_NAME} ${var_name})
   remake_set(${project_var} ${ARGN})
 endmacro(remake_project_set)
 
@@ -95,7 +97,7 @@ endmacro(remake_project_set)
 macro(remake_project_get var_name)
   remake_arguments(VAR OUTPUT ${ARGN})
 
-  remake_var_name(${REMAKE_PROJECT_NAME}_${var_name} project_var)
+  remake_var_name(project_var ${REMAKE_PROJECT_NAME} ${var_name})
   if(OUTPUT)
     remake_set(${OUTPUT} FROM ${project_var})
   else(OUTPUT)
@@ -122,7 +124,7 @@ endmacro(remake_project_option)
 # lower-case project name followed by a score.
 macro(remake_project_prefix)
   remake_arguments(VAR LIBRARY VAR PLUGIN VAR EXECUTABLE VAR SCRIPT 
-    VAR FILE ARGN argn ${ARGN})
+    VAR FILE ${ARGN})
 
   remake_set(REMAKE_LIBRARY_PREFIX FROM LIBRARY 
     DEFAULT ${REMAKE_PROJECT_FILENAME}-)
