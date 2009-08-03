@@ -24,17 +24,18 @@ include(ReMakePrivate)
 macro(remake_qt4)
   if(NOT DEFINED QT4_FOUND)
     find_package(Qt4 QUIET)
-    set(REMAKE_QT4_MOC ${QT4_FOUND} CACHE BOOL "Process Qt4 meta-objects.")
+    remake_set(REMAKE_QT4_MOC ${QT4_FOUND} CACHE BOOL 
+      "Process Qt4 meta-objects.")
   endif(NOT DEFINED QT4_FOUND)
 endmacro(remake_qt4)
 
 # Find Qt4 meta-objects.
-macro(remake_qt4_moc var_name)
+macro(remake_qt4_moc qt4_var)
   remake_qt4()
 
-  set(${var_name})
+  set(${qt4_var})
   if(REMAKE_QT4_MOC)
-    remake_file(moc_headers *.hpp)
-    qt4_wrap_cpp(${var_name} ${moc_headers})
+    remake_file(qt4_headers *.hpp)
+    qt4_wrap_cpp(${qt4_var} ${qt4_headers})
   endif(REMAKE_QT4_MOC)
 endmacro(remake_qt4_moc)

@@ -1,1 +1,1 @@
-remake_add_documentation(DOXYGEN Doxyfile.remake COMPONENT dev)
+remake_add_documentation(GROFF remake.* COMPONENT doc)

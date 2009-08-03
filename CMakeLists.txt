@@ -16,16 +16,9 @@ remake_project(
 )
 
 remake_doc(
-  man
-  INSTALL share
+  man INSTALL share
+  html
 )
 
-remake_pack_deb(
-  ARCH all
-  "cmake (>= 2.6)"
-)
-
-remake_pack_deb(
-  ARCH all
-  COMPONENT dev
-)
+remake_pack_deb(ARCH all "cmake (>= 2.6)")
+remake_pack_deb(ARCH all COMPONENT doc)

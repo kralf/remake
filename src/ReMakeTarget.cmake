@@ -27,23 +27,27 @@ remake_set(REMAKE_TARGET_DIR ReMakeTargets)
 macro(remake_target target_name)
   add_custom_target(${target_name} ${ARGN})
 
-  remake_file_read(${REMAKE_TARGET_DIR}/${target_name}.commands commands)
-  if(commands)
-    add_custom_command(TARGET ${target_name} ${commands})
-  endif(commands)  
+  remake_file_read(${REMAKE_TARGET_DIR}/${target_name}.commands target_cmds)
+  if(target_cmds)
+    add_custom_command(TARGET ${target_name} ${target_cmds})
+  endif(target_cmds)  
 endmacro(remake_target)
 
 # Output a valid target name from a string.
-macro(remake_target_name var_name)
-  string(TOLOWER "${ARGN}" lower_string)
-  string(REGEX REPLACE "[ ;]" "_" ${var_name} "${lower_string}")
+macro(remake_target_name target_var)
+  string(TOLOWER "${ARGN}" target_lower)
+  string(REGEX REPLACE "[ ;]" "_" ${target_var} "${target_lower}")
 endmacro(remake_target_name)
 
 # Add command to a top-level target. This macro also works in directories
 # below the top-level directory. Commands will be stored for later collection
 # in a file ${TARGET}.commands in ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}.
-macro(remake_target_add_command target)
-  remake_file_create(${REMAKE_TARGET_DIR}/${target}.commands OUTDATED)
-  remake_file_write(${REMAKE_TARGET_DIR}/${target}.commands ${ARGN} 
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+macro(remake_target_add_command target_name)
+  if(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    add_custom_command(TARGET ${target_name} ${ARGN})
+  else(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    remake_file_create(${REMAKE_TARGET_DIR}/${target_name}.commands OUTDATED)
+    remake_file_write(${REMAKE_TARGET_DIR}/${target_name}.commands ${ARGN} 
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  endif(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endmacro(remake_target_add_command)

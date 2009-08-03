@@ -47,9 +47,9 @@ macro(remake_add_library lib_name)
 
   remake_file_glob(lib_sources *.cpp)
   remake_moc(moc_sources)
-  add_library(${REMAKE_LIBRARY_PREFIX}${lib_name}${SUFFIX} SHARED 
+  add_library(${REMAKE_LIBRARY_PREFIX}${lib_name}${suffix} SHARED 
     ${lib_sources} ${moc_sources})
-  target_link_libraries(${REMAKE_LIBRARY_PREFIX}${lib_name}${SUFFIX} 
+  target_link_libraries(${REMAKE_LIBRARY_PREFIX}${lib_name}${suffix} 
     ${link_libs})
 
   remake_set(plugins ${PLUGIN_DESTINATION}/${lib_name}/*.so)
@@ -67,9 +67,9 @@ macro(remake_add_plugin lib_name plugin_name)
 
   remake_file_glob(plugin_sources *.c *.cpp)
   remake_moc(moc_sources)
-  add_library(${REMAKE_PLUGIN_PREFIX}${plugin_name}${SUFFIX} SHARED
+  add_library(${REMAKE_PLUGIN_PREFIX}${plugin_name}${suffix} SHARED
     ${plugin_sources} ${moc_sources})
-  target_link_libraries(${REMAKE_PLUGIN_PREFIX}${plugin_name}${SUFFIX}
+  target_link_libraries(${REMAKE_PLUGIN_PREFIX}${plugin_name}${suffix}
     ${link_plugins})
 endmacro(remake_add_plugin)
 
@@ -82,9 +82,9 @@ macro(remake_add_executables)
   foreach(exec_source ${exec_sources})
     get_filename_component(exec_name ${exec_source} NAME)
     string(REGEX REPLACE "[.].*$" "" exec_name ${exec_name})
-    add_executable(${REMAKE_EXECUTABLE_PREFIX}${exec_name}${SUFFIX} 
+    add_executable(${REMAKE_EXECUTABLE_PREFIX}${exec_name}${suffix} 
       ${exec_source})
-    target_link_libraries(${REMAKE_EXECUTABLE_PREFIX}${exec_name}${SUFFIX}
+    target_link_libraries(${REMAKE_EXECUTABLE_PREFIX}${exec_name}${suffix}
       ${link_libs})
   endforeach(exec_source)
 endmacro(remake_add_executables)
@@ -93,19 +93,19 @@ endmacro(remake_add_executables)
 macro(remake_add_scripts)
   remake_project_get(SCRIPT_DESTINATION)
 
-  remake_arguments(VAR SUFFIX ARGN glob_expressions ${ARGN})
-  remake_file_glob(scripts ${glob_expressions})
+  remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
+  remake_file_glob(scripts ${globs})
 endmacro(remake_add_scripts)
 
 # Add file targets.
 macro(remake_add_files)
-  remake_arguments(VAR SUFFIX VAR INSTALL ARGN glob_expressions ${ARGN})
+  remake_arguments(VAR INSTALL ARGN globs ${ARGN})
   remake_project_get(FILE_DESTINATION)
-  remake_set(INSTALL DEFAULT ${FILE_DESTINATION})
+  remake_set(install SELF DEFAULT ${FILE_DESTINATION})
 
-  remake_file_glob(files ${glob_expressions})
+  remake_file_glob(files ${globs})
   foreach(file ${files})
-    install(FILES ${files} DESTINATION ${INSTALL} COMPONENT default)
+    install(FILES ${files} DESTINATION ${install} COMPONENT default)
   endforeach(file)
 endmacro(remake_add_files)
 
@@ -119,10 +119,12 @@ macro(remake_add_headers)
 endmacro(remake_add_headers)
 
 # Add a documentation target.
-macro(remake_add_documentation doc_type)
-  if(${doc_type} MATCHES "DOXYGEN")
+macro(remake_add_documentation doc_module)
+  if(${doc_module} MATCHES "DOXYGEN")
     remake_doc_doxygen(${ARGN})
-  endif(${doc_type} MATCHES "DOXYGEN")
+  elseif(${doc_module} MATCHES "GROFF")
+    remake_doc_groff(${ARGN})
+  endif(${doc_module} MATCHES "DOXYGEN")
 endmacro(remake_add_documentation)
 
 # Add include directories to the current ReMake branch.
