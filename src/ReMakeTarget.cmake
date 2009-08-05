@@ -22,7 +22,7 @@ include(ReMakePrivate)
 
 remake_set(REMAKE_TARGET_DIR ReMakeTargets)
 
-# Define a top-level target. If commands have been stored for that target,
+## Define a top-level target. If commands have been stored for that target,
 # they will be automatically added.
 macro(remake_target target_name)
   add_custom_target(${target_name} ${ARGN})
@@ -33,15 +33,15 @@ macro(remake_target target_name)
   endif(target_cmds)  
 endmacro(remake_target)
 
-# Output a valid target name from a string.
+## Output a valid target name from a string.
 macro(remake_target_name target_var)
   string(TOLOWER "${ARGN}" target_lower)
   string(REGEX REPLACE "[ ;]" "_" ${target_var} "${target_lower}")
 endmacro(remake_target_name)
 
-# Add command to a top-level target. This macro also works in directories
-# below the top-level directory. Commands will be stored for later collection
-# in a file ${TARGET}.commands in ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}.
+## Add command to a top-level target. This macro also works in directories
+#  below the top-level directory. Commands will be stored for later collection
+#  in a file ${TARGET}.commands in ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}.
 macro(remake_target_add_command target_name)
   if(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     add_custom_command(TARGET ${target_name} ${ARGN})

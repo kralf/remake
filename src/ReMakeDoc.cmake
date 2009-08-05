@@ -110,7 +110,8 @@ endmacro(remake_doc_doxygen)
 
 # Generate documentation using groff.
 macro(remake_doc_groff)
-  remake_arguments(PREFIX doc_ VAR MACRO VAR COMPONENT ARGN globs ${ARGN})
+  remake_arguments(PREFIX doc_ VAR MACRO VAR COMPONENT LIST PREPROCESS 
+    ARGN globs ${ARGN})
   remake_set(doc_macro SELF DEFAULT man)
 
   if(NOT DEFINED GROFF_FOUND)
@@ -121,6 +122,11 @@ macro(remake_doc_groff)
   endif(NOT DEFINED GROFF_FOUND)
 
   if(GROFF_FOUND)
+    if(doc_preprocess)
+      remake_target_add_command(${REMAKE_DOC_TARGET}
+        COMMAND ${doc_preprocess})
+    endif(doc_preprocess)
+
     foreach(doc_type ${REMAKE_DOC_TYPES})
       remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
       remake_set(doc_output ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}})
@@ -130,16 +136,19 @@ macro(remake_doc_groff)
         remake_file_configure(${doc_globs} DESTINATION ${doc_output})
       else(${doc_macro} STREQUAL ${doc_type})
         string(REGEX REPLACE "^m" "" doc_macro ${doc_macro})
+        remake_file_name(doc_extension ${doc_type})
         remake_file_glob(doc_files ${doc_globs})
 
         foreach(doc_file ${doc_files})
           get_filename_component(doc_name ${doc_file} NAME)
           remake_target_add_command(${REMAKE_DOC_TARGET}
             COMMAND ${GROFF_EXECUTABLE} -t -e -m${doc_macro} -T${doc_type} 
-            ${doc_file} > ${doc_output}/${doc_name})
+            ${doc_file} > ${doc_output}/${doc_name}.${doc_extension})
         endforeach(doc_file)
       endif(${doc_macro} STREQUAL ${doc_type})
     endforeach(doc_type)
+
+    remake_doc_install(${REMAKE_DOC_TYPES} ${COMPONENT})
   endif(GROFF_FOUND)
 endmacro(remake_doc_groff)
 

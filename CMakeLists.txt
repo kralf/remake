@@ -11,7 +11,7 @@ remake_project(
   "Ralf Kaestner"
   "ralf.kaestner@gmail.com"
   "http://aslforge.ethz.ch/projects/remake"
-  GPL
+  "GNU Lesser General Public License (LGPL)"
   INSTALL /usr
 )
 

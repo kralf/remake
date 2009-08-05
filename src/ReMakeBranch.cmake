@@ -94,3 +94,8 @@ macro(remake_branch_link_target target_name)
     endforeach(link_library)
   endforeach(branch_name)
 endmacro(remake_branch_link_target)
+
+##  Link a target in the current ReMake branch.
+macro(remake_link_target target_name)
+  target_link_libraries(${target_name}-${remake_branch} ${ARGN})
+endmacro(remake_link_target)

@@ -18,15 +18,6 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-# ReMake provides a set of CMake macros that have originally been written
-# to facilitate the restructuring of GNU Automake/Autoconf projects.
-#
-# A key feature of ReMake is its branching concept. A branch is defined
-# along with a list of dependencies that will automatically be resolved
-# by ReMake.
-#
-# ReMake requires CMake version 2.6 or higher.
-
 include(ReMakeProject)
 include(ReMakeBranch)
 include(ReMakeFind)
@@ -39,7 +30,23 @@ include(ReMakePack)
 
 include(ReMakePrivate)
 
-# Add a library target. Link the library target to a list of libraries.
+### \brief ReMake convenience macros
+#   ReMake provides a set of CMake macros that have originally been written to 
+#   facilitate the restructuring of GNU Automake/Autoconf projects.
+#
+#   A key feature of ReMake is its branching concept. A branch is defined
+#   along with a list of dependencies that will automatically be resolved
+#   by ReMake.
+#
+#   ReMake requires CMake version 2.6 or higher.
+
+### \brief Add a library target.
+#   Automatically identify library objects in the current directory and 
+#   link the library to a list of libraries provided.
+#   \required[value] name The name of the library target to be added.
+#   \optional[value] SUFFIX:suffix An optional library name suffix.
+#   \optional[list] lib The list of libraries the target library will be 
+#     linked against.
 macro(remake_add_library lib_name)
   remake_arguments(VAR SUFFIX ARGN link_libs ${ARGN})
   remake_project_get(LIBRARY_DESTINATION)
@@ -60,7 +67,9 @@ macro(remake_add_library lib_name)
   endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
 endmacro(remake_add_library)
 
-# Add a plugin target. Link the plugin target to a list of plugins.
+### \brief Add a plugin library target.
+#   Automatically identify plugin library objects and link the plugin to a 
+#   list of libraries provided.
 macro(remake_add_plugin lib_name plugin_name)
   remake_arguments(VAR SUFFIX ARGN link_plugins ${ARGN})
   remake_project_get(PLUGIN_DESTINATION)
@@ -73,7 +82,9 @@ macro(remake_add_plugin lib_name plugin_name)
     ${link_plugins})
 endmacro(remake_add_plugin)
 
-# Add executable targets. Link the executable targets to a list of libraries.
+### \brief Add executable targets.
+#   Automatically identify executable objects and link the executable to a 
+#   list of libraries provided.
 macro(remake_add_executables)
   remake_arguments(VAR SUFFIX ARGN link_libs ${ARGN})
   remake_project_get(EXECUTABLE_DESTINATION)
@@ -89,7 +100,7 @@ macro(remake_add_executables)
   endforeach(exec_source)
 endmacro(remake_add_executables)
 
-# Add script targets.
+### \brief Add script targets.
 macro(remake_add_scripts)
   remake_project_get(SCRIPT_DESTINATION)
 
@@ -97,7 +108,7 @@ macro(remake_add_scripts)
   remake_file_glob(scripts ${globs})
 endmacro(remake_add_scripts)
 
-# Add file targets.
+### \brief Add file targets.
 macro(remake_add_files)
   remake_arguments(VAR INSTALL ARGN globs ${ARGN})
   remake_project_get(FILE_DESTINATION)
@@ -109,7 +120,7 @@ macro(remake_add_files)
   endforeach(file)
 endmacro(remake_add_files)
 
-# Add header targets.
+### \brief Add header targets.
 macro(remake_add_headers)
   remake_project_get(HEADER_DESTINATION)
 
@@ -118,24 +129,26 @@ macro(remake_add_headers)
     COMPONENT dev)
 endmacro(remake_add_headers)
 
-# Add a documentation target.
-macro(remake_add_documentation doc_module)
-  if(${doc_module} MATCHES "DOXYGEN")
+### \brief Add a documentation target.
+#   This macro adds a documentation target, using the requested generator
+#   for document generation. Additional arguments passed to the macro will
+#   be forwarded to the selected generator.
+#   \required[option] DOYXGEN|GROFF The generator that will be used for 
+#     document generation.
+#   \required[list] arg The arguments to be forwared to the document
+#     generator. See ReMakeDoc for details.
+macro(remake_add_documentation doc_generator)
+  if(${doc_generator} MATCHES "DOXYGEN")
     remake_doc_doxygen(${ARGN})
-  elseif(${doc_module} MATCHES "GROFF")
+  elseif(${doc_generator} MATCHES "GROFF")
     remake_doc_groff(${ARGN})
-  endif(${doc_module} MATCHES "DOXYGEN")
+  endif(${doc_generator} MATCHES "DOXYGEN")
 endmacro(remake_add_documentation)
 
-# Add include directories to the current ReMake branch.
+### \brief Add directories to the include path.
 macro(remake_include include_dirs)
   foreach(include_dir ${ARGV})
     get_filename_component(absolute_path ${include_dir} ABSOLUTE)
     include_directories(${absolute_path})
   endforeach(include_dir)
 endmacro(remake_include)
-
-# Link a target in the current ReMake branch.
-macro(remake_link_target target_name)
-  target_link_libraries(${target_name}-${remake_branch} ${ARGN})
-endmacro(remake_link_target)

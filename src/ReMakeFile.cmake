@@ -38,7 +38,15 @@ macro(remake_file_name file_var)
   string(REGEX REPLACE "[ ;]" "_" ${file_var} "${file_lower}")
 endmacro(remake_file_name)
 
-# Find files using a glob expression, omit hidden files from the list.
+### Find files using a glob expression.
+#   This macro searches the current directory for files having names that 
+#   match any of the glob expression. By default, hidden files will be
+#   excluded from the list.
+#   \required[value] variable The name of the variable that will hold the
+#     matched filenames.
+#   \optional[option] HIDDEN If present, this option prevents hidden files
+#     from being excluded from the result list.
+#   \required[list] glob A list of glob expressions.
 macro(remake_file_glob file_var)
   remake_arguments(PREFIX file_ OPTION HIDDEN ARGN globs ${ARGN})
 
@@ -73,9 +81,9 @@ macro(remake_file_create file_name)
 
   if(EXISTS ${file_create})
     if(file_outdated)
-      if(${REMAKE_FILE_TIMESTAMP} IS_NEWER_THAN ${file_create})
+      if(NOT ${file_create} IS_NEWER_THAN ${REMAKE_FILE_TIMESTAMP})
         file(WRITE ${file_create})
-      endif(${REMAKE_FILE_TIMESTAMP} IS_NEWER_THAN ${file_create})
+      endif(NOT ${file_create} IS_NEWER_THAN ${REMAKE_FILE_TIMESTAMP})
     else(file_outdated)
       file(WRITE ${file_create})
     endif(file_outdated)

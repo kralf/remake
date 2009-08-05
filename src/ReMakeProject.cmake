@@ -20,9 +20,29 @@
 
 include(ReMakePrivate)
 
-# Define the ReMake project.
+### \brief Define a ReMake project.
+#   This macro initializes all the ReMake project variables from the
+#   arguments provided or from default values. It should be the first ReMake
+#   macro called in the project root's CMakeLists.txt file.
+#   \required[value] name The name of the project to be defined,
+#     a string value.
+#   \required[value] version The version of the project. Here, the macro 
+#     expects a string value that reflects standard versioning conventions, 
+#     i.e. the version string is of the form ${MAJOR}.${MINOR}.${PATCH}.
+#   \required[value] release The release of the project. This value may
+#     contain a string describing the release status, such as alpha or beta.
+#   \required[value] summary A short but descriptive project summary. This
+#     summary will be used in several places, including the packaging module.
+#   \required[value] author The name of the project author.
+#   \required[value] contact A contact to the project responsibles, usually
+#     a valid e-mail address.
+#   \required[value] home A URL pointing to the project homepage, where
+#     users may find further documentation and bug tracking facilities.
+#   \required[value] license The license specified in the project's 
+#     copyleft/copyright agreement. Common values are GPL, LGPL, MIT, BSD, 
+#     naming just a few.
 macro(remake_project project_name project_version project_release 
-  project_summary project_vendor project_contact project_home project_license)
+  project_summary project_author project_contact project_home project_license)
   remake_arguments(PREFIX project_ VAR INSTALL VAR SOURCES ${ARGN})
 
   remake_set(REMAKE_PROJECT_NAME ${project_name})
@@ -43,7 +63,7 @@ macro(remake_project project_name project_version project_release
   remake_set(REMAKE_PROJECT_RELEASE ${project_release})
 
   remake_set(REMAKE_PROJECT_SUMMARY ${project_summary})
-  remake_set(REMAKE_PROJECT_VENDOR ${project_vendor})
+  remake_set(REMAKE_PROJECT_AUTHOR ${project_author})
   remake_set(REMAKE_PROJECT_CONTACT ${project_contact})
   remake_set(REMAKE_PROJECT_HOME ${project_home})
   remake_set(REMAKE_PROJECT_LICENSE ${project_license})
@@ -76,7 +96,7 @@ macro(remake_project project_name project_version project_release
     "version ${REMAKE_PROJECT_VERSION}, "
     "release ${REMAKE_PROJECT_RELEASE}")
   message(STATUS "Summary: ${REMAKE_PROJECT_SUMMARY}")
-  message(STATUS "Vendor: ${REMAKE_PROJECT_VENDOR} (${REMAKE_PROJECT_CONTACT})")
+  message(STATUS "Author: ${REMAKE_PROJECT_AUTHOR} (${REMAKE_PROJECT_CONTACT})")
   message(STATUS "Home: ${REMAKE_PROJECT_HOME}")
   message(STATUS "License: ${REMAKE_PROJECT_LICENSE}")
 
