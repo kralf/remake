@@ -18,7 +18,15 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
+include(ReMakeFile)
+
 include(ReMakePrivate)
+
+### \brief ReMake project macros
+#   The ReMake project macros are required by most processing macros in 
+#   ReMake. They maintain the environment necessary for initializing default 
+#   values throughout the modules, thus introducing convenience and
+#   conventions into ReMake's naming schemes.
 
 ### \brief Define a ReMake project.
 #   This macro initializes all the ReMake project variables from the
@@ -32,7 +40,7 @@ include(ReMakePrivate)
 #   \required[value] release The release of the project. This value may
 #     contain a string describing the release status, such as alpha or beta.
 #   \required[value] summary A short but descriptive project summary. This
-#     summary will be used in several places, including the packaging module.
+#     summary is used in several places, including the packaging module.
 #   \required[value] author The name of the project author.
 #   \required[value] contact A contact to the project responsibles, usually
 #     a valid e-mail address.
@@ -41,6 +49,10 @@ include(ReMakePrivate)
 #   \required[value] license The license specified in the project's 
 #     copyleft/copyright agreement. Common values are GPL, LGPL, MIT, BSD, 
 #     naming just a few.
+#   \optional[value] INSTALL:dir The directory that shall be used as the 
+#     project's preset install prefix, defaults to /usr/local.
+#   \optional[value] SOURCES:dir The directory containing the project
+#     source tree, defaults to src.
 macro(remake_project project_name project_version project_release 
   project_summary project_author project_contact project_home project_license)
   remake_arguments(PREFIX project_ VAR INSTALL VAR SOURCES ${ARGN})
@@ -108,15 +120,28 @@ macro(remake_project project_name project_version project_release
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
 endmacro(remake_project)
 
-# Define the value of a ReMake project variable. The variable name will
-# automatically be prefixed with an upper-case conversion of the project name.
-# Thus, variables may appear in the cache as ${PROJECT_NAME}_${VAR_NAME}.
+### \brief Define the value of a ReMake project variable.
+#   This macro defines a variable matching the ReMake naming conventions. 
+#   The variable name is automatically prefixed with an upper-case 
+#   conversion of the project name. Thus, variables may appear in the cache 
+#   as ${PROJECT_NAME}_${VAR_NAME}. Additional arguments are passed on to 
+#   CMake's set() macro.
+#   \required[value] variable The name of the project variable to be defined.
+#   \optional[list] arg The arguments to be passed on to CMake's set() macro.
 macro(remake_project_set project_var)
   remake_var_name(project_global_var ${REMAKE_PROJECT_NAME} ${project_var})
   remake_set(${project_global_var} ${ARGN})
 endmacro(remake_project_set)
 
-# Retrieve the value of a ReMake project variable.
+### \brief Retrieve the value of a ReMake project variable.
+#   This macro retrieves a variable matching the ReMake naming conventions.
+#   Specifically, variables named ${PROJECT_NAME}_${VAR_NAME} can be found
+#   by passing ${VAR_NAME} to this macro. By default, the macro defines an
+#   output variable named ${VAR_NAME} which will be assigned the value of the
+#   queried project variable.
+#   \required[value] variable The name of the project variable to be retrieved.
+#   \optional[value] OUTPUT:variable The optional name of an output variable
+#     that will be assigned the value of the queried project variable.
 macro(remake_project_get project_var)
   remake_arguments(PREFIX project_ VAR OUTPUT ${ARGN})
 
@@ -128,8 +153,16 @@ macro(remake_project_get project_var)
   endif(project_output)
 endmacro(remake_project_get)
 
-# Define a ReMake project option. The option name will be converted into
-# a ReMake project variable.
+### \brief Define a ReMake project option.
+#   This macro provides a ReMake project option for the user to select as ON
+#   or OFF. The option name is automatically converted into a ReMake project
+#   variable.
+#   \required[value] variable The name of the option variable that is 
+#     converted to match ReMake naming conventions for variables.
+#   \required[value] description A description string that explains the
+#     purpose of this option.
+#   \required[value] default The default value of the project option, will
+#     be used for initialization.
 macro(remake_project_option project_option project_description project_default)
   remake_project_set(${project_option} ${project_default} CACHE BOOL
     "Compile with ${project_description}.")
@@ -142,9 +175,21 @@ macro(remake_project_option project_option project_description project_default)
   endif(${project_option})
 endmacro(remake_project_option)
 
-# Define the ReMake project prefix for libary, plugin, executable, script,
-# and file names. By an empty argument list, this prefix defaults to the
-# lower-case project name followed by a score.
+### \brief Define the ReMake project prefix for target output.
+#   The macro initializes the ReMake project prefix for libaries, plugins, 
+#   executables, scripts, and regular files produced by all targets. 
+#   With an empty argument list, this prefix defaults to the lower-case 
+#   project name followed by a score.
+#   \optional[value] LIBRARY:prefix The prefix that is used for producing
+#     libraries, extending the library name to ${PREFIX}${LIB_NAME}.
+#   \optional[value] PLUGIN:prefix The prefix that is used for producing
+#     plugins, extending the plugin name to ${PREFIX}${PLUGIN_NAME}.
+#   \optional[value] EXECUTABLE:prefix The prefix that is used for producing
+#     executables, extending the executable name to ${PREFIX}${EXECUTABLE_NAME}.
+#   \optional[value] SCRIPT:prefix The prefix that is used for producing
+#     scripts, extending the script name to ${PREFIX}${SCRIPT_NAME}.
+#   \optional[value] FILE:prefix The prefix that is used for producing regular
+#     files, extending the file name to ${PREFIX}${FILE_NAME}.
 macro(remake_project_prefix)
   remake_arguments(PREFIX project_ VAR LIBRARY VAR PLUGIN VAR EXECUTABLE 
     VAR SCRIPT VAR FILE ${ARGN})
@@ -161,7 +206,16 @@ macro(remake_project_prefix)
     DEFAULT ${REMAKE_PROJECT_FILENAME}-)
 endmacro(remake_project_prefix)
 
-# Define the ReMake project configuration header.
+### \brief Create the ReMake project configuration header.
+#   This macro creates the project configuration header, commonly named 
+#   config.h, by modifying the contents of a given header source based on
+#   ReMake project settings. In addition, the macro adds the output location
+#   of the project header to the include path of all project targets.
+#   For detailed documentation on file configuration, see ReMakeFile.
+#   \required[value] source The source of the header to be configured using
+#     the ReMake project settings.
+#   \optional[value] HEADER:header The optional name of the output header that 
+#     is generated by this macro, defaults to config.h.
 macro(remake_project_header project_source)
   remake_arguments(PREFIX project_ VAR HEADER ${ARGN})
   remake_assign(project_header SELF DEFAULT config.h)
@@ -169,7 +223,7 @@ macro(remake_project_header project_source)
   if(NOT REMAKE_PROJECT_HEADER)
     remake_set(REMAKE_PROJECT_HEADER 
       ${CMAKE_BINARY_DIR}/include/${project_header})
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${project_source} 
+    remake_file_configure(${CMAKE_CURRENT_SOURCE_DIR}/${project_source} 
       ${REMAKE_PROJECT_HEADER})
     include_directories(${CMAKE_BINARY_DIR}/include)
   else(NOT REMAKE_PROJECT_HEADER)

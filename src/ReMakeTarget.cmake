@@ -22,8 +22,14 @@ include(ReMakePrivate)
 
 remake_set(REMAKE_TARGET_DIR ReMakeTargets)
 
-## Define a top-level target. If commands have been stored for that target,
-# they will be automatically added.
+### \brief Define a new top-level target.
+#   The macro creates a top-level target by calling CMake's add_custom_target()
+#   with the provided target name and all additional arguments.
+#   If any commands have been stored for that target, these commands will 
+#   automatically be added as custom build rules.
+#   \required[value] name The name of the target to be created.
+#   \optional[list] arg The arguments to be passed on to CMake's 
+#     add_custom_target() macro.
 macro(remake_target target_name)
   add_custom_target(${target_name} ${ARGN})
 
@@ -33,15 +39,31 @@ macro(remake_target target_name)
   endif(target_cmds)  
 endmacro(remake_target)
 
-## Output a valid target name from a string.
+### \brief Output a valid target name from a set of strings.
+#   This macro is a helper macro to generate valid target names from arbitrary
+#   strings. It replaces whitespace characters and CMake list separators by
+#   underscores and performs an upper-case conversion of the result.
+#   \required[value] variable The name of a variable to be assigned the
+#     generated target name.
+#   \required[list] string A list of strings to be concatenated to the
+#     target name.
 macro(remake_target_name target_var)
   string(TOLOWER "${ARGN}" target_lower)
   string(REGEX REPLACE "[ ;]" "_" ${target_var} "${target_lower}")
 endmacro(remake_target_name)
 
-## Add command to a top-level target. This macro also works in directories
-#  below the top-level directory. Commands will be stored for later collection
-#  in a file ${TARGET}.commands in ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}.
+### \brief Add custom build rule to a top-level target.
+#   The macro adds a custom build rule to a target. Whereas CMake's
+#   add_custom_command() only behaves correctly in the top-level source 
+#   directory, this macro is designed to also work in directories below the 
+#   top-level. Therefor, build rules are stored for later collection in a
+#   temporary file ${TARGET_NAME}.commands in 
+#   ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}. A subsequent call to 
+#   remake_target() will automatically collect and add these rules.
+#   \required[value] name The name of the top-level target to add the build
+#     rule to. 
+#   \required[list] args The arguments to be passed to CMake's
+#     add_custom_command() during collection.
 macro(remake_target_add_command target_name)
   if(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     add_custom_command(TARGET ${target_name} ${ARGN})

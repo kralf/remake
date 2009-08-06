@@ -20,26 +20,53 @@
 
 include(ReMakePrivate)
 
-# Push the value of a variable to a list.
+### \brief ReMake list macros
+#   The ReMake list macros are a set of helper macros to simplify
+#   operations over lists in ReMake.
+
+### \brief Append values to the back of a list.
+#   This macro appends a list of values to the back of a list.
+#   \required[value] list The name of the list to append values to.
+#   \required[list] value A list of values that will be appended to the list.
 macro(remake_list_push list_name)
   list(APPEND ${list_name} ${ARGN})
 endmacro(remake_list_push)
 
-# Pop the value of a variable from a list. Use a given default value if the 
-# list is empty.
-macro(remake_list_pop list_name list_var)
-  remake_arguments(PREFIX list_ VAR DEFAULT ${ARGN})
+### \brief Remove values from the front of a list.
+#   This macro removes a list of values from the front of the list and
+#   assigns the removed values to output variables.
+#   \required[value] list The name of the list to remove the values from.
+#   \required[list] var A list of variables to assign removed list values to. 
+#     The number of variables provided determines the number of elements to
+#     be removed from the list.
+#   \optional[value] DEFAULT:value An optional default value that is assigned
+#     to an output variable only if the requested list element does not exist.
+macro(remake_list_pop list_name)
+  remake_arguments(PREFIX list_ VAR DEFAULT ARGN vars ${ARGN})
 
-  list(LENGTH ${list_name} list_length)
-  if(list_length)
-    list(GET ${list_name} 0 ${list_var})
-    list(REMOVE_AT ${list_name} 0)
-  else(list_length)
-    set(${list_var} ${list_default})
-  endif(list_length)
+  foreach(variable ${list_vars})
+    list(LENGTH ${list_name} list_length)
+    if(list_length)
+      list(GET ${list_name} 0 ${variable})
+      list(REMOVE_AT ${list_name} 0)
+    else(list_length)
+      set(${variable} ${list_default})
+    endif(list_length)
+  endforeach(variable)
 endmacro(remake_list_pop)
 
-# Check for values in a list.
+### \brief Search a list for existing values.
+#   This macro iterates a list in order to determine missing list values.
+#   \required[value] list The name of the list to be searched for existing
+#     values.
+#   \optional[value] ALL:variable The name of an optional output variable that
+#     is set to TRUE only if all the values provided are contained in the list.
+#   \optional[value] ANY:variable The name of an optional output variable that
+#     is set to TRUE only if any of the values provided is contained in the 
+#     list.
+#   \optional[value] MISSING:variable The name of an optional variable to
+#     hold the list of values not contained in the list.
+#   \requiredl[list] value The list of values to be searched for.
 macro(remake_list_contains list_name)
   remake_arguments(PREFIX list_ VAR ALL VAR ANY VAR MISSING ARGN values   
     ${ARGN})

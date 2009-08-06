@@ -57,19 +57,22 @@ sub write_man {
 
     for my $param (@{$macro->{parameters}}) {
       my $param_signature;
-      if ($param->{type} =~ /$list_pattern/) {
-        $param_signature = "\" $param->{name}1 \" [\" $param->{name}2 \" ...]";
-      }
-      elsif ($param->{type} =~ /$option_pattern/) {
-        $param_signature = "$param->{name}";
-      }
-      else {
-        $param_signature = "\" ".$param->{name}." \"";
-      }
 
+      if ($param->{name}) {
+        if ($param->{type} =~ /$list_pattern/) {
+          $param_signature = "\" $param->{name}1 \" [\" $param->{name}2 \" ...]";
+        }
+        elsif ($param->{type} =~ /$option_pattern/) {
+          $param_signature = "$param->{name}";
+        }
+        else {
+          $param_signature = "\" ".$param->{name}." \"";
+        }
+      }
       if ($param->{key}) {
         $param_signature = "$param->{key} $param_signature";
       }
+      $param_signature =~ s/^\s*|\s*$//g;
       if ($param->{tag} =~ /$optional_pattern/) {
         $param_signature = "[$param_signature]";
       }
@@ -109,15 +112,29 @@ sub write_man {
 
     for my $param (@{$macro->{parameters}}) {
       $doc .= ".TP\n";
-      if ($param->{type} =~ /$list_pattern/) {
-        $doc .= ".IR \"$param->{name}1 $param->{name}2 \"...\n";
-      }
-      elsif ($param->{type} =~ /$option_pattern/) {
-        $doc .= "$param->{name}\n";
+
+      if ($param->{key}) {
+        $doc .= ".RI \"$param->{key} \"";
       }
       else {
-        $doc .= ".IR \"$param->{name}\"\n";
+        $doc .= ".IR";
       }
+
+      if ($param->{name}) {
+        if ($param->{type} =~ /$list_pattern/) {
+          $doc .= " \"$param->{name}1 $param->{name}2 \"...\n";
+        }
+        elsif ($param->{type} =~ /$option_pattern/) {
+          $doc .= " $param->{name}\n";
+        }
+        else {
+          $doc .= " \"$param->{name}\"\n";
+        }
+      }
+      else {
+        $doc .= "\n";
+      }
+
       $doc .= "$param->{description}\n";
     }
 
@@ -222,15 +239,10 @@ sub process_source {
             my $param_spec = $2;
 
             if ($arguments =~ /$param_arguments_pattern/) {
-              my $param_key;
-              my $param_name = $1;
+              my $param_key = $1;
+              my $param_name = $2;
               my $param_type = $value_pattern;
-              my $param_description = $2;
-
-              if ($param_name =~ /$param_key_pattern/) {
-                $param_key = $1;
-                $param_name = $2;
-              }
+              my $param_description = $3;
 
               foreach my $param_type_key (keys %param_type_patterns) {
                 if ($param_spec =~ /$param_type_patterns{$param_type_key}/) {

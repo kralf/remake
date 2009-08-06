@@ -20,10 +20,20 @@
 
 include(ReMakePrivate)
 
+### \brief ReMake file macros
+#   The ReMake file macros are a set of helper macros to simplify
+#   file operations in ReMake.
+
 remake_set(REMAKE_FILE_DIR ${CMAKE_BINARY_DIR}/ReMakeFiles)
 
-# Define a ReMake file. If the filename contains a relative path, the
-# file will be assumed below ${REMAKE_FILE_DIR}.
+### \brief Define a ReMake file.
+#   This macro creates a variable to hold the ReMake-compliant path to a
+#   a regular file or directory with the specified name. If the file or 
+#   directory name contains a relative path, it will be assumed to be located
+#   below the ReMake directory ${REMAKE_FILE_DIR}.
+#   \required[value] filename The name of a file or directory.
+#   \required[value] variable name of the output variable to be assigned the
+#     ReMake path to the file or directory.
 macro(remake_file file_name file_var)
   if(IS_ABSOLUTE ${file_name})
     remake_set(${file_var} ${file_name})
@@ -32,17 +42,24 @@ macro(remake_file file_name file_var)
   endif(IS_ABSOLUTE ${file_name})
 endmacro(remake_file)
 
-# Output a valid filename from a string.
+### \brief Output a valid file or directory name from a set of strings.
+#   This macro is a helper macro to generate valid filenames from arbitrary
+#   strings. It replaces whitespace characters and CMake list separators by
+#   underscores and performs a lower-case conversion of the result.
+#   \required[value] variable The name of a variable to be assigned the
+#     generated filename.
+#   \required[list] string A list of strings to be concatenated to the
+#     filename.
 macro(remake_file_name file_var)
   string(TOLOWER "${ARGN}" file_lower)
   string(REGEX REPLACE "[ ;]" "_" ${file_var} "${file_lower}")
 endmacro(remake_file_name)
 
-### Find files using a glob expression.
+### \brief Find files using a glob expression.
 #   This macro searches the current directory for files having names that 
-#   match any of the glob expression. By default, hidden files will be
-#   excluded from the list.
-#   \required[value] variable The name of the variable that will hold the
+#   match any of the glob expression passed to the macro. By default, hidden
+#   files will be excluded from the result list.
+#   \required[value] variable The name of the output variable to hold the 
 #     matched filenames.
 #   \optional[option] HIDDEN If present, this option prevents hidden files
 #     from being excluded from the result list.
@@ -61,8 +78,10 @@ macro(remake_file_glob file_var)
   endif(NOT file_hidden)
 endmacro(remake_file_glob)
 
-# Create a directory. If the directory name contains a relative path, the
-# directory will be created below ${REMAKE_FILE_DIR}.
+### \brief Create a directory.
+#   This macro creates a ReMake directory. The directory name is automatically 
+#   converted into a ReMake location by a call to remake_file().
+#   \required[value] dirname The name of the directory to be created.
 macro(remake_file_mkdir file_dir_name)
   remake_file(${file_dir_name} file_dir)
 
@@ -72,9 +91,15 @@ macro(remake_file_mkdir file_dir_name)
   endif(NOT EXISTS ${file_dir})
 endmacro(remake_file_mkdir)
 
-# Create an empty file. If the filename contains a relative path, the
-# file will be created below ${REMAKE_FILE_DIR}. Optionally, re-create
-# outdated files.
+### \brief Create an empty file.
+#   This macro creates an empty ReMake file. The filename is automatically 
+#   converted into a ReMake location by a call to remake_file(). Optionally,
+#   the macro allows for selectively re-creating outdated files. Therefor,
+#   the file modification date is tested against ReMake's timestamp file,
+#   a special file created at inclusion time.
+#   \required[value] filename The name of the file to be created.
+#   \optional[option] OUTDATED If present, this option prevents files with
+#      a recent modification timestamp from being re-created.
 macro(remake_file_create file_name)
   remake_arguments(PREFIX file_ OPTION OUTDATED ${ARGN})
   remake_file(${file_name} file_create)
@@ -92,8 +117,13 @@ macro(remake_file_create file_name)
   endif(EXISTS ${file_create})
 endmacro(remake_file_create)
 
-# Read content from file. If the filename contains a relative path, the
-# file will be assumed below ${REMAKE_FILE_DIR}.
+### \brief Read content from file. 
+#   This macro reads file content into a string variable. The name of the file
+#   to be read is automatically converted into a ReMake location by a call to
+#   remake_file().
+#   \required[value] filename The name of the file to be read from.
+#   \required[value] variable The name of a string variable to be assigned
+#     the file's content.
 macro(remake_file_read file_name file_var)
   remake_file(${file_name} file_read)
 
@@ -104,9 +134,13 @@ macro(remake_file_read file_name file_var)
   endif(EXISTS ${file_read})
 endmacro(remake_file_read)
 
-# Write content to file. If the filename contains a relative path, the
-# file will be assumed below ${REMAKE_FILE_DIR}. If the file exists,
-# any content will be appended.
+### \brief Write content to file. 
+#   This macro appends a list of string values to a file. The name of the file
+#   to be written is automatically converted into a ReMake location by a call 
+#   to remake_file(). If the file does not exists yets, it will automatically 
+#   be created.
+#   \required[value] filename The name of the file to be written to.
+#   \optional[list] string The list of strings to be appended to the file.
 macro(remake_file_write file_name)
   remake_file(${file_name} file_write)
 
@@ -123,11 +157,21 @@ macro(remake_file_write file_name)
   endif(file_content)
 endmacro(remake_file_write)
 
-# Configure files using ReMake variables. The macro actually configures
-# files with a .remake extension, but copies files that do not match this
-# naming convention. By default, the output path will be the relative 
-# source path below ${CMAKE_CURRENT_BINARY_DIR}. The .remake extension will
-# automatically be stripped from the output filename.
+### \brief Configure files using ReMake variables.
+#   This macro takes a glob expression and, in all matching input files,
+#   replaces variables referenced as ${VAR} or @VAR@ with their values as 
+#   determined by CMake.
+#   The macro actually calls CMake's configure_file() macro to configure
+#   files with a .remake extension, but copies files that do not match this
+#   naming convention. By default, the configured file's output path is 
+#   the relative source path below ${CMAKE_CURRENT_BINARY_DIR}. The .remake
+#   extension is automatically stripped from the output filenames.
+#   \optional[var] DESTINATION:dirname The optional destination path for
+#     output files generated by this macro.
+#   \optional[var] OUTPUT:variable The optional name of a list variable to
+#     be assigned all output filenames.
+#   \required[list] glob A list of glob expressions that are matched to find
+#     the input files.
 macro(remake_file_configure)
   remake_arguments(PREFIX file_ VAR DESTINATION VAR OUTPUT ARGN globs ${ARGN})
 

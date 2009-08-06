@@ -20,6 +20,10 @@
 
 include(ReMakePrivate)
 
+### \brief ReMake packaging macros
+#   The ReMake packaging macros have been designed to provide simple and
+#   transparent package generation using CMake's CPack module.
+
 remake_set(REMAKE_PACK_ALL_TARGET packages)
 remake_set(REMAKE_PACK_TARGET package)
 remake_set(REMAKE_PACK_INSTALL_TARGET package_install)
@@ -27,9 +31,19 @@ remake_set(REMAKE_PACK_INSTALL_TARGET package_install)
 remake_set(REMAKE_PACK_DIR ReMakePackages)
 remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 
-# Generate packages from the ReMake project. This macro takes optional
-# arguments giving the package name and the project component the package 
-# will be generated from.
+### \brief Generate packages from a ReMake project.
+#   This macro generally configures package generation for a ReMake project 
+#   using CMake's CPack macros. It is usually called by the generator-specific
+#   commands defined in this module and is therefore not required to be
+#   included directly in a CMakeLists.txt file. The macro creates a package 
+#   build target from the specified install component and initializes the CPack
+#   variables.
+#   \required[value] generator The generator to be used for creating the
+#     component package. See the CPack documentation for valid generators.
+#   \optional[value] NAME:name The name of the package to be generated,
+#     defaults to the ReMake project name.
+#   \optional[value] COMPONENT:component The name of the install component
+#     to generate the package from, defaults to default.
 macro(remake_pack pack_generator)
   if(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
     remake_target(${REMAKE_PACK_ALL_TARGET})
@@ -68,7 +82,23 @@ macro(remake_pack pack_generator)
   endforeach(pack_var)
 endmacro(remake_pack)
 
-# Generate Debian package from the ReMake project.
+### \brief Generate a Debian package from the ReMake project.
+#   This macro configures package generation using CPack's DEB generator
+#   for Debian packages. It acquires all the information necessary from
+#   the current project settings and the arguments passed. In addition to
+#   creating a package build target through remake_pack(), the macro adds a 
+#   simplified package install target.
+#   \optional[value] ARCH:architecture The package architecture that is
+#     inscribed into the package manifest, defaults to the local system
+#     architecture as returned by 'dpkg --print-architecture'.
+#   \optional[value] COMPONENT:component The name of the install component
+#     to generate the Debian package from, defaults to the empty string.
+#     Note that following Debian conventions, the component name is used as 
+#     suffix to the package name.
+#   \optional[list] dep An optional list of package dependencies
+#     that are inscribed into the package manifest. The format of a 
+#     dependency should comply to Debian conventions, meaning that the
+#     dependency is of the form ${PACKAGE} [(>= ${VERSION})].
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT ARGN dependencies 
     ${ARGN})

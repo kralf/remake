@@ -1,3 +1,5 @@
+#! /usr/bin/perl
+
 $project_name = '${REMAKE_PROJECT_NAME}';
 $project_version = '${REMAKE_PROJECT_VERSION}';
 $project_release = '${REMAKE_PROJECT_RELEASE}';
@@ -24,8 +26,7 @@ $optional_pattern = 'optional';
 $default_pattern = 'default';
 $param_pattern = '('.$required_pattern.'|'.$optional_pattern.')'.
   '\[?\s*([^\]]*)\s*\]?';
-$param_arguments_pattern = '([^\s]+)\s*(.*)\s*';
-$param_key_pattern = '([^:]+):([^:]+)';
+$param_arguments_pattern = '\s*([A-Z_|]*):?([a-z_]*)\s*(.*)\s*';
 $value_pattern = 'value';
 $list_pattern = 'list';
 $option_pattern = 'option';
