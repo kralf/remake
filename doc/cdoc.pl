@@ -10,6 +10,8 @@ use File::Glob;
 use File::Basename;
 use File::Path;
 
+use IO::Compress::Gzip;
+
 my $generator = "CDoc";
 
 my $doc_type = $opt_t;
@@ -354,13 +356,13 @@ sub find_source {
   generate_man($man_name, \%module, \@variables, \@macros, \%references, \$man);
 
   if ($doc_type =~ /man/) {
-    my $doc_name = "man${man_extension}/$man_name.$man_extension";
+    my $doc_name = "man${man_extension}/$man_name.$man_extension.gz";
     print "Writing $doc_name\n";
     mkpath("${doc_output}/man${man_extension}");
-    open(file, ">$doc_output/$doc_name") or 
-      die("Error: Failed to write $doc_name!\n");
-    print file $man;
-    close(file);
+    my $z = new IO::Compress::Gzip "$doc_output/$doc_name" or 
+      die("Error: Failed to compress $doc_name!\n");
+    print $z $man;
+    close $z;
   }
   else {
     my $doc_name = "$man_name.".lc($doc_type);

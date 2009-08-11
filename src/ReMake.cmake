@@ -27,6 +27,7 @@ include(ReMakeTarget)
 include(ReMakeQt4)
 include(ReMakeDoc)
 include(ReMakePack)
+include(ReMakeSVN)
 
 include(ReMakePrivate)
 

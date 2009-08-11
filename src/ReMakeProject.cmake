@@ -53,6 +53,10 @@ include(ReMakePrivate)
 #     project's preset install prefix, defaults to /usr/local.
 #   \optional[value] SOURCES:dir The directory containing the project
 #     source tree, defaults to src.
+#   \optional[value] README:file The name of the readme file that will be
+#     shipped with the project package, defaults to README.
+#   \optional[value] COPYRIGHT:file The name of the copyright file that will 
+#     be shipped with the project package, defaults to copyright.
 macro(remake_project project_name project_version project_release 
   project_summary project_author project_contact project_home project_license)
   remake_arguments(PREFIX project_ VAR INSTALL VAR SOURCES ${ARGN})
@@ -79,6 +83,9 @@ macro(remake_project project_name project_version project_release
   remake_set(REMAKE_PROJECT_CONTACT ${project_contact})
   remake_set(REMAKE_PROJECT_HOME ${project_home})
   remake_set(REMAKE_PROJECT_LICENSE ${project_license})
+  remake_set(REMAKE_PROJECT_README ${project_readme} DEFAULT README)
+  remake_set(REMAKE_PROJECT_COPYRIGHT ${project_copyright} DEFAULT copyright)
+  remake_set(REMAKE_PROJECT_CHANGELOG changelog)
 
   remake_set(REMAKE_PROJECT_BUILD_SYSTEM ${CMAKE_SYSTEM_NAME})
   remake_set(REMAKE_PROJECT_BUILD_ARCH ${CMAKE_SYSTEM_PROCESSOR})
@@ -118,6 +125,14 @@ macro(remake_project project_name project_version project_release
   if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
     add_subdirectory(${REMAKE_PROJECT_SOURCE_DIR})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
+
+  remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
+  remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
+  remake_svn_log(${REMAKE_PROJECT_CHANGELOG} TARGET changelog
+    COMMENT "Building the changelog" OUTPUT project_changelog)
+  install(FILES ${project_readme} ${project_copyright} ${project_changelog}
+    DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
+    COMPONENT default)
 endmacro(remake_project)
 
 ### \brief Define the value of a ReMake project variable.
