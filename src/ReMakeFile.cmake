@@ -61,13 +61,31 @@ endmacro(remake_file_name)
 #   files will be excluded from the result list.
 #   \required[value] variable The name of the output variable to hold the 
 #     matched filenames.
+#   \optional[value] WORKING_DIRECTORY:dirname An optional directory name that
+#     refers to the working directory for resolving relative-path glob 
+#     expressions, defaults to the current directory.
 #   \optional[option] HIDDEN If present, this option prevents hidden files
 #     from being excluded from the result list.
 #   \required[list] glob A list of glob expressions.
 macro(remake_file_glob file_var)
-  remake_arguments(PREFIX file_ OPTION HIDDEN ARGN globs ${ARGN})
+  remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION HIDDEN ARGN globs 
+    ${ARGN})
 
-  file(GLOB ${file_var} ${file_globs})
+  if(file_working_directory)
+    remake_set(file_working_globs)
+    foreach(file_glob ${file_globs})
+      if(NOT IS_ABSOLUTE ${file_glob})
+        remake_list_push(file_working_globs 
+          ${file_working_directory}/${file_glob})
+      else(NOT IS_ABSOLUTE ${file_glob})
+        remake_list_push(file_working_globs ${file_glob})
+      endif(NOT IS_ABSOLUTE ${file_glob})
+    endforeach(file_glob)
+  else(file_working_directory)
+    remake_set(file_working_globs ${file_globs})
+  endif(file_working_directory)
+
+  file(GLOB ${file_var} ${file_working_globs})
   if(NOT file_hidden)
     foreach(file_name ${${file_var}})
       string(REGEX MATCH "^.*/[.].*$" file_matched ${file_name})
@@ -146,15 +164,14 @@ macro(remake_file_write file_name)
 
   if(EXISTS ${file_write})
     file(READ ${file_write} file_content)
+    if(file_content)
+      file(APPEND ${file_write} ";${ARGN}")
+    else(file_content)
+      file(APPEND ${file_write} "${ARGN}")
+    endif(file_content)
   else(EXISTS ${file_write})
     remake_set(file_content)
   endif(EXISTS ${file_write})
-
-  if(file_content)
-    file(APPEND ${file_write} ";${ARGN}")
-  else(file_content)
-    file(APPEND ${file_write} "${ARGN}")
-  endif(file_content)
 endmacro(remake_file_write)
 
 ### \brief Configure files using ReMake variables.

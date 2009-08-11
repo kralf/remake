@@ -3,24 +3,26 @@
 $project_name = '${REMAKE_PROJECT_NAME}';
 $project_version = '${REMAKE_PROJECT_VERSION}';
 $project_release = '${REMAKE_PROJECT_RELEASE}';
-$project_sources = '${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR}';
 $project_author = '${REMAKE_PROJECT_AUTHOR}';
 $project_contact = '${REMAKE_PROJECT_CONTACT}';
 $project_license = '${REMAKE_PROJECT_LICENSE}';
 $project_home = '${REMAKE_PROJECT_HOME}';
 $project_summary = '${REMAKE_PROJECT_SUMMARY}';
 
-$output_directory = '${CMAKE_CURRENT_BINARY_DIR}/pre';
+$groff_executable = '${GROFF_EXECUTABLE}';
+
 $man_extension = '3';
 
 $source_pattern = '\.cmake$';
-$name_pattern = '^'.$project_name.'(.*)$';
+$name_pattern = '^'.$project_name.'(\w+)$';
 $comment_pattern = '#\s*(.*?)\s*$';
 $block_pattern = '^#+\s+(.*?)\s*$';
 $directive_pattern = '^\\\([^\s]+)\s+(.*)\s*$';
 
 $module_pattern = 'module';
 $brief_pattern = 'brief';
+$variable_pattern = 'variable';
+$variable_arguments_pattern = '\s*([\w\$\{\}]*)\s+(.*)\s*';
 $required_pattern = 'required';
 $optional_pattern = 'optional';
 $default_pattern = 'default';
@@ -35,6 +37,7 @@ $option_pattern = 'option';
   list => $list_pattern,
   option => $option_pattern
 );
+$man_reference_pattern = '([\w]+)\s*(\(\d\)[.,;]?)';
 
 $include_pattern = '^\s*include\(\s*([^\s\)]*)\s*\)\s*$';
 $macro_pattern = '^\s*macro\(\s*([^\s\)]*).*\)?\s*$';

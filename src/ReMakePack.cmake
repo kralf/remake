@@ -33,11 +33,10 @@ remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 
 ### \brief Generate packages from a ReMake project.
 #   This macro generally configures package generation for a ReMake project 
-#   using CMake's CPack macros. It is usually called by the generator-specific
-#   commands defined in this module and is therefore not required to be
-#   included directly in a CMakeLists.txt file. The macro creates a package 
-#   build target from the specified install component and initializes the CPack
-#   variables.
+#   using CMake's CPack macros. It gets invoked by the generator-specific
+#   macros defined in this module and should not be called directly from a 
+#   CMakeLists.txt file. The macro creates a package build target from the
+#   specified install component and initializes the CPack variables.
 #   \required[value] generator The generator to be used for creating the
 #     component package. See the CPack documentation for valid generators.
 #   \optional[value] NAME:name The name of the package to be generated,
@@ -130,6 +129,6 @@ macro(remake_pack_deb)
   remake_target_name(pack_install_target ${pack_prefix}
     ${REMAKE_PACK_INSTALL_TARGET})
   remake_target(${pack_install_target}
-    COMMAND sudo dpkg --install deb/${pack_file}.deb
-    DEPENDS ${pack_target})
+    COMMAND sudo dpkg --install deb/${pack_file}.deb)
+  add_dependencies(${pack_install_target} ${pack_target})
 endmacro(remake_pack_deb)

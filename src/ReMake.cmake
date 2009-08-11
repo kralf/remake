@@ -35,7 +35,7 @@ include(ReMakePrivate)
 #   facilitate the restructuring of GNU Automake/Autoconf projects.
 #
 #   A key feature of ReMake is its branching concept. A branch is defined
-#   along with a list of dependencies that will automatically be resolved
+#   along with a list of dependencies that is automatically resolved
 #   by ReMake.
 #
 #   ReMake requires CMake version 2.6 or higher.
@@ -45,7 +45,7 @@ include(ReMakePrivate)
 #   link the library to a list of libraries provided.
 #   \required[value] name The name of the library target to be added.
 #   \optional[value] SUFFIX:suffix An optional library name suffix.
-#   \optional[list] lib The list of libraries the target library will be 
+#   \optional[list] lib The list of libraries the target library is to be 
 #     linked against.
 macro(remake_add_library lib_name)
   remake_arguments(VAR SUFFIX ARGN link_libs ${ARGN})
@@ -131,9 +131,9 @@ endmacro(remake_add_headers)
 
 ### \brief Add a documentation target.
 #   This macro adds a documentation target, using the requested generator
-#   for document generation. Additional arguments passed to the macro will
-#   be forwarded to the selected generator.
-#   \required[option] DOYXGEN|GROFF The generator that will be used for 
+#   for document generation. Additional arguments passed to the macro are
+#   forwarded to the selected generator.
+#   \required[option] DOYXGEN|GROFF|CUSTOM The generator to be used for 
 #     document generation.
 #   \required[list] arg The arguments to be forwared to the document
 #     generator. See ReMakeDoc for details.
@@ -142,6 +142,8 @@ macro(remake_add_documentation doc_generator)
     remake_doc_doxygen(${ARGN})
   elseif(${doc_generator} MATCHES "GROFF")
     remake_doc_groff(${ARGN})
+  elseif(${doc_generator} MATCHES "CUSTOM")
+    remake_doc_custom(${ARGN})
   endif(${doc_generator} MATCHES "DOXYGEN")
 endmacro(remake_add_documentation)
 

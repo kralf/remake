@@ -53,7 +53,7 @@ macro(remake_arguments)
       endif(private_arg STREQUAL PREFIX)
     endif(private_push)
   endforeach(private_arg)
-  
+
   foreach(private_var ${private_vars})
     set(${private_var})
     string(TOLOWER ${private_var} private_var)

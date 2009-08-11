@@ -20,7 +20,46 @@
 
 include(ReMakePrivate)
 
-# Turn on documentation support.
+include(ReMakeProject)
+include(ReMakeFile)
+
+### \brief ReMake documentation macros
+#   The ReMake documentation module has been designed for simple and 
+#   transparent intergration of project documentation tasks with CMake.
+#
+#   It provides support for major document generators, such as Doxygen and
+#   GNU Troff.
+
+### \variable REMAKE_DOC_TYPES The list of documentation types to be 
+#     generated.
+#   \variable REMAKE_DOC_OUTPUTS The list of document output directories,
+#     one directory for each type in ${REMAKE_DOC_TYPES}.
+#   \variable REMAKE_DOC_DESTINATIONS The list of document install 
+#     destinations, one destination directory for each type in
+#     ${REMAKE_DOC_TYPES}.
+#   \variable REMAKE_DOC_CONFIGURATION_DIR The directory containing the 
+#     project document configuration.
+#   \variable REMAKE_DOC_TARGET The name of the documentation target
+#     containing the document build rules.
+
+### \brief Configure ReMake documentation task support.
+#   This macro initializes all the ReMake documentation task variables from
+#   the arguments provided or from default values. It should be called in the 
+#   project root's CMakeLists.txt file, before any other documentation macro.
+#   \required[list] type Defines the types of documentation to be generated 
+#     by all documentation macros. Common document types are man, html, latex, 
+#     etc. Note that the types provided here must be supported by all 
+#     generators used throughout the project.
+#   \optional[list] OUTPUT:dir An optional list of output directories, one
+#     for each document type, that is passed to the document generator. The
+#     directories define relative paths below ${CMAKE_CURRENT_BINARY_DIR} and
+#     default to a filename conversion of the respective document type.
+#   \optional[list] INSTALL:dir An optional list of directories defining the 
+#     install destintations for the given document types. All directories
+#     default to share/doc/${REMAKE_PROJECT_FILENAME}. See remake_doc_install() 
+#     for details.
+#   \optional[value] CONFIGURATION:dir The directory containing the project
+#     document configuration, defaults to doc.
 macro(remake_doc)
   remake_arguments(PREFIX doc_ VAR OUTPUT VAR INSTALL VAR CONFIGURATION 
     ARGN types ${ARGN})
@@ -61,21 +100,42 @@ macro(remake_doc)
   remake_target(${REMAKE_DOC_TARGET} ALL)
 endmacro(remake_doc)
 
-# Evaluate support for the documentation types requested. Emit an error
-# message if a documentation module lacks support for any of these types.
-macro(remake_doc_support doc_module)
-  remake_var_name(doc_support_var REMAKE_DOC ${doc_module} SUPPORTED_TYPES)
-  remake_set(${doc_support_var} ${ARGN})
+### \brief Evaluate support for the documentation types requested.
+#   This macro is a helper macro to evaluate generator support for the 
+#   documentation types requested. It emits a fatal error message if a 
+#   generator lacks support for any of the types. Note that the macro
+#   gets invoked by the generator-specific macros defined in this module.
+#   It should not be called directly from a CMakeLists.txt file.
+#   \required[value] generator The name of the generator to be evaluated.
+#   \required[list] type The list of documentation types supported by the
+#      named generator.
+macro(remake_doc_support doc_generator)
+  remake_var_name(doc_supported_types_var REMAKE_DOC ${doc_generator} 
+    SUPPORTED_TYPES)
+  remake_var_name(doc_types_var REMAKE_DOC ${doc_generator} TYPES)
 
-  remake_list_contains(${doc_support_var} ${REMAKE_DOC_TYPES} 
-    MISSING doc_missing_types)
-  if(doc_missing_types)
-    message(FATAL_ERROR "Unsupported document type(s) for ${doc_module}: "
-      "${doc_missing_types}")
-  endif(doc_missing_types)
+  remake_set(${doc_supported_types_var} ${ARGN})
+  remake_list_contains(${doc_supported_types_var} ${REMAKE_DOC_TYPES} 
+    CONTAINED ${doc_types_var})
+
+  if(NOT ${doc_types_var})
+    message(FATAL_ERROR 
+    "Document generator ${doc_generator} fails to support any type requested!")
+  endif(NOT ${doc_types_var})
 endmacro(remake_doc_support)
 
-# Generate documentation using doxygen.
+### \brief Generate Doxygen documentation.
+#   This macro defines documentation build and install rules for the Doxygen
+#   generator. It configures a list of Doxygen configuration files using
+#   remake_file_configure() and adds generator commands to the documentation
+#   target. See ReMakeFile for details on file configuration, the ReMakeDoc 
+#   variable listing and ReMakeProject for useful configuration variables.
+#   \required[list] glob A list of glob expressions resolving to Doxygen
+#     configuration files. Note that each file gets configured and processed
+#     independently, disregarding any output conflicts.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to remake_doc_install() for defining the
+#     install rule.
 macro(remake_doc_doxygen)
   remake_arguments(PREFIX doc_ VAR COMPONENT ARGN globs ${ARGN})
 
@@ -108,10 +168,21 @@ macro(remake_doc_doxygen)
   endif(DOXYGEN_FOUND)
 endmacro(remake_doc_doxygen)
 
-# Generate documentation using groff.
+### \brief Generate GNU Troff documentation.
+#   This macro defines documentation build and install rules for the GNU
+#   Troff (groff) generator. Unlike Doxygen, groff does not generate
+#   documentation from documented source code, but takes formatted
+#   input to create HTML or PostScript documents. For details, see groff(1).
+#   \required[list] glob A list of glob expressions resolving to groff input
+#     files. The files must contain formatted input that can be interpreted
+#     by the named groff macro.
+#   \optional[value] MACRO:macro The groff macro to be used for interpreting 
+#     the input, defaults to man.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to remake_doc_install() for defining the
+#     install rule.
 macro(remake_doc_groff)
-  remake_arguments(PREFIX doc_ VAR MACRO VAR COMPONENT LIST PREPROCESS 
-    ARGN globs ${ARGN})
+  remake_arguments(PREFIX doc_ VAR MACRO VAR COMPONENT ARGN globs ${ARGN})
   remake_set(doc_macro SELF DEFAULT man)
 
   if(NOT DEFINED GROFF_FOUND)
@@ -122,11 +193,9 @@ macro(remake_doc_groff)
   endif(NOT DEFINED GROFF_FOUND)
 
   if(GROFF_FOUND)
-    if(doc_preprocess)
-      remake_target_add_command(${REMAKE_DOC_TARGET}
-        COMMAND ${doc_preprocess})
-    endif(doc_preprocess)
-
+    remake_var_name(doc_input_var REMAKE_DOC ${doc_macro} OUTPUT)
+    remake_set(doc_input ${CMAKE_CURRENT_BINARY_DIR}/${${doc_input_var}})
+      
     foreach(doc_type ${REMAKE_DOC_TYPES})
       remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
       remake_set(doc_output ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}})
@@ -135,15 +204,16 @@ macro(remake_doc_groff)
       if(${doc_macro} STREQUAL ${doc_type})
         remake_file_configure(${doc_globs} DESTINATION ${doc_output})
       else(${doc_macro} STREQUAL ${doc_type})
-        string(REGEX REPLACE "^m" "" doc_macro ${doc_macro})
+        string(REGEX REPLACE "^m" "" doc_macro_file ${doc_macro})
         remake_file_name(doc_extension ${doc_type})
-        remake_file_glob(doc_files ${doc_globs})
 
+        remake_file_glob(doc_files ${doc_globs})
         foreach(doc_file ${doc_files})
           get_filename_component(doc_name ${doc_file} NAME)
           remake_target_add_command(${REMAKE_DOC_TARGET}
-            COMMAND ${GROFF_EXECUTABLE} -t -e -m${doc_macro} -T${doc_type} 
-            ${doc_file} > ${doc_output}/${doc_name}.${doc_extension})
+            COMMAND ${GROFF_EXECUTABLE} -t -e -m${doc_macro_file} 
+              -T${doc_type} ${doc_file} > 
+              ${doc_output}/${doc_name}.${doc_extension})
         endforeach(doc_file)
       endif(${doc_macro} STREQUAL ${doc_type})
     endforeach(doc_type)
@@ -152,7 +222,80 @@ macro(remake_doc_groff)
   endif(GROFF_FOUND)
 endmacro(remake_doc_groff)
 
-# Add documentation install targets.
+### \brief Generate documentation using a custom generator.
+#   This macro defines documentation build and install rules for a custom
+#   generator, such as a script. It adds the provided generator command to 
+#   the documentation target.
+#   \required[value] generator The name of the custom generator.
+#   \required[value] command The command that executes the custom generator.
+#     Assuming that the generator is provided with the sources, the working 
+#     directory for this command defaults to ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[list] arg An optional list of command line arguments to be
+#     passed to the generator command.
+#   \optional[list] INPUT:glob An optional list of glob expressions that
+#     resolves to a set of input files or directories for the generator.
+#     The presence of this option causes the definition of multiple document
+#     build rules, one for each input file or directory, where the input 
+#     filename is appended to the generator's command line arguments.
+#   \optional[list] TYPES:type The optional list of document types generated
+#     by the custom generator, defaults to ${REMAKE_DOC_TYPES}. For each 
+#     document type requested, the generator gets called with the document
+#     type and and the name of the respective output directory added to its 
+#     command line arguments.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to remake_doc_install() for defining the
+#     install rule.
+macro(remake_doc_custom doc_generator doc_command)
+  remake_arguments(PREFIX doc_ LIST TYPES VAR COMPONENT LIST INPUT ARGN args 
+    ${ARGN})
+  remake_set(doc_types SELF DEFAULT ${REMAKE_DOC_TYPES})
+
+  remake_doc_support(${doc_generator} ${doc_types})
+  remake_var_name(doc_types_var REMAKE_DOC ${doc_generator} TYPES)
+
+  foreach(doc_type ${${doc_types_var}})
+    remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
+    remake_set(doc_output_dir ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}})
+    remake_file_mkdir(${doc_output_dir})
+
+    if(doc_input)
+      remake_file_glob(doc_input_files ${doc_input})
+      remake_file_name(doc_extension ${doc_type})
+
+      foreach(doc_input_file ${doc_input_files})
+        get_filename_component(doc_input_name ${doc_input_file} NAME_WE)
+        remake_list_pop(doc_output doc_output_file DEFAULT 
+          ${doc_input_name}.${doc_extension})
+        if(doc_output_file)
+          remake_set(doc_output_file ${doc_output_dir}/${doc_output_file})
+        endif(doc_output_file)
+
+        remake_target_add_command(${REMAKE_DOC_TARGET}
+          COMMAND ${doc_command} ${doc_args} ${doc_type} ${doc_input_file} 
+            ${doc_output_dir}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      endforeach(doc_input_file)
+    else(doc_input)
+      remake_target_add_command(${REMAKE_DOC_TARGET}
+        COMMAND ${doc_command} ${doc_args} ${doc_type} ${doc_output_dir}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endif(doc_input)
+  endforeach(doc_type)
+
+  remake_doc_install(${${doc_types_var}} ${COMPONENT})
+endmacro(remake_doc_custom)
+
+### \brief Add documentation install rule.
+#   This macro is a helper macro to define documentation install rules for
+#   all requested document types. It expects generated documentation content
+#   in the defined output location. Note that the macro gets invoked by the 
+#   generator-specific macros defined in this module. It should not be called 
+#   directly from a CMakeLists.txt file.
+#   \required[list] type The documentation types for which to add install
+#     rules.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro. See the CMake
+#     documentation for details.
 macro(remake_doc_install)
   remake_arguments(PREFIX doc_ VAR COMPONENT ARGN types ${ARGN})
 

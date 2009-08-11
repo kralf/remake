@@ -31,12 +31,16 @@ remake_set(REMAKE_TARGET_DIR ReMakeTargets)
 #   \optional[list] arg The arguments to be passed on to CMake's 
 #     add_custom_target() macro.
 macro(remake_target target_name)
-  add_custom_target(${target_name} ${ARGN})
+  if(NOT TARGET ${target_name})
+    add_custom_target(${target_name} ${ARGN})
+  endif(NOT TARGET ${target_name})
 
-  remake_file_read(${REMAKE_TARGET_DIR}/${target_name}.commands target_cmds)
-  if(target_cmds)
-    add_custom_command(TARGET ${target_name} ${target_cmds})
-  endif(target_cmds)  
+  remake_file_read(${REMAKE_TARGET_DIR}/${target_name}.commands 
+    target_cmds LINES)
+  while(target_cmds)
+    remake_list_pop(target_cmds target_command SPLIT \n)
+    add_custom_command(TARGET ${target_name} ${target_command})
+  endwhile(target_cmds)
 endmacro(remake_target)
 
 ### \brief Output a valid target name from a set of strings.
@@ -65,11 +69,14 @@ endmacro(remake_target_name)
 #   \required[list] args The arguments to be passed to CMake's
 #     add_custom_command() during collection.
 macro(remake_target_add_command target_name)
+  remake_arguments(PREFIX target_ VAR WORKING_DIRECTORY ARGN args ${ARGN})
+  remake_set(target_working_directory SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
+
   if(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     add_custom_command(TARGET ${target_name} ${ARGN})
   else(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     remake_file_create(${REMAKE_TARGET_DIR}/${target_name}.commands OUTDATED)
-    remake_file_write(${REMAKE_TARGET_DIR}/${target_name}.commands ${ARGN} 
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    remake_file_write(${REMAKE_TARGET_DIR}/${target_name}.commands 
+      ${target_args} WORKING_DIRECTORY ${target_working_directory} \n)
   endif(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endmacro(remake_target_add_command)
