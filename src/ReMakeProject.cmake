@@ -37,6 +37,8 @@ include(ReMakePrivate)
 #   \required[value] version The version of the project. Here, the macro 
 #     expects a string value that reflects standard versioning conventions, 
 #     i.e. the version string is of the form ${MAJOR}.${MINOR}.${PATCH}.
+#     If the patch version is omitted from the string, the project's Subversion
+#     revision is used instead.
 #   \required[value] release The release of the project. This value may
 #     contain a string describing the release status, such as alpha or beta.
 #   \required[value] summary A short but descriptive project summary. This
@@ -73,7 +75,8 @@ macro(remake_project project_name project_version project_release
     ${project_version})
   remake_set(REMAKE_PROJECT_MAJOR SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_MINOR SELF DEFAULT 0)
-  remake_set(REMAKE_PROJECT_PATCH SELF DEFAULT 0)
+  remake_svn_revision(project_revision)
+  remake_set(REMAKE_PROJECT_PATCH SELF DEFAULT ${project_revision})
   remake_set(REMAKE_PROJECT_VERSION 
     ${REMAKE_PROJECT_MAJOR}.${REMAKE_PROJECT_MINOR}.${REMAKE_PROJECT_PATCH})
   remake_set(REMAKE_PROJECT_RELEASE ${project_release})

@@ -24,6 +24,26 @@ include(ReMakePrivate)
 #   The ReMake Subversion module provides useful tools for Subversion-based
 #   projects.
 
+### \brief Retrieve the Subversion head revision.
+#   This macro retrieves the Subversion head revision of the working directory.
+#   The macro defines an output variable with the name provided and assigns the
+#   revision number or 0 for non-versioned directories.
+#   \required[value] variable The name of a variable to be assigned the 
+#     revision number.
+macro(remake_svn_revision svn_var)
+  remake_set(${svn_var} 0)
+  
+  if(SUBVERSION_FOUND)
+    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
+      execute_process(COMMAND ${Subversion_SVN_EXECUTABLE} info
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE svn_info)
+      string(REGEX REPLACE ".*Revision: ([0-9]*).*" "\\1" ${svn_var}
+        ${svn_info})
+    endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
+  endif(SUBVERSION_FOUND)
+endmacro(remake_svn_revision)
+
 ### \brief Define a Subversion log target.
 #   This macro defines a top-level target and a build rule for the acquisition
 #   of Subversion log messages in the working directory. It may be used to
@@ -56,6 +76,7 @@ macro(remake_svn_log svn_file)
       remake_target(${svn_target} ALL 
         COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision}
           ${CMAKE_CURRENT_SOURCE_DIR} > ${svn_absolute}
+        DEPENDS 
         ${COMMENT})
       if(svn_output)
         remake_set(${svn_output} ${svn_absolute})

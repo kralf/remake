@@ -25,7 +25,8 @@ sub read_source {
   my $macros = shift;
   my $references = shift;
 
-  $$module{name} = basename($source_name);
+  $$module{source} = basename($source_name);
+  $$module{name} = $$module{source};
   $$module{name} =~ s/$source_pattern//;
 
   my $in_block = 0;
@@ -234,8 +235,11 @@ sub generate_man {
     $description =~ s/\n\n/\n.PP\n/g;
     $$man .= "$description\n";
   }
-  else {
+  elsif ($$module{name} =~ /^$project_name$/) {
     $$man .= "$project_summary\n";
+  }
+  else {
+    $$man .= "This module requires documentation.\n";
   }
 
   if (@$variables) {
@@ -261,9 +265,16 @@ sub generate_man {
       $$man .= ".PP\n";
     }
 
-    my $macro_description = $macro->{description};
-    $macro_description =~ s/\n\n/\n.PP\n/g;
-    $$man .= "$macro_description\n";
+    if ($macro->{description}) {
+      my $macro_description = $macro->{description};
+
+      $macro_description =~ s/\n\n/\n.PP\n/g;
+      $$man .= "$macro_description\n";
+    }
+
+    if (!($macro->{brief}) and !($macro->{description})) {
+      $$man .= "This macro requires documentation.\n";
+    }
 
     for my $param (@{$macro->{parameters}}) {
       $$man .= ".TP\n";
@@ -290,7 +301,15 @@ sub generate_man {
         $$man .= "\n";
       }
 
-      $$man .= "$param->{description}\n";
+      if ($param->{description}) {
+        my $param_description = $param->{description};
+  
+        $param_description =~ s/\n\n/\n.PP\n/g;
+        $$man .= "$param_description\n";
+      }
+      else {
+        $$man .= "This parameter requires documentation.\n";
+      }
     }
 
     $$man .= ".RE\n";

@@ -20,6 +20,13 @@
 
 include(ReMakePrivate)
 
+### \brief ReMake target macros
+#   The ReMake target module provides useful workarounds addressing some 
+#   grave CMake limitations. In CMake, top-level target definition only
+#   behaves correctly in the top-level source directory. The ReMake target 
+#   macros are specifically designed to also work in directories below the
+#   top-level.
+
 remake_set(REMAKE_TARGET_DIR ReMakeTargets)
 
 ### \brief Define a new top-level target.
