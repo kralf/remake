@@ -28,6 +28,8 @@ include(ReMakePrivate)
 #   values throughout the modules, thus introducing convenience and
 #   conventions into ReMake's naming schemes.
 
+remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
+
 ### \brief Define a ReMake project.
 #   This macro initializes all the ReMake project variables from the
 #   arguments provided or from default values. It should be the first ReMake
@@ -138,10 +140,12 @@ macro(remake_project project_name project_version project_release
     add_subdirectory(${REMAKE_PROJECT_CONFIGURATION_DIR})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
 
+  remake_svn_log(${REMAKE_PROJECT_CHANGELOG})
+  remake_target(${REMAKE_PROJECT_CHANGELOG_TARGET} ALL
+    DEPENDS ${REMAKE_PROJECT_CHANGELOG})
+
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
-  remake_svn_log(${REMAKE_PROJECT_CHANGELOG} TARGET project_changelog
-    project_changelog COMMENT "Building project changelog")
   install(FILES ${project_readme} ${project_copyright} ${project_changelog}
     DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
     COMPONENT default)

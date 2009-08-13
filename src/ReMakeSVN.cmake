@@ -46,25 +46,19 @@ macro(remake_svn_revision svn_var)
   endif(SUBVERSION_FOUND)
 endmacro(remake_svn_revision)
 
-### \brief Define a Subversion log target.
-#   This macro defines a top-level target and a build rule for the acquisition
-#   of Subversion log messages in the working directory. It may be used to
-#   dump a project's Subversion log into a file during build.
+### \brief Define Subversion log build rules.
+#   This macro defines build rules for storing Subversion log messages of
+#   the working directory into files. Called in the top-level source
+#   directory, it may be used to dump a project's changelog during build.
 #   \required[value] filename The name of the file to write the Subversion
 #     log messages to, relative to ${CMAKE_CURRENT_BINARY_DIR}.
-#   \optional[value] TARGET:name The optional name of the target for which 
-#     the Subversion log build rule is defined, defaults to svn_log.
-#   \optional[value] COMMENT:string An optional comment string that is
-#     printed during the build target's execution.
 #   \optional[value] REVISION:rev The Subversion revision for which to
 #     request the log information, defaults to BASE:HEAD. See the Subversion
 #     documentation for details.
 #   \optional[var] OUTPUT:variable The optional name of a variable to be
 #     assigned the absolute-path output filename.
 macro(remake_svn_log svn_file)
-  remake_arguments(PREFIX svn_ VAR TARGET VAR COMMENT VAR REVISION VAR OUTPUT
-    ${ARGN})
-  remake_set(svn_target SELF DEFAULT svn_log)
+  remake_arguments(PREFIX svn_ VAR REVISION VAR OUTPUT ${ARGN})
   remake_set(svn_revision SELF DEFAULT BASE:HEAD)
   
   if(SUBVERSION_FOUND)
@@ -86,7 +80,7 @@ macro(remake_svn_log svn_file)
         COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision} 
           ${CMAKE_CURRENT_SOURCE_DIR} > ${svn_absolute}
         DEPENDS ${svn_head})
-      remake_target(${svn_target} DEPENDS ${svn_absolute} ${COMMENT})
+
       if(svn_output)
         remake_set(${svn_output} ${svn_absolute})
       endif(svn_output)
