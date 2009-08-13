@@ -218,15 +218,15 @@ endmacro(remake_file_read)
 #     to be written is a top-level ReMake file.
 #   \optional[list] string The list of strings to be appended to the file.
 macro(remake_file_write file_name)
-  remake_arguments(PREFIX file_ OPTION TOPLEVEL ${ARGN})
+  remake_arguments(PREFIX file_ OPTION TOPLEVEL ARGN strings ${ARGN})
   remake_file(file_write ${file_name} ${TOPLEVEL})
 
   if(EXISTS ${file_write})
     file(READ ${file_write} file_content)
     if(file_content)
-      file(APPEND ${file_write} ";${ARGN}")
+      file(APPEND ${file_write} ";${file_strings}")
     else(file_content)
-      file(APPEND ${file_write} "${ARGN}")
+      file(APPEND ${file_write} "${file_strings}")
     endif(file_content)
   else(EXISTS ${file_write})
     remake_set(file_content)
