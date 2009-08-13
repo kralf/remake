@@ -140,9 +140,9 @@ macro(remake_project project_name project_version project_release
     add_subdirectory(${REMAKE_PROJECT_CONFIGURATION_DIR})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
 
-  remake_svn_log(${REMAKE_PROJECT_CHANGELOG})
+  remake_svn_log(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
   remake_target(${REMAKE_PROJECT_CHANGELOG_TARGET} ALL
-    DEPENDS ${REMAKE_PROJECT_CHANGELOG})
+    DEPENDS ${project_changelog})
 
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
