@@ -45,7 +45,7 @@ remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 #     to generate the package from, defaults to default.
 macro(remake_pack pack_generator)
   if(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
-    remake_target(${REMAKE_PACK_ALL_TARGET})
+    remake_target(${REMAKE_PACK_ALL_TARGET} COMMENT "Building all packages")
   endif(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
 
   remake_arguments(PREFIX pack_ VAR NAME VAR COMPONENT ${ARGN})
@@ -72,7 +72,8 @@ macro(remake_pack pack_generator)
   include(CPack)
 
   remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET})
-  remake_target(${pack_target} COMMAND cpack --config ${pack_config})
+  remake_target(${pack_target} COMMAND cpack --config ${pack_config}
+    COMMENT "Building ${pack_name} package")
   add_dependencies(${REMAKE_PACK_ALL_TARGET} ${pack_target})
 
   remake_var_regex(pack_variables "^CPACK_")
@@ -129,6 +130,7 @@ macro(remake_pack_deb)
   remake_target_name(pack_install_target ${pack_prefix}
     ${REMAKE_PACK_INSTALL_TARGET})
   remake_target(${pack_install_target}
-    COMMAND sudo dpkg --install deb/${pack_file}.deb)
+    COMMAND sudo dpkg --install deb/${pack_file}.deb
+    COMMENT "Installing ${pack_name} package")
   add_dependencies(${pack_install_target} ${pack_target})
 endmacro(remake_pack_deb)

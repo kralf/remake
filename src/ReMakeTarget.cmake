@@ -42,8 +42,8 @@ macro(remake_target target_name)
     add_custom_target(${target_name} ${ARGN})
   endif(NOT TARGET ${target_name})
 
-  remake_file_read(${REMAKE_TARGET_DIR}/${target_name}.commands 
-    target_cmds LINES)
+  remake_file_read(target_cmds ${REMAKE_TARGET_DIR}/${target_name}.commands 
+    TOPLEVEL LINES)
   while(target_cmds)
     remake_list_pop(target_cmds target_command SPLIT \n)
     add_custom_command(TARGET ${target_name} ${target_command})
@@ -82,8 +82,9 @@ macro(remake_target_add_command target_name)
   if(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
     add_custom_command(TARGET ${target_name} ${ARGN})
   else(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-    remake_file_create(${REMAKE_TARGET_DIR}/${target_name}.commands OUTDATED)
-    remake_file_write(${REMAKE_TARGET_DIR}/${target_name}.commands 
+    remake_file_create(${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
+      OUTDATED)
+    remake_file_write(${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
       ${target_args} WORKING_DIRECTORY ${target_working_directory} \n)
   endif(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endmacro(remake_target_add_command)

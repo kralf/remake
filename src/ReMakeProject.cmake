@@ -61,7 +61,8 @@ include(ReMakePrivate)
 #     be shipped with the project package, defaults to copyright.
 macro(remake_project project_name project_version project_release 
   project_summary project_author project_contact project_home project_license)
-  remake_arguments(PREFIX project_ VAR INSTALL VAR SOURCES ${ARGN})
+  remake_arguments(PREFIX project_ VAR INSTALL VAR SOURCES VAR CONFIGURATIONS 
+    VAR README VAR COPYRIGHT ${ARGN})
 
   remake_set(REMAKE_PROJECT_NAME ${project_name})
   remake_file_name(REMAKE_PROJECT_FILENAME ${REMAKE_PROJECT_NAME})
@@ -111,6 +112,8 @@ macro(remake_project project_name project_version project_release
     "Install destination of project scripts.")
   remake_project_set(FILE_DESTINATION share/${REMAKE_PROJECT_FILENAME} 
     CACHE PATH "Install destination of project files.")
+  remake_project_set(CONFIGURATION_DESTINATION /etc/${REMAKE_PROJECT_FILENAME}
+    CACHE PATH "Install destination of configuration files.")
   remake_project_set(HEADER_DESTINATION include/${REMAKE_PROJECT_FILENAME} 
     CACHE PATH "Install destination of project development headers.")
 
@@ -129,10 +132,16 @@ macro(remake_project project_name project_version project_release
     add_subdirectory(${REMAKE_PROJECT_SOURCE_DIR})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
 
+  remake_set(REMAKE_PROJECT_CONFIGURATION_DIR ${project_configurations}
+    DEFAULT conf)
+  if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
+    add_subdirectory(${REMAKE_PROJECT_CONFIGURATION_DIR})
+  endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
+
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
-  remake_svn_log(${REMAKE_PROJECT_CHANGELOG} TARGET changelog
-    COMMENT "Building the changelog" OUTPUT project_changelog)
+  remake_svn_log(${REMAKE_PROJECT_CHANGELOG} TARGET project_changelog
+    project_changelog COMMENT "Building project changelog")
   install(FILES ${project_readme} ${project_copyright} ${project_changelog}
     DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
     COMPONENT default)

@@ -62,7 +62,7 @@ include(ReMakeFile)
 #     document configuration, defaults to doc.
 macro(remake_doc)
   remake_arguments(PREFIX doc_ VAR OUTPUT VAR INSTALL VAR CONFIGURATION 
-    VAR README VAR COPYRIGHT ARGN types ${ARGN})
+    ARGN types ${ARGN})
 
   foreach(doc_type ${doc_types})
     remake_file_name(doc_file ${doc_type})

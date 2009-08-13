@@ -84,8 +84,9 @@ macro(remake_add_plugin lib_name plugin_name)
 endmacro(remake_add_plugin)
 
 ### \brief Add executable targets.
-#   Automatically identify executable objects and link the executable to a 
-#   list of libraries provided.
+#   This macro automatically defines build rules for executable targets
+#   from all source files in the working directory. The macro takes a list
+#   of libraries that are linked into the executable targets.
 macro(remake_add_executables)
   remake_arguments(VAR SUFFIX ARGN link_libs ${ARGN})
   remake_project_get(EXECUTABLE_DESTINATION)
@@ -101,23 +102,72 @@ macro(remake_add_executables)
   endforeach(exec_source)
 endmacro(remake_add_executables)
 
-### \brief Add script targets.
+### \brief Add script install rules.
+#   This macro automatically defines install rules for script targets
+#   from a list of glob expressions.
+#   \required[list] glob A list of glob expressions that are resolved in
+#     order to find the scripts.
+#   \optional[value] SUFFIX:suffix An optional suffix that is prepended
+#     to the script names during installation.
 macro(remake_add_scripts)
+  remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
   remake_project_get(SCRIPT_DESTINATION)
 
-  remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
-  remake_file_glob(scripts ${globs})
+  remake_file_glob(scripts RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
+  foreach(script ${scripts})
+    remake_file_suffix(script_suffixed ${script} ${suffix})
+    install(PROGRAMS ${script}
+      DESTINATION ${SCRIPT_DESTINATION}
+      COMPONENT default
+      RENAME ${script_suffixed})
+  endforeach(script)
 endmacro(remake_add_scripts)
 
-### \brief Add file targets.
+### \brief Add configuration file install rules.
+#   This macro automatically defines install rules for configuration targets
+#   from a list of glob expressions. As opposed to regular file targets,
+#   configuration targets are automatically configured by remake_file_install()
+#   prior to the install stage.
+#   \required[list] glob A list of glob expressions that are resolved in
+#     order to find the configuration file templates.
+#   \optional[value] SUFFIX:suffix An optional suffix that is prepended
+#     to the configuration file names during installation.
+macro(remake_add_configurations)
+  remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
+  remake_project_get(CONFIGURATION_DESTINATION)
+
+  remake_file_configure(${globs} OUTPUT configurations)
+  foreach(config ${configurations})
+    file(RELATIVE_PATH config_relative ${CMAKE_CURRENT_BINARY_DIR} ${config})
+    remake_file_suffix(config_suffixed ${config_relative} ${suffix})
+    install(FILES ${config}
+      DESTINATION ${CONFIGURATION_DESTINATION}
+      COMPONENT default
+      RENAME ${config_suffixed})
+  endforeach(config)
+endmacro(remake_add_configurations)
+
+### \brief Add file install rules.
+#   This macro automatically defines install rules for file targets
+#   from a list of glob expressions.
+#   \required[list] glob A list of glob expressions that are resolved in
+#     order to find the files.
+#   \optional[value] SUFFIX:suffix An optional suffix that is prepended
+#     to the file names during installation.
+#   \optional[value] INSTALL:dir The directory that shall be passed as the 
+#     files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
 macro(remake_add_files)
-  remake_arguments(VAR INSTALL ARGN globs ${ARGN})
+  remake_arguments(VAR SUFFIX VAR INSTALL ARGN globs ${ARGN})
   remake_project_get(FILE_DESTINATION)
   remake_set(install SELF DEFAULT ${FILE_DESTINATION})
 
-  remake_file_glob(files ${globs})
+  remake_file_glob(files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
   foreach(file ${files})
-    install(FILES ${files} DESTINATION ${install} COMPONENT default)
+    remake_file_suffix(file_suffixed ${file} ${suffix})
+    install(FILES ${file}
+      DESTINATION ${install}
+      COMPONENT default
+      RENAME ${file_suffixed})
   endforeach(file)
 endmacro(remake_add_files)
 

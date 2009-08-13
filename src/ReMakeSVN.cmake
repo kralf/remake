@@ -24,6 +24,8 @@ include(ReMakePrivate)
 #   The ReMake Subversion module provides useful tools for Subversion-based
 #   projects.
 
+remake_set(REMAKE_SVN_DIR ReMakeSVN)
+
 ### \brief Retrieve the Subversion head revision.
 #   This macro retrieves the Subversion head revision of the working directory.
 #   The macro defines an output variable with the name provided and assigns the
@@ -69,15 +71,22 @@ macro(remake_svn_log svn_file)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
       if(NOT IS_ABSOLUTE ${svn_file})
         remake_set(svn_absolute ${CMAKE_CURRENT_BINARY_DIR}/${svn_file})
-    else(NOT IS_ABSOLUTE ${svn_file})
+      else(NOT IS_ABSOLUTE ${svn_file})
         remake_set(svn_absolute ${svn_file})
       endif(NOT IS_ABSOLUTE ${svn_file})
-  
-      remake_target(${svn_target} ALL 
-        COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision}
+
+      remake_file_mkdir(${REMAKE_SVN_DIR})
+      remake_file(svn_head ${REMAKE_SVN_DIR}/head)
+      add_custom_command(OUTPUT ${svn_head}
+        COMMAND ${Subversion_SVN_EXECUTABLE} info | grep ^Revision | 
+          grep -o [0-9]\\+ > ${svn_head} VERBATIM
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries)
+      add_custom_command(OUTPUT ${svn_absolute}
+        COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision} 
           ${CMAKE_CURRENT_SOURCE_DIR} > ${svn_absolute}
-        DEPENDS 
-        ${COMMENT})
+        DEPENDS ${svn_head})
+      remake_target(${svn_target} DEPENDS ${svn_absolute} ${COMMENT})
       if(svn_output)
         remake_set(${svn_output} ${svn_absolute})
       endif(svn_output)
