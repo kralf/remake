@@ -53,13 +53,13 @@ endmacro(remake_svn_revision)
 #   \required[value] filename The name of the file to write the Subversion
 #     log messages to, relative to ${CMAKE_CURRENT_BINARY_DIR}.
 #   \optional[value] REVISION:rev The Subversion revision for which to
-#     request the log information, defaults to BASE:HEAD. See the Subversion
+#     request the log information, defaults to 0:HEAD. See the Subversion
 #     documentation for details.
 #   \optional[var] OUTPUT:variable The optional name of a variable to be
 #     assigned the absolute-path output filename.
 macro(remake_svn_log svn_file)
   remake_arguments(PREFIX svn_ VAR REVISION VAR OUTPUT ${ARGN})
-  remake_set(svn_revision SELF DEFAULT BASE:HEAD)
+  remake_set(svn_revision SELF DEFAULT 0:HEAD)
   
   if(SUBVERSION_FOUND)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
