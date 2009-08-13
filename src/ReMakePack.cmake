@@ -45,7 +45,7 @@ remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 #     to generate the package from, defaults to default.
 macro(remake_pack pack_generator)
   if(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
-    remake_target(${REMAKE_PACK_ALL_TARGET} COMMENT "Building all packages")
+    remake_target(${REMAKE_PACK_ALL_TARGET})
   endif(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
 
   remake_arguments(PREFIX pack_ VAR NAME VAR COMPONENT ${ARGN})
@@ -53,9 +53,9 @@ macro(remake_pack pack_generator)
 
   remake_set(pack_prefix ${pack_component})
   remake_set(pack_component SELF DEFAULT default)
-  remake_file(${REMAKE_PACK_DIR}/${pack_component}.cpack pack_config)
-  remake_file(${REMAKE_PACK_SOURCE_DIR}/${pack_component}.cpack 
-    pack_src_config)
+  remake_file(pack_config ${REMAKE_PACK_DIR}/${pack_component}.cpack)
+  remake_file(pack_src_config
+    ${REMAKE_PACK_SOURCE_DIR}/${pack_component}.cpack)
   remake_set(CPACK_OUTPUT_CONFIG_FILE ${pack_config})
   remake_set(CPACK_SOURCE_OUTPUT_CONFIG_FILE ${pack_src_config})
 
