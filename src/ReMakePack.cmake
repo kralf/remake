@@ -25,8 +25,8 @@ include(ReMakePrivate)
 #   transparent package generation using CMake's CPack module.
 
 remake_set(REMAKE_PACK_ALL_TARGET packages)
-remake_set(REMAKE_PACK_TARGET package)
-remake_set(REMAKE_PACK_INSTALL_TARGET package_install)
+remake_set(REMAKE_PACK_TARGET_SUFFIX package)
+remake_set(REMAKE_PACK_INSTALL_TARGET_SUFFIX package_install)
 
 remake_set(REMAKE_PACK_DIR ReMakePackages)
 remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
@@ -71,7 +71,7 @@ macro(remake_pack pack_generator)
 
   include(CPack)
 
-  remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET})
+  remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET_SUFFIX})
   remake_target(${pack_target} COMMAND cpack --config ${pack_config}
     COMMENT "Building ${pack_name} package")
   add_dependencies(${REMAKE_PACK_ALL_TARGET} ${pack_target})
@@ -126,9 +126,9 @@ macro(remake_pack_deb)
 
   remake_pack(DEB ${COMPONENT} NAME ${pack_name})
 
-  remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET})
+  remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET_SUFFIX})
   remake_target_name(pack_install_target ${pack_prefix}
-    ${REMAKE_PACK_INSTALL_TARGET})
+    ${REMAKE_PACK_INSTALL_TARGET_SUFFIX})
   remake_target(${pack_install_target}
     COMMAND sudo dpkg --install deb/${pack_file}.deb
     COMMENT "Installing ${pack_name} package")

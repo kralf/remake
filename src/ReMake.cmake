@@ -41,24 +41,42 @@ include(ReMakePrivate)
 #
 #   ReMake requires CMake version 2.6 or higher.
 
-### \brief Add a library target.
-#   Automatically identify library objects in the current directory and 
-#   link the library to a list of libraries provided.
-#   \required[value] name The name of the library target to be added.
-#   \optional[value] SUFFIX:suffix An optional library name suffix.
-#   \optional[list] lib The list of libraries the target library is to be 
-#     linked against.
-macro(remake_add_library lib_name)
-  remake_arguments(VAR SUFFIX ARGN link_libs ${ARGN})
+### \brief Add a shared library target.
+#   This macro automatically defines build rules for a shared library
+#   target from a list of glob expressions. In addition, the macro takes a
+#   list of libraries that are linked into the library target. Also, the
+#   library source directory is automatically added to the include path,
+#   thus allowing for the library headers to be found from subdirectories.
+#   \required[value] name The name of the library target to be defined.
+#   \optional[value] SUFFIX:suffix An optional library name suffix, forced
+#     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the library sources, defaulting to *.c
+#     and *.cpp.
+#   \optional[list] LINK:lib The list of libraries to be linked into the
+#     library target.
+macro(remake_add_library name)
+  remake_arguments(VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_project_get(LIBRARY_PREFIX)
   remake_project_get(LIBRARY_DESTINATION)
   remake_project_get(PLUGIN_DESTINATION)
 
-  remake_file_glob(lib_sources *.cpp)
-  remake_moc(moc_sources)
-  add_library(${REMAKE_LIBRARY_PREFIX}${lib_name}${suffix} SHARED 
-    ${lib_sources} ${moc_sources})
-  target_link_libraries(${REMAKE_LIBRARY_PREFIX}${lib_name}${suffix} 
-    ${link_libs})
+  if(REMAKE_BRANCH_COMPILE)
+    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_branch_link(link TARGET ${name} ${link})
+    remake_branch_add_targets(${name})
+  endif(REMAKE_BRANCH_COMPILE)
+
+  remake_include()
+  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
+#   remake_moc(moc_sources)
+  add_library(${name}${suffix} SHARED ${sources})
+  set_target_properties(${name}${suffix} PROPERTIES OUTPUT_NAME
+    ${LIBRARY_PREFIX}${name}${suffix})
+  if(link)
+    target_link_libraries(${name}${suffix} ${link})
+  endif(link)
 
   remake_set(plugins ${PLUGIN_DESTINATION}/${lib_name}/*.so)
   if(IS_ABSOLUTE ${PLUGIN_DESTINATION})
@@ -66,6 +84,10 @@ macro(remake_add_library lib_name)
   else(IS_ABSOLUTE ${PLUGIN_DESTINATION})
     add_definitions(-DPLUGINS="${CMAKE_INSTALL_PREFIX}/${plugins}")
   endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
+
+  install(TARGETS ${name}${suffix}
+    LIBRARY DESTINATION ${LIBRARY_DESTINATION}
+    COMPONENT default)
 endmacro(remake_add_library)
 
 ### \brief Add a plugin library target.
@@ -84,34 +106,94 @@ macro(remake_add_plugin lib_name plugin_name)
 endmacro(remake_add_plugin)
 
 ### \brief Add executable targets.
-#   This macro automatically defines build rules for executable targets
-#   from all source files in the working directory. The macro takes a list
-#   of libraries that are linked into the executable targets.
+#   This macro automatically defines build rules for executable targets from
+#   a list of glob expressions. One target is added for each executable source
+#   resolved from the glob expressions. The target bears the name of the
+#   source file without the file extension. In addition, the macro takes a
+#   list of libraries that are linked into the executable targets.
+#   \optional[value] SUFFIX:suffix An optional executable name suffix, forced
+#     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the executable sources, defaulting to *.c
+#     and *.cpp.
+#   \optional[list] LINK:lib The list of libraries to be linked into the
+#     executable targets.
 macro(remake_add_executables)
-  remake_arguments(VAR SUFFIX ARGN link_libs ${ARGN})
+  remake_arguments(VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_project_get(EXECUTABLE_PREFIX)
   remake_project_get(EXECUTABLE_DESTINATION)
 
-  remake_file_glob(exec_sources *.c *.cpp)
-  foreach(exec_source ${exec_sources})
-    get_filename_component(exec_name ${exec_source} NAME)
-    string(REGEX REPLACE "[.].*$" "" exec_name ${exec_name})
-    add_executable(${REMAKE_EXECUTABLE_PREFIX}${exec_name}${suffix} 
-      ${exec_source})
-    target_link_libraries(${REMAKE_EXECUTABLE_PREFIX}${exec_name}${suffix}
-      ${link_libs})
-  endforeach(exec_source)
+  if(REMAKE_BRANCH_COMPILE)
+    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+  endif(REMAKE_BRANCH_COMPILE)
+
+  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
+  remake_branch_link(link ${link})
+  foreach(source ${sources})
+    get_filename_component(name ${source} NAME_WE)
+    if(REMAKE_BRANCH_COMPILE)
+      remake_branch_add_targets(${name})
+    endif(REMAKE_BRANCH_COMPILE)
+    add_executable(${name}${suffix} ${source})
+    set_target_properties(${name}${suffix} PROPERTIES OUTPUT_NAME
+      ${EXECUTABLE_PREFIX}${name}${suffix})
+    if(link)
+      target_link_libraries(${name}${suffix} ${link})
+    endif(link)
+
+    install(TARGETS ${name}${suffix}
+      RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
+      COMPONENT default)
+  endforeach(source)
 endmacro(remake_add_executables)
 
+### \brief Add header install rules.
+#   This macro automatically defines install rules for header files from
+#   a list of glob expressions. The install destination of each header file 
+#   is its relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the header files, defaulting to *.h, *.hpp,
+#     and *.tpp.
+#   \optional[value] INSTALL:dirname The directory that shall be passed
+#     as the headers' install destination. For each header file, the
+#     install destination defaults to its relative-path location below
+#     ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults to dev.
+#     See the CMake documentation for details.
+macro(remake_add_headers)
+  remake_arguments(VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
+  remake_set(globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+  remake_set(component SELF DEFAULT dev)
+  remake_project_get(HEADER_DESTINATION)
+
+  foreach(glob ${globs})
+    remake_file_glob(headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${glob})
+    get_filename_component(header_dir ${glob} PATH)
+    remake_set(header_dir FROM install DEFAULT ${header_dir})
+
+    install(FILES ${headers}
+      DESTINATION ${HEADER_DESTINATION}/${header_dir}
+      COMPONENT ${component})
+  endforeach(glob)
+endmacro(remake_add_headers)
+
 ### \brief Add script install rules.
-#   This macro automatically defines install rules for script targets
-#   from a list of glob expressions.
+#   This macro automatically defines install rules for script files from
+#   a list of glob expressions.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the scripts.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
-#     to the script names during installation.
+#     to the script names during installation, forced to
+#     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_scripts)
   remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
   remake_project_get(SCRIPT_DESTINATION)
+
+  if(REMAKE_BRANCH_COMPILE)
+    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+  endif(REMAKE_BRANCH_COMPILE)
 
   remake_file_glob(scripts RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
   foreach(script ${scripts})
@@ -131,10 +213,15 @@ endmacro(remake_add_scripts)
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the configuration file templates.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
-#     to the configuration file names during installation.
+#     to the configuration file names during installation, forced to
+#     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_configurations)
   remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
   remake_project_get(CONFIGURATION_DESTINATION)
+
+  if(REMAKE_BRANCH_COMPILE)
+    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+  endif(REMAKE_BRANCH_COMPILE)
 
   remake_file_configure(${globs} OUTPUT configurations)
   foreach(config ${configurations})
@@ -153,13 +240,18 @@ endmacro(remake_add_configurations)
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the files.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
-#     to the file names during installation.
-#   \optional[value] INSTALL:dir The directory that shall be passed as the 
-#     files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
+#     to the file names during installation, forced to ${REMAKE_BRANCH_SUFFIX}
+#     if defined within a ReMake branch.
+#   \optional[value] INSTALL:dirname The directory that shall be passed as
+#     the files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
 macro(remake_add_files)
   remake_arguments(VAR SUFFIX VAR INSTALL ARGN globs ${ARGN})
   remake_project_get(FILE_DESTINATION)
   remake_set(install SELF DEFAULT ${FILE_DESTINATION})
+
+  if(REMAKE_BRANCH_COMPILE)
+    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+  endif(REMAKE_BRANCH_COMPILE)
 
   remake_file_glob(files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
   foreach(file ${files})
@@ -171,14 +263,41 @@ macro(remake_add_files)
   endforeach(file)
 endmacro(remake_add_files)
 
-### \brief Add header targets.
-macro(remake_add_headers)
-  remake_project_get(HEADER_DESTINATION)
+### \brief Add subdirectories.
+#   This macro includes subdirectories of the working directory from a list
+#   of glob expressions. The directories are added for CMake processing.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the directories, defaulting to *. Note that
+#     the correct behavior of directory inclusion might be sensitive to order.
+#     In some cases, it is therefore useful to specify directories in the
+#     correct order of inclusion.
+#   \optional[value] IF:option The name of a project option variable that
+#     conditions directory inclusion. See ReMakeProject for the correct usage
+#     of ReMake project options.
+macro(remake_add_directories)
+  remake_arguments(VAR IF ARGN globs ${ARGN})
+  remake_set(globs SELF DEFAULT *)
 
-  remake_file_glob(headers *.h *.hpp *.tpp)
-  install(FILES ${headers} DESTINATION ${HEADER_DESTINATION}
-    COMPONENT dev)
-endmacro(remake_add_headers)
+  if(if)
+    remake_project_get(${if} OUTPUT option)
+  else(if)
+    remake_set(option ON)
+  endif(if)
+
+  if(option)
+    remake_file_glob(files ${globs})
+    remake_set(directories)
+
+    foreach(file ${files})
+      if(IS_DIRECTORY ${file})
+        remake_list_push(directories ${file})
+      endif(IS_DIRECTORY ${file})
+    endforeach(file)
+    foreach(dir ${directories})
+      add_subdirectory(${dir})
+    endforeach(dir)
+  endif(option)
+endmacro(remake_add_directories)
 
 ### \brief Add a documentation target.
 #   This macro adds a documentation target, using the requested generator
@@ -199,9 +318,23 @@ macro(remake_add_documentation doc_generator)
 endmacro(remake_add_documentation)
 
 ### \brief Add directories to the include path.
-macro(remake_include include_dirs)
-  foreach(include_dir ${ARGV})
-    get_filename_component(absolute_path ${include_dir} ABSOLUTE)
-    include_directories(${absolute_path})
-  endforeach(include_dir)
+#   This macro adds a list of directories to the compiler's include path.
+#   As opposed to CMake's include_directories(), the macro converts
+#   directory names into absolute-path names before passing them as
+#   arguments to include_directories(). If defined within a ReMake branch, 
+#   the macro calls remake_branch_include() instead.
+#   \optional[list] dirname The directories to be added to the compiler's
+#     include path, defaults to the current directory.
+macro(remake_include)
+  remake_arguments(ARGN directories ${ARGN})
+  remake_set(directories SELF DEFAULT .)
+
+  if(REMAKE_BRANCH_COMPILE)
+    remake_branch_include(directories ${directories})
+  endif(REMAKE_BRANCH_COMPILE)
+
+  foreach(directory ${directories})
+    get_filename_component(directory ${directory} ABSOLUTE)
+    include_directories(${directory})
+  endforeach(directory)
 endmacro(remake_include)

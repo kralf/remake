@@ -324,9 +324,17 @@ sub generate_man {
   $$man .= ".SH COPYRIGHT\n";
   $$man .= "$project_name is published under the $project_license.\n";
 
+  for my $reference_key (keys %$references) {
+    $$man =~ s/$reference_key/$$references{$reference_key}/g;
+  }
+  $$man =~ s/\s*$man_reference_pattern\s*/\n.BR \1 \2\n/g;
+
   if (%$references) {
+    my $see_also = join(" ", values(%$references));
+    $see_also =~ s/\s*$man_reference_pattern\s*/.BR \1 \2\n/g;
+
     $$man .= ".SH SEE ALSO\n";
-    $$man .= join(" ", values(%$references))."\n";
+    $$man .= $see_also;
   }
 
   $$man .= ".SH COLOPHON\n";
@@ -335,11 +343,6 @@ sub generate_man {
   $$man .= ".PP\n";
   $$man .= "A description of the project, and information about ".
     "reporting bugs, can be found at ".$project_home.".\n";  
-
-  for my $reference_key (keys %$references) {
-    $$man =~ s/$reference_key/$$references{$reference_key}/g;
-  }
-  $$man =~ s/$man_reference_pattern/\n.BR \1 \2/g;
 }
 
 sub find_source {

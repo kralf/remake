@@ -94,7 +94,7 @@ macro(remake_doc)
 
   remake_set(REMAKE_DOC_CONFIGURATION_DIR ${doc_configuration} DEFAULT doc)
   if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_DOC_CONFIGURATION_DIR})
-    add_subdirectory(${REMAKE_DOC_CONFIGURATION_DIR})
+    remake_add_directories(${REMAKE_DOC_CONFIGURATION_DIR})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_DOC_CONFIGURATION_DIR})
 
   remake_target(${REMAKE_DOC_TARGET} ALL)

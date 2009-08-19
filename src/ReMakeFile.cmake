@@ -154,10 +154,9 @@ macro(remake_file_mkdir file_dir_name)
   remake_arguments(PREFIX file_ OPTION TOPLEVEL ${ARGN})
   remake_file(file_dir ${file_dir_name} ${TOPLEVEL})
 
-  if(NOT EXISTS  ${file_dir})
-    file(WRITE ${file_dir}/.touch)
-    file(REMOVE ${file_dir}/.touch)
-  endif(NOT EXISTS ${file_dir})
+  if(NOT IS_DIRECTORY  ${file_dir})
+    file(MAKE_DIRECTORY ${file_dir})
+  endif(NOT IS_DIRECTORY ${file_dir})
 endmacro(remake_file_mkdir)
 
 ### \brief Create an empty file.
