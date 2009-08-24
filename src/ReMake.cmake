@@ -47,18 +47,19 @@ include(ReMakePrivate)
 #   list of libraries that are linked into the library target. Also, the
 #   library source directory is automatically added to the include path,
 #   thus allowing for the library headers to be found from subdirectories.
-#   \required[value] name The name of the library target to be defined.
+#   \required[value] name The name of the shared library target to be defined.
 #   \optional[value] SUFFIX:suffix An optional library name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the library sources, defaulting to *.c
 #     and *.cpp.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
-#     library target.
+#     shared library target.
 macro(remake_add_library name)
   remake_arguments(VAR SUFFIX ARGN globs LIST LINK ${ARGN})
   remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_project_get(LIBRARY_PREFIX)
+  remake_project_get(PLUGIN_PREFIX)
   remake_project_get(LIBRARY_DESTINATION)
   remake_project_get(PLUGIN_DESTINATION)
 
@@ -78,7 +79,9 @@ macro(remake_add_library name)
     target_link_libraries(${name}${suffix} ${link})
   endif(link)
 
-  remake_set(plugins ${PLUGIN_DESTINATION}/${lib_name}/*.so)
+  remake_set(plugin_suffix ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  remake_set(plugins
+    ${PLUGIN_DESTINATION}/${name}/${PLUGIN_PREFIX}*${plugin_suffix})
   if(IS_ABSOLUTE ${PLUGIN_DESTINATION})
     add_definitions(-DPLUGINS="${plugins}")
   else(IS_ABSOLUTE ${PLUGIN_DESTINATION})
@@ -91,18 +94,47 @@ macro(remake_add_library name)
 endmacro(remake_add_library)
 
 ### \brief Add a plugin library target.
-#   Automatically identify plugin library objects and link the plugin to a 
-#   list of libraries provided.
-macro(remake_add_plugin lib_name plugin_name)
-  remake_arguments(VAR SUFFIX ARGN link_plugins ${ARGN})
-  remake_project_get(PLUGIN_DESTINATION)
+#   This macro automatically defines build rules for a plugin library
+#   target from a list of glob expressions. In addition, the macro takes a
+#   list of libraries that are linked into the plugin library target.
+#   \required[value] name The name of the plugin library target to be defined.
+#   \optional[value] SUFFIX:suffix An optional plugin name suffix, forced
+#     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the plugin sources, defaulting to *.c
+#     and *.cpp.
+#   \optional[list] LINK:lib The list of libraries to be linked into the
+#     plugin library target.
+macro(remake_add_plugin name)
+  remake_arguments(VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_project_get(PLUGIN_PREFIX)
+  get_property(definitions DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+  remake_list_values(definitions plugins PLUGINS)
+  if(plugins)
+    string(REGEX REPLACE "\"(.*)/[^/]*\"" "\\1" plugins ${plugins})
+  else(plugins)
+    remake_project_get(PLUGIN_DESTINATION OUTPUT plugins)
+  endif(plugins)
 
-  remake_file_glob(plugin_sources *.c *.cpp)
-  remake_moc(moc_sources)
-  add_library(${REMAKE_PLUGIN_PREFIX}${plugin_name}${suffix} SHARED
-    ${plugin_sources} ${moc_sources})
-  target_link_libraries(${REMAKE_PLUGIN_PREFIX}${plugin_name}${suffix}
-    ${link_plugins})
+  if(REMAKE_BRANCH_COMPILE)
+    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_branch_link(link TARGET ${name} ${link})
+    remake_branch_add_targets(${name})
+  endif(REMAKE_BRANCH_COMPILE)
+
+  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
+#   remake_moc(moc_sources)
+  add_library(${name}${suffix} SHARED ${sources})
+  set_target_properties(${name}${suffix} PROPERTIES OUTPUT_NAME
+    ${PLUGIN_PREFIX}${name}${suffix})
+  if(link)
+    target_link_libraries(${name}${suffix} ${link})
+  endif(link)
+
+  install(TARGETS ${name}${suffix}
+    LIBRARY DESTINATION ${plugins}
+    COMPONENT default)
 endmacro(remake_add_plugin)
 
 ### \brief Add executable targets.

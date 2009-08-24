@@ -109,6 +109,8 @@ macro(remake_project project_name project_version project_release
 
   remake_project_set(LIBRARY_PREFIX ${REMAKE_PROJECT_FILENAME}-
     CACHE STRING "Name prefix of project libraries.")
+  remake_project_set(PLUGIN_PREFIX "" CACHE STRING
+    "Name prefix of project plugins.")
   remake_project_set(EXECUTABLE_PREFIX ${REMAKE_PROJECT_FILENAME}-
     CACHE STRING "Name prefix of project executables.")
 

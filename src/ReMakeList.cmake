@@ -119,3 +119,25 @@ macro(remake_list_contains list_name)
     endif(list_index LESS 0)
   endforeach(list_value)
 endmacro(remake_list_contains)
+
+### \brief Search a list for key/value pairs.
+#   This macro iterates a list in order to interpret list entries of the form
+#   ${KEY}=${VALUE} and returns all values associated with a given list of
+#   matched keys.
+#   \required[value] list The name of the list to be searched for key/value
+#     pairs.
+#   \required[value] variable The name of an output variable to be assigned
+#     the values of matched keys.
+#   \requiredl[list] key The list of keys to be searched for.
+macro(remake_list_values list_name list_var)
+  remake_arguments(PREFIX list_ ARGN keys ${ARGN})
+
+  remake_set(${list_var})
+  foreach(list_key ${list_keys})
+    string(REGEX MATCHALL "${list_key}=.*" list_matches ${${list_name}})
+    foreach(list_match ${list_matches})
+      string(REGEX REPLACE "${list_key}=(.*)" "\\1" list_match ${list_match})
+      remake_list_push(${list_var} ${list_match})
+    endforeach(list_match)
+  endforeach(list_key)
+endmacro(remake_list_values)
