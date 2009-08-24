@@ -97,6 +97,10 @@ macro(remake_project project_name project_version project_release
   remake_set(REMAKE_PROJECT_BUILD_ARCH ${CMAKE_SYSTEM_PROCESSOR})
   remake_set(REMAKE_PROJECT_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
+  remake_set(REMAKE_PROJECT_SOURCE_DIR ${project_sources} DEFAULT src)
+  remake_set(REMAKE_PROJECT_CONFIGURATION_DIR ${project_configurations}
+    DEFAULT conf)
+
   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local 
       CACHE PATH "Install path prefix, prepended onto install directories."
@@ -132,19 +136,6 @@ macro(remake_project project_name project_version project_release
   message(STATUS "Home: ${REMAKE_PROJECT_HOME}")
   message(STATUS "License: ${REMAKE_PROJECT_LICENSE}")
 
-  project(${REMAKE_PROJECT_NAME})
-
-  remake_set(REMAKE_PROJECT_SOURCE_DIR ${project_sources} DEFAULT src)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
-    remake_add_directories(${REMAKE_PROJECT_SOURCE_DIR})
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
-
-  remake_set(REMAKE_PROJECT_CONFIGURATION_DIR ${project_configurations}
-    DEFAULT conf)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
-    remake_add_directories(${REMAKE_PROJECT_CONFIGURATION_DIR})
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
-
   remake_svn_log(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
   remake_target(${REMAKE_PROJECT_CHANGELOG_TARGET} ALL
     DEPENDS ${project_changelog})
@@ -154,6 +145,16 @@ macro(remake_project project_name project_version project_release
   install(FILES ${project_readme} ${project_copyright} ${project_changelog}
     DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
     COMPONENT default)
+  remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
+
+  project(${REMAKE_PROJECT_NAME})
+
+  if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
+    remake_add_directories(${REMAKE_PROJECT_SOURCE_DIR})
+  endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
+  if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
+    remake_add_directories(${REMAKE_PROJECT_CONFIGURATION_DIR})
+  endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
 endmacro(remake_project)
 
 ### \brief Define the value of a ReMake project variable.
@@ -254,7 +255,8 @@ endmacro(remake_project_prefix)
 #     with the ReMake project settings.
 macro(remake_project_header project_source)
   if(NOT REMAKE_PROJECT_HEADER)
-    remake_file_configure(${project_source} OUTPUT REMAKE_PROJECT_HEADER)
+    remake_file_configure(${project_source} OUTPUT REMAKE_PROJECT_HEADER
+      ESCAPE_QUOTES ESCAPE_NEWLINES)
 
     get_filename_component(project_path ${REMAKE_PROJECT_HEADER} PATH)
     include_directories(${project_path})

@@ -26,6 +26,7 @@ include(ReMakePrivate)
 
 remake_set(REMAKE_PACK_ALL_TARGET packages)
 remake_set(REMAKE_PACK_TARGET_SUFFIX package)
+remake_set(REMAKE_PACK_INSTALL_ALL_TARGET packages_install)
 remake_set(REMAKE_PACK_INSTALL_TARGET_SUFFIX package_install)
 
 remake_set(REMAKE_PACK_DIR ReMakePackages)
@@ -103,6 +104,10 @@ macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT ARGN dependencies 
     ${ARGN})
 
+  if(NOT TARGET ${REMAKE_PACK_INSTALL_ALL_TARGET})
+    remake_target(${REMAKE_PACK_INSTALL_ALL_TARGET})
+  endif(NOT TARGET ${REMAKE_PACK_INSTALL_ALL_TARGET})
+
   execute_process(COMMAND dpkg --print-architecture
     OUTPUT_VARIABLE pack_deb_arch OUTPUT_STRIP_TRAILING_WHITESPACE)
   remake_set(pack_arch SELF DEFAULT ${pack_deb_arch})
@@ -133,4 +138,5 @@ macro(remake_pack_deb)
     COMMAND sudo dpkg --install deb/${pack_file}.deb
     COMMENT "Installing ${pack_name} package")
   add_dependencies(${pack_install_target} ${pack_target})
+  add_dependencies(${REMAKE_PACK_INSTALL_ALL_TARGET} ${pack_install_target})
 endmacro(remake_pack_deb)
