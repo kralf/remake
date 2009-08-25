@@ -64,7 +64,7 @@ macro(remake_target_name target_var)
 endmacro(remake_target_name)
 
 ### \brief Add custom build rule to a top-level target.
-#   The macro adds a custom build rule to a target. Whereas CMake's
+#   This macro adds a custom build rule to a target. Whereas CMake's
 #   add_custom_command() only behaves correctly in the top-level source 
 #   directory, this macro is designed to also work in directories below the 
 #   top-level. Therefor, build rules are stored for later collection in a
@@ -88,3 +88,30 @@ macro(remake_target_add_command target_name)
       ${target_args} WORKING_DIRECTORY ${target_working_directory} \n)
   endif(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
 endmacro(remake_target_add_command)
+
+### \brief Add sources to a target.
+#   This macro does not actually add sources to an already defined top-level
+#   target, but appends a list of source files to a variable named 
+#   ${TARGET}_SOURCES. Thus, the macro may be used to circumnavigate CMake's
+#   deficiency on modifying an existing target's SOURCES property.
+#   Note that the list of sources can later be recovered by calling 
+#   remake_target_get_sources().
+#   \required[value] name The name of the target to add the sources to. 
+#   \required[list] source A list of source filenames to be appended to
+#     the target's sources.
+macro(remake_target_add_sources target_name)
+  remake_arguments(PREFIX target_ ARGN sources ${ARGN})
+  remake_var_name(target_global_var ${target_name} SOURCES)
+  remake_list_push(${target_global_var} ${target_sources})
+endmacro(remake_target_add_sources)
+
+### \brief Retrieve sources for a target.
+#   This macro retrieves a list of source files from a variable named 
+#   ${TARGET}_SOURCES, usually defined by remake_target_add_sources().
+#   \required[value] variable The name of a variable to be assigned the list
+#     of sources for the target.
+#   \required[value] name The name of the target to retrieve the sources for.
+macro(remake_target_get_sources target_var target_name)
+  remake_var_name(target_global_var ${target_name} SOURCES)
+  remake_set(${target_var} ${${target_global_var}})
+endmacro(remake_target_get_sources)
