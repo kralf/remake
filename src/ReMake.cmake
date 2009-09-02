@@ -48,6 +48,9 @@ include(ReMakePrivate)
 #   library source directory is automatically added to the include path,
 #   thus allowing for the library headers to be found from subdirectories.
 #   \required[value] name The name of the shared library target to be defined.
+#   \optional[value] PREFIX:prefix An optional library name prefix, defaults
+#     to the project's ${LIBRARY_PREFIX}. Note that passing OFF here    
+#     results in an empty prefix.
 #   \optional[value] SUFFIX:suffix An optional library name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 #   \optional[list] glob An optional list of glob expressions that are
@@ -56,28 +59,35 @@ include(ReMakePrivate)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
 macro(remake_add_library name)
-  remake_arguments(VAR SUFFIX ARGN globs LIST LINK ${ARGN})
-  remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
+    ${ARGN})
+  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_project_get(LIBRARY_PREFIX)
   remake_project_get(PLUGIN_PREFIX)
   remake_project_get(LIBRARY_DESTINATION)
   remake_project_get(PLUGIN_DESTINATION)
+  if(NOT DEFINED remake_prefix)
+    remake_set(remake_prefix ${LIBRARY_PREFIX})
+  elseif(NOT remake_prefix)
+    remake_set(remake_prefix)
+  endif(NOT DEFINED remake_prefix)
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
-    remake_branch_link(link TARGET ${name} ${link})
+    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_branch_link(remake_link TARGET ${name} ${remake_link})
     remake_branch_add_targets(${name})
   endif(REMAKE_BRANCH_COMPILE)
 
   remake_include()
-  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
+  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    ${remake_globs})
   remake_target_get_sources(target_sources ${name})
-  add_library(${name}${suffix} SHARED ${sources} ${target_sources})
-  set_target_properties(${name}${suffix} PROPERTIES OUTPUT_NAME
-    ${LIBRARY_PREFIX}${name}${suffix})
-  if(link)
-    target_link_libraries(${name}${suffix} ${link})
-  endif(link)
+  add_library(${name}${remake_suffix} SHARED ${sources} ${target_sources})
+  set_target_properties(${name}${remake_suffix}
+    PROPERTIES OUTPUT_NAME ${remake_prefix}${name}${remake_suffix})
+  if(remake_link)
+    target_link_libraries(${name}${remake_suffix} ${remake_link})
+  endif(remake_link)
 
   remake_set(plugin_suffix ${CMAKE_SHARED_LIBRARY_SUFFIX})
   remake_set(plugins
@@ -88,7 +98,7 @@ macro(remake_add_library name)
     add_definitions(-DPLUGINS="${CMAKE_INSTALL_PREFIX}/${plugins}")
   endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
 
-  install(TARGETS ${name}${suffix}
+  install(TARGETS ${name}${remake_suffix}
     LIBRARY DESTINATION ${LIBRARY_DESTINATION}
     COMPONENT default)
 endmacro(remake_add_library)

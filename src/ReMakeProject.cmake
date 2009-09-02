@@ -107,12 +107,7 @@ macro(remake_project project_name project_version project_release
       FORCE)
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-  remake_project_set(LIBRARY_PREFIX ${REMAKE_PROJECT_FILENAME}-
-    CACHE STRING "Name prefix of project libraries.")
-  remake_project_set(PLUGIN_PREFIX "" CACHE STRING
-    "Name prefix of project plugins.")
-  remake_project_set(EXECUTABLE_PREFIX ${REMAKE_PROJECT_FILENAME}-
-    CACHE STRING "Name prefix of project executables.")
+  remake_project_prefix()
 
   remake_project_set(LIBRARY_DESTINATION lib CACHE PATH 
     "Install destination of project libraries.")
@@ -225,24 +220,19 @@ endmacro(remake_project_option)
 #     plugins, extending the plugin name to ${PREFIX}${PLUGIN_NAME}.
 #   \optional[value] EXECUTABLE:prefix The prefix that is used for producing
 #     executables, extending the executable name to ${PREFIX}${EXECUTABLE_NAME}.
-#   \optional[value] SCRIPT:prefix The prefix that is used for producing
-#     scripts, extending the script name to ${PREFIX}${SCRIPT_NAME}.
-#   \optional[value] FILE:prefix The prefix that is used for producing regular
-#     files, extending the file name to ${PREFIX}${FILE_NAME}.
 macro(remake_project_prefix)
-  remake_arguments(PREFIX project_ VAR LIBRARY VAR PLUGIN VAR EXECUTABLE 
-    VAR SCRIPT VAR FILE ${ARGN})
+  remake_arguments(PREFIX project_ VAR LIBRARY VAR PLUGIN VAR EXECUTABLE
+    ${ARGN})
 
-  remake_set(REMAKE_LIBRARY_PREFIX ${project_library} 
-    DEFAULT ${REMAKE_PROJECT_FILENAME}-)
-  remake_set(REMAKE_PLUGIN_PREFIX ${project_plugin} 
-    DEFAULT ${REMAKE_PROJECT_FILENAME}-)
-  remake_set(REMAKE_EXECUTABLE_PREFIX ${project_executable}
-    DEFAULT ${REMAKE_PROJECT_FILENAME}-)
-  remake_set(REMAKE_SCRIPT_PREFIX ${project_script}
-    DEFAULT ${REMAKE_PROJECT_FILENAME}-)
-  remake_set(REMAKE_FILE_PREFIX ${project_file}
-    DEFAULT ${REMAKE_PROJECT_FILENAME}-)
+  remake_project_set(LIBRARY_PREFIX FROM project_library
+    DEFAULT ${REMAKE_PROJECT_FILENAME}-
+    CACHE STRING "Name prefix of project libraries.")
+  remake_project_set(PLUGIN_PREFIX FROM project_plugin
+    DEFAULT ${REMAKE_PROJECT_FILENAME}-
+    CACHE STRING "Name prefix of project plugins.")
+  remake_project_set(EXECUTABLE_PREFIX FROM project_executable
+    DEFAULT ${REMAKE_PROJECT_FILENAME}-
+    CACHE STRING "Name prefix of project executables.")
 endmacro(remake_project_prefix)
 
 ### \brief Create the ReMake project configuration header.
