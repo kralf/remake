@@ -200,9 +200,9 @@ macro(remake_project_get project_var)
 
   remake_var_name(project_global_var ${REMAKE_PROJECT_NAME} ${project_var})
   if(project_output)
-    remake_set(${project_output} FROM ${project_global_var})
+    remake_set(${project_output} ${${project_global_var}})
   else(project_output)
-    remake_set(${project_var} FROM ${project_global_var})
+    remake_set(${project_var} ${${project_global_var}})
   endif(project_output)
 endmacro(remake_project_get)
 
