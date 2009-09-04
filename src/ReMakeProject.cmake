@@ -55,6 +55,8 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[value] LICENSE:license The license specified in the project's 
 #     copyleft/copyright agreement, defaults to LGPL. Common values are GPL,
 #     LGPL, MIT, BSD, naming just a few.
+#   \optional[value] PREFIX:prefix The optional target prefix that is passed
+#     to remake_project_prefix(), defaults to ${REMAKE_PROJECT_FILENAME}-.
 #   \optional[value] INSTALL:dir The directory that shall be used as the 
 #     project's preset install prefix, defaults to /usr/local.
 #   \optional[value] SOURCES:dir The directory containing the project
@@ -65,8 +67,8 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     be shipped with the project package, defaults to copyright.
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY 
-    VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR INSTALL VAR SOURCES
-    VAR CONFIGURATIONS VAR README VAR COPYRIGHT ${ARGN})
+    VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR PREFIX VAR INSTALL
+    VAR SOURCES VAR CONFIGURATIONS VAR README VAR COPYRIGHT ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   if(NOT project_summary)
@@ -123,7 +125,10 @@ macro(remake_project project_name)
       FORCE)
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-  remake_project_prefix()
+  remake_set(project_prefix SELF DEFAULT ${REMAKE_PROJECT_FILENAME}-)
+  remake_project_prefix(LIBRARY ${project_prefix} 
+    PLUGIN ${project_prefix}
+    EXECUTABLE ${project_prefix})
 
   remake_project_set(LIBRARY_DESTINATION lib CACHE PATH 
     "Install destination of project libraries.")
@@ -229,16 +234,16 @@ macro(remake_project_option project_option project_description project_default)
 endmacro(remake_project_option)
 
 ### \brief Define the ReMake project prefix for target output.
-#   The macro initializes the ReMake project prefix for libaries, plugins, 
-#   executables, scripts, and regular files produced by all targets. 
-#   With an empty argument list, this prefix defaults to the lower-case 
-#   project name followed by a score.
+#   This macro initializes the ReMake project prefix for libaries, plugins, 
+#   and executables produced by all targets. It gets invoked by
+#   remake_project() and needs not be called directly from a CMakeLists.txt
+#   file. Note that undefined prefixes default to ${REMAKE_PROJECT_FILENAME}-.
 #   \optional[value] LIBRARY:prefix The prefix that is used for producing
-#     libraries, extending the library name to ${PREFIX}${LIB_NAME}.
+#     libraries, extending library names to ${PREFIX}${LIB_NAME}.
 #   \optional[value] PLUGIN:prefix The prefix that is used for producing
-#     plugins, extending the plugin name to ${PREFIX}${PLUGIN_NAME}.
+#     plugins, extending plugin names to ${PREFIX}${PLUGIN_NAME}.
 #   \optional[value] EXECUTABLE:prefix The prefix that is used for producing
-#     executables, extending the executable name to ${PREFIX}${EXECUTABLE_NAME}.
+#     executables, extending executable names to ${PREFIX}${EXECUTABLE_NAME}.
 macro(remake_project_prefix)
   remake_arguments(PREFIX project_ VAR LIBRARY VAR PLUGIN VAR EXECUTABLE
     ${ARGN})
