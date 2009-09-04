@@ -48,9 +48,9 @@ include(ReMakePrivate)
 #   library source directory is automatically added to the include path,
 #   thus allowing for the library headers to be found from subdirectories.
 #   \required[value] name The name of the shared library target to be defined.
-#   \optional[value] PREFIX:prefix An optional library name prefix, defaults
-#     to the project's ${LIBRARY_PREFIX}. Note that passing OFF here    
-#     results in an empty prefix.
+#   \optional[value] PREFIX:prefix An optional library name prefix,
+#     defaults to the project's ${LIBRARY_PREFIX}. Note that passing OFF
+#     here results in an empty prefix.
 #   \optional[value] SUFFIX:suffix An optional library name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 #   \optional[list] glob An optional list of glob expressions that are
@@ -58,12 +58,11 @@ include(ReMakePrivate)
 #     and *.cpp.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
-macro(remake_add_library name)
+macro(remake_add_library remake_name)
   remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
     ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_project_get(LIBRARY_PREFIX)
-  remake_project_get(PLUGIN_PREFIX)
   remake_project_get(LIBRARY_DESTINATION)
   remake_project_get(PLUGIN_DESTINATION)
   if(NOT DEFINED remake_prefix)
@@ -74,31 +73,31 @@ macro(remake_add_library name)
 
   if(REMAKE_BRANCH_COMPILE)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-    remake_branch_link(remake_link TARGET ${name} ${remake_link})
-    remake_branch_add_targets(${name})
+    remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
+    remake_branch_add_targets(${remake_name})
   endif(REMAKE_BRANCH_COMPILE)
 
   remake_include()
-  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     ${remake_globs})
-  remake_target_get_sources(target_sources ${name})
-  add_library(${name}${remake_suffix} SHARED ${sources} ${target_sources})
-  set_target_properties(${name}${remake_suffix}
-    PROPERTIES OUTPUT_NAME ${remake_prefix}${name}${remake_suffix})
+  remake_target_get_sources(remake_target_sources ${remake_name})
+  add_library(${remake_name}${remake_suffix}
+    SHARED ${remake_sources} ${remake_target_sources})
+  set_target_properties(${remake_name}${remake_suffix}
+    PROPERTIES OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
   if(remake_link)
-    target_link_libraries(${name}${remake_suffix} ${remake_link})
+    target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
   endif(remake_link)
 
-  remake_set(plugin_suffix ${CMAKE_SHARED_LIBRARY_SUFFIX})
-  remake_set(plugins
-    ${PLUGIN_DESTINATION}/${name}/${PLUGIN_PREFIX}*${plugin_suffix})
+  remake_set(remake_plugins
+    ${PLUGIN_DESTINATION}/${remake_name}/*${CMAKE_SHARED_LIBRARY_SUFFIX})
   if(IS_ABSOLUTE ${PLUGIN_DESTINATION})
-    add_definitions(-DPLUGINS="${plugins}")
+    remake_define(PLUGINS QUOTED "${remake_plugins}")
   else(IS_ABSOLUTE ${PLUGIN_DESTINATION})
-    add_definitions(-DPLUGINS="${CMAKE_INSTALL_PREFIX}/${plugins}")
+    remake_define(PLUGINS QUOTED "${CMAKE_INSTALL_PREFIX}/${remake_plugins}")
   endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
 
-  install(TARGETS ${name}${remake_suffix}
+  install(TARGETS ${remake_name}${remake_suffix}
     LIBRARY DESTINATION ${LIBRARY_DESTINATION}
     COMPONENT default)
 endmacro(remake_add_library)
@@ -108,6 +107,9 @@ endmacro(remake_add_library)
 #   target from a list of glob expressions. In addition, the macro takes a
 #   list of libraries that are linked into the plugin library target.
 #   \required[value] name The name of the plugin library target to be defined.
+#   \optional[value] PREFIX:prefix An optional plugin name prefix,
+#     defaults to the project's ${PLUGIN_PREFIX}. Note that passing OFF
+#     here results in an empty prefix.
 #   \optional[value] SUFFIX:suffix An optional plugin name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 #   \optional[list] glob An optional list of glob expressions that are
@@ -115,35 +117,45 @@ endmacro(remake_add_library)
 #     and *.cpp.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     plugin library target.
-macro(remake_add_plugin name)
-  remake_arguments(VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+macro(remake_add_plugin remake_name)
+  remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
+    ${ARGN})
   remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_project_get(PLUGIN_PREFIX)
-  get_property(definitions DIRECTORY PROPERTY COMPILE_DEFINITIONS)
-  remake_list_values(definitions plugins PLUGINS)
-  if(plugins)
-    string(REGEX REPLACE "\"(.*)/[^/]*\"" "\\1" plugins ${plugins})
-  else(plugins)
-    remake_project_get(PLUGIN_DESTINATION OUTPUT plugins)
-  endif(plugins)
+  if(NOT DEFINED remake_prefix)
+    remake_set(remake_prefix ${PLUGIN_PREFIX})
+  elseif(NOT remake_prefix)
+    remake_set(remake_prefix)
+  endif(NOT DEFINED remake_prefix)
+
+  get_property(remake_definitions DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+  remake_list_values(remake_definitions remake_plugins PLUGINS)
+  if(remake_plugins)
+    string(REGEX REPLACE "\"(.*)/[^/]*\"" "\\1" remake_plugins
+      ${remake_plugins})
+  else(remake_plugins)
+    remake_project_get(PLUGIN_DESTINATION OUTPUT remake_plugins)
+  endif(remake_plugins)
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
-    remake_branch_link(link TARGET ${name} ${link})
-    remake_branch_add_targets(${name})
+    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
+    remake_branch_add_targets(${remake_name})
   endif(REMAKE_BRANCH_COMPILE)
 
-  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
-  remake_target_get_sources(target_sources ${name})
-  add_library(${name}${suffix} SHARED ${sources} ${target_sources})
-  set_target_properties(${name}${suffix} PROPERTIES OUTPUT_NAME
-    ${PLUGIN_PREFIX}${name}${suffix})
-  if(link)
-    target_link_libraries(${name}${suffix} ${link})
-  endif(link)
+  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    ${remake_globs})
+  remake_target_get_sources(remake_target_sources ${remake_name})
+  add_library(${remake_name}${remake_suffix}
+    SHARED ${remake_sources} ${remake_target_sources})
+  set_target_properties(${remake_name}${remake_suffix} PROPERTIES
+    OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
+  if(remake_link)
+    target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
+  endif(remake_link)
 
-  install(TARGETS ${name}${suffix}
-    LIBRARY DESTINATION ${plugins}
+  install(TARGETS ${remake_name}${remake_suffix}
+    LIBRARY DESTINATION ${remake_plugins}
     COMPONENT default)
 endmacro(remake_add_plugin)
 
@@ -153,6 +165,9 @@ endmacro(remake_add_plugin)
 #   resolved from the glob expressions. The target bears the name of the
 #   source file without the file extension. In addition, the macro takes a
 #   list of libraries that are linked into the executable targets.
+#   \optional[value] PREFIX:prefix An optional executable name prefix,
+#     defaults to the project's ${EXECUTABLE_PREFIX}. Note that passing
+#     OFF here results in an empty prefix.
 #   \optional[value] SUFFIX:suffix An optional executable name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 #   \optional[list] glob An optional list of glob expressions that are
@@ -161,34 +176,42 @@ endmacro(remake_add_plugin)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     executable targets.
 macro(remake_add_executables)
-  remake_arguments(VAR SUFFIX ARGN globs LIST LINK ${ARGN})
-  remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
+    ${ARGN})
+  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_project_get(EXECUTABLE_PREFIX)
   remake_project_get(EXECUTABLE_DESTINATION)
+  if(NOT DEFINED remake_prefix)
+    remake_set(remake_prefix ${EXECUTABLE_PREFIX})
+  elseif(NOT remake_prefix)
+    remake_set(remake_prefix)
+  endif(NOT DEFINED remake_prefix)
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
   endif(REMAKE_BRANCH_COMPILE)
 
-  remake_file_glob(sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
-  remake_branch_link(link ${link})
-  foreach(source ${sources})
-    get_filename_component(name ${source} NAME_WE)
+  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    ${remake_globs})
+  remake_branch_link(remake_link ${remake_link})
+  foreach(remake_source ${remake_sources})
+    get_filename_component(remake_name ${remake_source} NAME_WE)
     if(REMAKE_BRANCH_COMPILE)
-      remake_branch_add_targets(${name})
+      remake_branch_add_targets(${remake_name})
     endif(REMAKE_BRANCH_COMPILE)
-    remake_target_get_sources(target_sources ${name})
-    add_executable(${name}${suffix} ${source} ${target_sources})
-    set_target_properties(${name}${suffix} PROPERTIES OUTPUT_NAME
-      ${EXECUTABLE_PREFIX}${name}${suffix})
-    if(link)
-      target_link_libraries(${name}${suffix} ${link})
-    endif(link)
+    remake_target_get_sources(remake_target_sources ${remake_name})
+    add_executable(${remake_name}${remake_suffix}
+      ${remake_source} ${remake_target_sources})
+    set_target_properties(${remake_name}${remake_suffix} PROPERTIES
+      OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
+    if(remake_link)
+      target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
+    endif(remake_link)
 
-    install(TARGETS ${name}${suffix}
+    install(TARGETS ${remake_name}${remake_suffix}
       RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
       COMPONENT default)
-  endforeach(source)
+  endforeach(remake_source)
 endmacro(remake_add_executables)
 
 ### \brief Add header install rules.
@@ -206,20 +229,22 @@ endmacro(remake_add_executables)
 #     component that is passed to CMake's install() macro, defaults to dev.
 #     See the CMake documentation for details.
 macro(remake_add_headers)
-  remake_arguments(VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
-  remake_set(globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
-  remake_set(component SELF DEFAULT dev)
+  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
+  remake_set(remake_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+  remake_set(remake_component SELF DEFAULT dev)
   remake_project_get(HEADER_DESTINATION)
 
-  foreach(glob ${globs})
-    remake_file_glob(headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${glob})
-    get_filename_component(header_dir ${glob} PATH)
-    remake_set(header_dir FROM install DEFAULT ${header_dir})
+  foreach(remake_glob ${remake_globs})
+    remake_file_glob(remake_headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      ${remake_glob})
+    get_filename_component(remake_header_dir ${remake_glob} PATH)
+    remake_set(remake_header_dir FROM remake_install
+      DEFAULT ${remake_header_dir})
 
-    install(FILES ${headers}
-      DESTINATION ${HEADER_DESTINATION}/${header_dir}
-      COMPONENT ${component})
-  endforeach(glob)
+    install(FILES ${remake_headers}
+      DESTINATION ${HEADER_DESTINATION}/${remake_header_dir}
+      COMPONENT ${remake_component})
+  endforeach(remake_glob)
 endmacro(remake_add_headers)
 
 ### \brief Add script install rules.
@@ -231,21 +256,23 @@ endmacro(remake_add_headers)
 #     to the script names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_scripts)
-  remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR SUFFIX ARGN globs ${ARGN})
   remake_project_get(SCRIPT_DESTINATION)
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
   endif(REMAKE_BRANCH_COMPILE)
 
-  remake_file_glob(scripts RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
-  foreach(script ${scripts})
-    remake_file_suffix(script_suffixed ${script} ${suffix})
-    install(PROGRAMS ${script}
+  remake_file_glob(remake_scripts RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    ${remake_globs})
+  foreach(remake_script ${remake_scripts})
+    remake_file_suffix(remake_script_suffixed
+      ${remake_script} ${remake_suffix})
+    install(PROGRAMS ${remake_script}
       DESTINATION ${SCRIPT_DESTINATION}
       COMPONENT default
-      RENAME ${script_suffixed})
-  endforeach(script)
+      RENAME ${remake_script_suffixed})
+  endforeach(remake_script)
 endmacro(remake_add_scripts)
 
 ### \brief Add configuration file install rules.
@@ -259,22 +286,24 @@ endmacro(remake_add_scripts)
 #     to the configuration file names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_configurations)
-  remake_arguments(VAR SUFFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR SUFFIX ARGN globs ${ARGN})
   remake_project_get(CONFIGURATION_DESTINATION)
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
   endif(REMAKE_BRANCH_COMPILE)
 
-  remake_file_configure(${globs} OUTPUT configurations)
-  foreach(config ${configurations})
-    file(RELATIVE_PATH config_relative ${CMAKE_CURRENT_BINARY_DIR} ${config})
-    remake_file_suffix(config_suffixed ${config_relative} ${suffix})
-    install(FILES ${config}
+  remake_file_configure(${remake_globs} OUTPUT remake_configs)
+  foreach(remake_config ${remake_configs})
+    file(RELATIVE_PATH remake_config_relative ${CMAKE_CURRENT_BINARY_DIR}
+      ${remake_config})
+    remake_file_suffix(remake_config_suffixed
+      ${remake_config_relative} ${remake_suffix})
+    install(FILES ${remake_config}
       DESTINATION ${CONFIGURATION_DESTINATION}
       COMPONENT default
-      RENAME ${config_suffixed})
-  endforeach(config)
+      RENAME ${remake_config_suffixed})
+  endforeach(remake_config)
 endmacro(remake_add_configurations)
 
 ### \brief Add file install rules.
@@ -288,22 +317,23 @@ endmacro(remake_add_configurations)
 #   \optional[value] INSTALL:dirname The directory that shall be passed as
 #     the files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
 macro(remake_add_files)
-  remake_arguments(VAR SUFFIX VAR INSTALL ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR SUFFIX VAR INSTALL ARGN globs ${ARGN})
   remake_project_get(FILE_DESTINATION)
-  remake_set(install SELF DEFAULT ${FILE_DESTINATION})
+  remake_set(remake_install SELF DEFAULT ${FILE_DESTINATION})
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_set(suffix ${REMAKE_BRANCH_SUFFIX})
+    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
   endif(REMAKE_BRANCH_COMPILE)
 
-  remake_file_glob(files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${globs})
-  foreach(file ${files})
-    remake_file_suffix(file_suffixed ${file} ${suffix})
-    install(FILES ${file}
-      DESTINATION ${install}
+  remake_file_glob(remake_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    ${remake_globs})
+  foreach(remake_file ${remake_files})
+    remake_file_suffix(remake_file_suffixed ${remake_file} ${remake_suffix})
+    install(FILES ${remake_file}
+      DESTINATION ${remake_install}
       COMPONENT default
-      RENAME ${file_suffixed})
-  endforeach(file)
+      RENAME ${remake_file_suffixed})
+  endforeach(remake_file)
 endmacro(remake_add_files)
 
 ### \brief Add subdirectories.
@@ -318,28 +348,28 @@ endmacro(remake_add_files)
 #     conditions directory inclusion. See ReMakeProject for the correct usage
 #     of ReMake project options.
 macro(remake_add_directories)
-  remake_arguments(VAR IF ARGN globs ${ARGN})
-  remake_set(globs SELF DEFAULT *)
+  remake_arguments(PREFIX remake_ VAR IF ARGN globs ${ARGN})
+  remake_set(remake_globs SELF DEFAULT *)
 
-  if(if)
-    remake_project_get(${if} OUTPUT option)
-  else(if)
-    remake_set(option ON)
-  endif(if)
+  if(remake_if)
+    remake_project_get(${remake_if} OUTPUT remake_option)
+  else(remake_if)
+    remake_set(remake_option ON)
+  endif(remake_if)
 
-  if(option)
-    remake_file_glob(files ${globs})
-    remake_set(directories)
+  if(remake_option)
+    remake_file_glob(remake_files ${remake_globs})
+    remake_set(remake_dirs)
 
-    foreach(file ${files})
-      if(IS_DIRECTORY ${file})
-        remake_list_push(directories ${file})
-      endif(IS_DIRECTORY ${file})
-    endforeach(file)
-    foreach(dir ${directories})
-      add_subdirectory(${dir})
-    endforeach(dir)
-  endif(option)
+    foreach(remake_file ${remake_files})
+      if(IS_DIRECTORY ${remake_file})
+        remake_list_push(remake_dirs ${remake_file})
+      endif(IS_DIRECTORY ${remake_file})
+    endforeach(remake_file)
+    foreach(remake_dir ${remake_dirs})
+      add_subdirectory(${remake_dir})
+    endforeach(remake_dir)
+  endif(remake_option)
 endmacro(remake_add_directories)
 
 ### \brief Add a documentation target.
@@ -350,14 +380,14 @@ endmacro(remake_add_directories)
 #     document generation.
 #   \required[list] arg The arguments to be forwared to the document
 #     generator. See ReMakeDoc for details.
-macro(remake_add_documentation doc_generator)
-  if(${doc_generator} MATCHES "DOXYGEN")
+macro(remake_add_documentation remake_generator)
+  if(${remake_generator} MATCHES "DOXYGEN")
     remake_doc_doxygen(${ARGN})
-  elseif(${doc_generator} MATCHES "GROFF")
+  elseif(${remake_generator} MATCHES "GROFF")
     remake_doc_groff(${ARGN})
-  elseif(${doc_generator} MATCHES "CUSTOM")
+  elseif(${remake_generator} MATCHES "CUSTOM")
     remake_doc_custom(${ARGN})
-  endif(${doc_generator} MATCHES "DOXYGEN")
+  endif(${remake_generator} MATCHES "DOXYGEN")
 endmacro(remake_add_documentation)
 
 ### \brief Add directories to the include path.
@@ -369,15 +399,45 @@ endmacro(remake_add_documentation)
 #   \optional[list] dirname The directories to be added to the compiler's
 #     include path, defaults to the current directory.
 macro(remake_include)
-  remake_arguments(ARGN directories ${ARGN})
-  remake_set(directories SELF DEFAULT .)
+  remake_arguments(PREFIX remake_ ARGN dirs ${ARGN})
+  remake_set(remake_dirs SELF DEFAULT .)
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_branch_include(directories ${directories})
+    remake_branch_include(remake_dirs ${remake_dirs})
   endif(REMAKE_BRANCH_COMPILE)
 
-  foreach(directory ${directories})
-    get_filename_component(directory ${directory} ABSOLUTE)
-    include_directories(${directory})
-  endforeach(directory)
+  foreach(remake_dir ${remake_dirs})
+    get_filename_component(remake_dir ${remake_dir} ABSOLUTE)
+    include_directories(${remake_dir})
+  endforeach(remake_dir)
 endmacro(remake_include)
+
+### \brief Add a flag to the compiler command line.
+#   This macro defines a variable and appends a flag to the compiler command
+#   line for sources in the current directory or below. If the flag variable
+#   is Boolean and ON, -D${VARIABLE} is added to the compile definitions.
+#   For regular string values, the list of compile definitions is extended by
+#   -D${VARIABLE}=${VALUE}.
+#   \required[value] variable The name of the flag variable to be defined and
+#     added to the compiler command line.
+#   \optional[option] QUOTED If this option is present, the flag variable is
+#     assumed to be of type string and quotes are added to the compiler
+#     definition.
+#   \required[list] value A list of values to be passed on to remake_set().
+#     See ReMakePrivate for correct usage.
+macro(remake_define remake_var)
+  remake_arguments(PREFIX remake_ OPTION QUOTED ARGN values ${ARGN})
+
+  remake_set(${remake_var} ${remake_values})
+  if(${remake_var})
+    if(remake_quoted)
+      add_definitions(-D${remake_var}="${${remake_var}}")
+    else(remake_quoted)
+      if(${remake_var} MATCHES "ON")
+        add_definitions(-D${remake_var})
+      else(${remake_var} MATCHES "ON")
+        add_definitions(-D${remake_var}=${${remake_var}})
+      endif(${remake_var} MATCHES "ON")
+    endif(remake_quoted)
+  endif(${remake_var})
+endmacro(remake_define)
