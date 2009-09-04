@@ -44,11 +44,11 @@ macro(remake_find_package find_package)
 endmacro(remake_find_package)
 
 ### \brief Find a library and it's header file.
-#   This macro calls CMake's find_library() and find_file() to discover
+#   This macro calls CMake's find_library() and find_path() to discover
 #   a library and it's main header file installed on the system. If the 
 #   library and the header were found, the upper-case conversion of 
 #   ${PACKAGE}_FOUND is set to TRUE. Arguments given in addition to the
-#   library and header name are forwarded to find_library(), find_file(), 
+#   library and header name are forwarded to find_library(), find_path(), 
 #   and remake_find_result().
 #   \required[value] library The name of the library to be discovered.
 #   \required[value] header The name of the header to be discovered.
@@ -56,23 +56,23 @@ endmacro(remake_find_package)
 #     requested library, defaults to the upper-case conversion of the library
 #     name and is used to set ${PACKAGE}_FOUND.
 #   \optional[list] arg A list of optional arguments to be forwared to
-#     CMake's find_library(), find_file(), and remake_find_result().
+#     CMake's find_library(), find_path(), and remake_find_result().
 #     See the CMake documentation for the correct usage of find_library()
-#     and find_file().
+#     and find_path().
 macro(remake_find_library find_lib find_header)
   remake_arguments(PREFIX find_ VAR PACKAGE ${ARGN})
   remake_set(find_package SELF DEFAULT ${find_lib})
   remake_var_name(find_lib_var ${find_package} LIBRARY)
-  remake_var_name(find_header_var ${find_package} HEADER)
+  remake_var_name(find_headers_var ${find_package} HEADERS)
 
-  find_library(${find_lib_var} NAMES ${find_lib})
+  find_library(${find_lib_var} NAMES ${find_lib} ${ARGN})
   if(${find_lib_var})
-    find_file(${find_header_var} NAMES ${find_header})
+    find_path(${find_headers_var} NAMES ${find_header} ${ARGN})
   else(${find_lib_var})
-    remake_set(${find_header_var})
+    remake_set(${find_headers_var})
   endif(${find_lib_var})
 
-  remake_find_result(${find_package} ${${find_header_var}} ${ARGN})
+  remake_find_result(${find_package} ${${find_headers_var}} ${ARGN})
 endmacro(remake_find_library)
 
 ### \brief Find an executable program.
