@@ -5,13 +5,14 @@ include(ReMake)
 
 remake_project(
   ReMake
-  0.1
-  beta
-  "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
-  "Ralf Kaestner"
-  "ralf.kaestner@gmail.com"
-  "http://aslforge.ethz.ch/projects/remake"
-  "GNU Lesser General Public License (LGPL)"
+  VERSION 0.1
+  RELEASE beta
+  SUMMARY "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
+  AUTHOR "Ralf Kaestner"
+  AUTHOR "Dizan Vasquez"
+  CONTACT "ralf.kaestner@gmail.com"
+  HOME "http://aslforge.ethz.ch/projects/remake"
+  LICENSE "GNU Lesser General Public License (LGPL)"
   INSTALL /usr
 )
 

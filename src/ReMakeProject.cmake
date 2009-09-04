@@ -36,23 +36,25 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   macro called in the project root's CMakeLists.txt file.
 #   \required[value] name The name of the project to be defined,
 #     a string value.
-#   \required[value] version The version of the project. Here, the macro 
-#     expects a string value that reflects standard versioning conventions, 
-#     i.e. the version string is of the form ${MAJOR}.${MINOR}.${PATCH}.
-#     If the patch version is omitted from the string, the project's Subversion
-#     revision is used instead.
-#   \required[value] release The release of the project. This value may
-#     contain a string describing the release status, such as alpha or beta.
-#   \required[value] summary A short but descriptive project summary. This
-#     summary is used in several places, including the packaging module.
-#   \required[value] author The name of the project author.
-#   \required[value] contact A contact to the project responsibles, usually
-#     a valid e-mail address.
-#   \required[value] home A URL pointing to the project homepage, where
+#   \optional[value] VERSION:version The version of the project, defaults to
+#     0.1. Here, the macro expects a string value that reflects standard
+#     versioning conventions, i.e. the version string is of the form
+#     ${MAJOR}.${MINOR}.${PATCH}. If the patch version is omitted from the
+#     string, the project's Subversion revision is used instead.
+#   \optional[value] RELEASE:release The release of the project, defaults to
+#     alpha. This value may contain a string describing the release status,
+#     such as alpha, beta, unstable, or stable.
+#   \required[value] SUMMARY:summary A short but descriptive project summary.
+#     This summary is used in several places, including the packaging module.
+#   \required[value] AUTHOR:name The name of the project author(s). Note that
+#     several authors may be specified by providing several AUTHOR arguments.
+#   \required[value] CONTACT:contact A contact to the project responsibles,
+#     usually a valid e-mail address.
+#   \optional[value] HOME:home A URL pointing to the project homepage, where
 #     users may find further documentation and bug tracking facilities.
-#   \required[value] license The license specified in the project's 
-#     copyleft/copyright agreement. Common values are GPL, LGPL, MIT, BSD, 
-#     naming just a few.
+#   \optional[value] LICENSE:license The license specified in the project's 
+#     copyleft/copyright agreement, defaults to LGPL. Common values are GPL,
+#     LGPL, MIT, BSD, naming just a few.
 #   \optional[value] INSTALL:dir The directory that shall be used as the 
 #     project's preset install prefix, defaults to /usr/local.
 #   \optional[value] SOURCES:dir The directory containing the project
@@ -61,10 +63,23 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     shipped with the project package, defaults to README.
 #   \optional[value] COPYRIGHT:file The name of the copyright file that will 
 #     be shipped with the project package, defaults to copyright.
-macro(remake_project project_name project_version project_release 
-  project_summary project_author project_contact project_home project_license)
-  remake_arguments(PREFIX project_ VAR INSTALL VAR SOURCES VAR CONFIGURATIONS 
-    VAR README VAR COPYRIGHT ${ARGN})
+macro(remake_project project_name)
+  remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY 
+    VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR INSTALL VAR SOURCES
+    VAR CONFIGURATIONS VAR README VAR COPYRIGHT ${ARGN})
+  remake_set(project_version SELF DEFAULT 0.1)
+  remake_set(project_release SELF DEFAULT alpha)
+  if(NOT project_summary)
+    message(FATAL_ERROR "The project definition requires a summary!")
+  endif(NOT project_summary)
+  if(NOT project_author)
+    message(FATAL_ERROR "The project definition requires an author!")
+  endif(NOT project_author)
+  if(NOT project_contact)
+    message(FATAL_ERROR "The project definition requires a contact!")
+  endif(NOT project_contact)
+  remake_set(project_lisence SELF DEFAULT
+    "GNU Lesser General Public License (LGPL)")
 
   remake_set(REMAKE_PROJECT_NAME ${project_name})
   remake_file_name(REMAKE_PROJECT_FILENAME ${REMAKE_PROJECT_NAME})
@@ -85,7 +100,8 @@ macro(remake_project project_name project_version project_release
   remake_set(REMAKE_PROJECT_RELEASE ${project_release})
 
   remake_set(REMAKE_PROJECT_SUMMARY ${project_summary})
-  remake_set(REMAKE_PROJECT_AUTHOR ${project_author})
+  list(GET project_author 0 REMAKE_PROJECT_ADMIN)
+  string(REPLACE ";" ", " REMAKE_PROJECT_AUTHORS "${project_author}")
   remake_set(REMAKE_PROJECT_CONTACT ${project_contact})
   remake_set(REMAKE_PROJECT_HOME ${project_home})
   remake_set(REMAKE_PROJECT_LICENSE ${project_license})
@@ -129,8 +145,11 @@ macro(remake_project project_name project_version project_release
     "version ${REMAKE_PROJECT_VERSION}, "
     "release ${REMAKE_PROJECT_RELEASE}")
   message(STATUS "Summary: ${REMAKE_PROJECT_SUMMARY}")
-  message(STATUS "Author: ${REMAKE_PROJECT_AUTHOR} (${REMAKE_PROJECT_CONTACT})")
-  message(STATUS "Home: ${REMAKE_PROJECT_HOME}")
+  message(STATUS
+    "Author(s): ${REMAKE_PROJECT_AUTHORS} <${REMAKE_PROJECT_CONTACT}>")
+  if(REMAKE_PROJECT_HOME)
+    message(STATUS "Home: ${REMAKE_PROJECT_HOME}")
+  endif(REMAKE_PROJECT_HOME)
   message(STATUS "License: ${REMAKE_PROJECT_LICENSE}")
 
   remake_svn_log(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)

@@ -316,7 +316,7 @@ sub generate_man {
   }
 
   $$man .= ".SH AUTHOR\n";
-  $$man .= "Written by $project_author.\n";  
+  $$man .= "Written by $project_authors.\n";  
 
   $$man .= ".SH REPORTING BUGS\n";
   $$man .= "Report bugs to <$project_contact>.\n";  

@@ -3,7 +3,7 @@
 $project_name = '${REMAKE_PROJECT_NAME}';
 $project_version = '${REMAKE_PROJECT_VERSION}';
 $project_release = '${REMAKE_PROJECT_RELEASE}';
-$project_author = '${REMAKE_PROJECT_AUTHOR}';
+$project_authors = '${REMAKE_PROJECT_AUTHORS}';
 $project_contact = '${REMAKE_PROJECT_CONTACT}';
 $project_license = '${REMAKE_PROJECT_LICENSE}';
 $project_home = '${REMAKE_PROJECT_HOME}';
