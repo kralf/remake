@@ -53,26 +53,27 @@ endmacro(remake_find_package)
 #   \required[value] library The name of the library to be discovered.
 #   \required[value] header The name of the header to be discovered.
 #   \optional[value] PACKAGE:package The name of the package containing the
-#     requested library, defaults to the upper-case conversion of the library
-#     name and is used to set ${PACKAGE}_FOUND.
+#     requested library, defaults to the provided library name and is used
+#     to set ${PACKAGE}_FOUND and the PATH_SUFFIXES argument for find_path().
 #   \optional[list] arg A list of optional arguments to be forwared to
 #     CMake's find_library(), find_path(), and remake_find_result().
 #     See the CMake documentation for the correct usage of find_library()
 #     and find_path().
 macro(remake_find_library find_lib find_header)
-  remake_arguments(PREFIX find_ VAR PACKAGE ${ARGN})
+  remake_arguments(PREFIX find_ VAR PACKAGE ARGN args ${ARGN})
   remake_set(find_package SELF DEFAULT ${find_lib})
   remake_var_name(find_lib_var ${find_package} LIBRARY)
   remake_var_name(find_headers_var ${find_package} HEADERS)
 
-  find_library(${find_lib_var} NAMES ${find_lib} ${ARGN})
+  find_library(${find_lib_var} NAMES ${find_lib} ${args})
   if(${find_lib_var})
-    find_path(${find_headers_var} NAMES ${find_header} ${ARGN})
+    find_path(${find_headers_var} NAMES ${find_header} 
+      PATH_SUFFIXES ${find_package} ${args})
   else(${find_lib_var})
     remake_set(${find_headers_var})
   endif(${find_lib_var})
 
-  remake_find_result(${find_package} ${${find_headers_var}} ${ARGN})
+  remake_find_result(${find_package} ${${find_headers_var}} ${args})
 endmacro(remake_find_library)
 
 ### \brief Find an executable program.
