@@ -316,10 +316,15 @@ endmacro(remake_add_configurations)
 #     if defined within a ReMake branch.
 #   \optional[value] INSTALL:dirname The directory that shall be passed as
 #     the files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults to default.
+#     See the CMake documentation for details.
 macro(remake_add_files)
-  remake_arguments(PREFIX remake_ VAR SUFFIX VAR INSTALL ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR SUFFIX VAR INSTALL VAR COMPONENT
+    ARGN globs ${ARGN})
   remake_project_get(FILE_DESTINATION)
   remake_set(remake_install SELF DEFAULT ${FILE_DESTINATION})
+  remake_set(remake_component SELF DEFAULT default)
 
   if(REMAKE_BRANCH_COMPILE)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
@@ -331,7 +336,7 @@ macro(remake_add_files)
     remake_file_suffix(remake_file_suffixed ${remake_file} ${remake_suffix})
     install(FILES ${remake_file}
       DESTINATION ${remake_install}
-      COMPONENT default
+      COMPONENT ${remake_component}
       RENAME ${remake_file_suffixed})
   endforeach(remake_file)
 endmacro(remake_add_files)
