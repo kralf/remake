@@ -120,7 +120,7 @@ endmacro(remake_add_library)
 macro(remake_add_plugin remake_name)
   remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
     ${ARGN})
-  remake_set(globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_project_get(PLUGIN_PREFIX)
   if(NOT DEFINED remake_prefix)
     remake_set(remake_prefix ${PLUGIN_PREFIX})
