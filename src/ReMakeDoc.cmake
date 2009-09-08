@@ -262,7 +262,7 @@ macro(remake_doc_custom doc_generator doc_command)
     remake_file_mkdir(${doc_output_dir})
 
     if(doc_input)
-      remake_file_glob(doc_input_files ${doc_input})
+      remake_file_glob(doc_input_files FILES DIRECTORIES ${doc_input})
       remake_file_name(doc_extension ${doc_type})
 
       foreach(doc_input_file ${doc_input_files})

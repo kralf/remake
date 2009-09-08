@@ -113,13 +113,18 @@ endmacro(remake_file_suffix)
 #     expressions, defaults to the current directory.
 #   \optional[option] HIDDEN If present, this option prevents hidden
 #     files/directories from being excluded from the result list.
+#   \optional[option] FILES If present, this option causes the macro
+#     to find regular files. Note that this is the default behavior. However,
+#     passing the option may prove useful in cases where both, files and
+#     directories, shall be included in the result list.
 #   \optional[option] DIRECTORIES If present, this option causes the macro
-#     to find directories instead of regular files.
+#     to find directories. With the FILES option being passed in addition,
+#     regular files are also included in the result list.
 #   \required[list] glob A list of glob expressions that is passed to CMake's
 #     file(GLOB ...) macro. See the CMake documentation for usage.
 macro(remake_file_glob file_var)
   remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION HIDDEN 
-    OPTION DIRECTORIES ARGN globs ${ARGN})
+    OPTION FILES OPTION DIRECTORIES ARGN globs ${ARGN})
 
   if(file_working_directory)
     remake_set(file_working_globs)
@@ -136,20 +141,23 @@ macro(remake_file_glob file_var)
   endif(file_working_directory)
 
   file(GLOB ${file_var} ${file_working_globs})
-  
-  if(file_directories)
-    foreach(file_name ${${file_var}})
-      if(NOT IS_DIRECTORY ${file_name})
-        list(REMOVE_ITEM ${file_var} ${file_name})
-      endif(NOT IS_DIRECTORY ${file_name})
-    endforeach(file_name)
-  else(file_directories)
+
+  if(NOT file_directories)
     foreach(file_name ${${file_var}})
       if(IS_DIRECTORY ${file_name})
         list(REMOVE_ITEM ${file_var} ${file_name})
       endif(IS_DIRECTORY ${file_name})
     endforeach(file_name)
-  endif(file_directories)
+    remake_set(file_files ON)
+  endif(NOT file_directories)
+  
+  if(NOT file_files)
+    foreach(file_name ${${file_var}})
+      if(NOT IS_DIRECTORY ${file_name})
+        list(REMOVE_ITEM ${file_var} ${file_name})
+      endif(NOT IS_DIRECTORY ${file_name})
+    endforeach(file_name)
+  endif(NOT file_files)
 
   if(NOT file_hidden)
     foreach(file_name ${${file_var}})
