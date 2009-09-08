@@ -6,6 +6,5 @@ if(PERL_FOUND AND GROFF_FOUND)
   remake_add_documentation(CUSTOM CDoc
     ${PERL_EXECUTABLE} cdoc.pl -c ${cdoc_config} -t
     INPUT ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR}
-    TYPES man ascii utf8 html ps
-    COMPONENT doc)
+    TYPES man ascii utf8 html ps)
 endif(PERL_FOUND AND GROFF_FOUND)

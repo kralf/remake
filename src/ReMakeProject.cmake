@@ -55,6 +55,8 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[value] LICENSE:license The license specified in the project's 
 #     copyleft/copyright agreement, defaults to LGPL. Common values are GPL,
 #     LGPL, MIT, BSD, naming just a few.
+#   \optional[value] COMPONENT:component The optional name of the project's
+#     default install component for targets, defaults to default.
 #   \optional[value] PREFIX:prefix The optional target prefix that is passed
 #     to remake_project_prefix(), defaults to ${REMAKE_PROJECT_FILENAME}-.
 #   \optional[value] INSTALL:dir The directory that shall be used as the 
@@ -67,8 +69,9 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     be shipped with the project package, defaults to copyright.
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY 
-    VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR PREFIX VAR INSTALL
-    VAR SOURCES VAR CONFIGURATIONS VAR README VAR COPYRIGHT ${ARGN})
+    VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR PREFIX VAR COMPONENT
+    VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR README VAR COPYRIGHT
+    ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   if(NOT project_summary)
@@ -107,6 +110,7 @@ macro(remake_project project_name)
   remake_set(REMAKE_PROJECT_CONTACT ${project_contact})
   remake_set(REMAKE_PROJECT_HOME ${project_home})
   remake_set(REMAKE_PROJECT_LICENSE ${project_license})
+  remake_set(REMAKE_PROJECT_COMPONENT ${project_component} DEFAULT default)
   remake_set(REMAKE_PROJECT_README ${project_readme} DEFAULT README)
   remake_set(REMAKE_PROJECT_COPYRIGHT ${project_copyright} DEFAULT copyright)
   remake_set(REMAKE_PROJECT_CHANGELOG changelog)
@@ -165,7 +169,7 @@ macro(remake_project project_name)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
   install(FILES ${project_readme} ${project_copyright} ${project_changelog}
     DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
-    COMPONENT default)
+    COMPONENT ${REMAKE_PROJECT_COMPONENT})
   remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
 
   project(${REMAKE_PROJECT_NAME})

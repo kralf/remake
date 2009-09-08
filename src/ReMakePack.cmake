@@ -43,7 +43,7 @@ remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 #   \optional[value] NAME:name The name of the package to be generated,
 #     defaults to the ReMake project name.
 #   \optional[value] COMPONENT:component The name of the install component
-#     to generate the package from, defaults to default.
+#     to generate the package from, defaults to ${REMAKE_PROJECT_COMPONENT}.
 macro(remake_pack pack_generator)
   if(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
     remake_target(${REMAKE_PACK_ALL_TARGET})
@@ -52,8 +52,12 @@ macro(remake_pack pack_generator)
   remake_arguments(PREFIX pack_ VAR NAME VAR COMPONENT ${ARGN})
   remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_NAME})
 
-  remake_set(pack_prefix ${pack_component})
-  remake_set(pack_component SELF DEFAULT default)
+  remake_set(pack_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
+  if(pack_component STREQUAL REMAKE_PROJECT_COMPONENT)
+    remake_set(pack_prefix)
+  else(pack_component STREQUAL REMAKE_PROJECT_COMPONENT)
+    remake_set(pack_prefix ${pack_component})
+  endif(pack_component STREQUAL REMAKE_PROJECT_COMPONENT)
   remake_file(pack_config ${REMAKE_PACK_DIR}/${pack_component}.cpack)
   remake_file(pack_src_config
     ${REMAKE_PACK_SOURCE_DIR}/${pack_component}.cpack)
@@ -93,10 +97,11 @@ endmacro(remake_pack)
 #   \optional[value] ARCH:architecture The package architecture that is
 #     inscribed into the package manifest, defaults to the local system
 #     architecture as returned by 'dpkg --print-architecture'.
-#   \optional[value] COMPONENT:component The name of the install component
-#     to generate the Debian package from, defaults to the empty string.
+#   \optional[value] COMPONENT:component The name of the install component to
+#     generate the Debian package from, defaults to ${REMAKE_PROJECT_COMPONENT}.
 #     Note that following Debian conventions, the component name is used as 
-#     suffix to the package name.
+#     suffix to the package name. However, a component name matching
+#     ${REMAKE_PROJECT_COMPONENT} results in an empty suffix.
 #   \optional[list] dep An optional list of package dependencies
 #     that are inscribed into the package manifest. The format of a 
 #     dependency should comply to Debian conventions, meaning that the
@@ -112,9 +117,15 @@ macro(remake_pack_deb)
   execute_process(COMMAND dpkg --print-architecture
     OUTPUT_VARIABLE pack_deb_arch OUTPUT_STRIP_TRAILING_WHITESPACE)
   remake_set(pack_arch SELF DEFAULT ${pack_deb_arch})
-  remake_set(pack_prefix ${pack_component})
-  remake_set(pack_suffix ${pack_component})
-
+  remake_set(pack_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
+  if(pack_component STREQUAL REMAKE_PROJECT_COMPONENT)
+    remake_set(pack_prefix)
+    remake_set(pack_suffix)
+  else(pack_component STREQUAL REMAKE_PROJECT_COMPONENT)
+    remake_set(pack_prefix ${pack_component})
+    remake_set(pack_suffix ${pack_component})
+  endif(pack_component STREQUAL REMAKE_PROJECT_COMPONENT)
+  
   if(pack_suffix)
     remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME}-${pack_suffix})
     remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}-${pack_suffix}
@@ -130,7 +141,7 @@ macro(remake_pack_deb)
   remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
   remake_set(CPACK_PACKAGE_FILE_NAME deb/${pack_file})
 
-  remake_pack(DEB ${COMPONENT} NAME ${pack_name})
+  remake_pack(DEB COMPONENT ${pack_component} NAME ${pack_name})
 
   remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET_SUFFIX})
   remake_target_name(pack_install_target ${pack_prefix}

@@ -48,6 +48,10 @@ include(ReMakePrivate)
 #   library source directory is automatically added to the include path,
 #   thus allowing for the library headers to be found from subdirectories.
 #   \required[value] name The name of the shared library target to be defined.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults
+#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
+#     documentation for details.
 #   \optional[value] PREFIX:prefix An optional library name prefix,
 #     defaults to the project's ${LIBRARY_PREFIX}. Note that passing OFF
 #     here results in an empty prefix.
@@ -59,9 +63,10 @@ include(ReMakePrivate)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
 macro(remake_add_library remake_name)
-  remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
-    ${ARGN})
+  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX 
+    ARGN globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(LIBRARY_PREFIX)
   remake_project_get(LIBRARY_DESTINATION)
   remake_project_get(PLUGIN_DESTINATION)
@@ -99,7 +104,7 @@ macro(remake_add_library remake_name)
 
   install(TARGETS ${remake_name}${remake_suffix}
     LIBRARY DESTINATION ${LIBRARY_DESTINATION}
-    COMPONENT default)
+    COMPONENT ${remake_component})
 endmacro(remake_add_library)
 
 ### \brief Add a plugin library target.
@@ -107,6 +112,10 @@ endmacro(remake_add_library)
 #   target from a list of glob expressions. In addition, the macro takes a
 #   list of libraries that are linked into the plugin library target.
 #   \required[value] name The name of the plugin library target to be defined.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults
+#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
+#     documentation for details.
 #   \optional[value] PREFIX:prefix An optional plugin name prefix,
 #     defaults to the project's ${PLUGIN_PREFIX}. Note that passing OFF
 #     here results in an empty prefix.
@@ -118,9 +127,10 @@ endmacro(remake_add_library)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     plugin library target.
 macro(remake_add_plugin remake_name)
-  remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
-    ${ARGN})
+  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
+    ARGN globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(PLUGIN_PREFIX)
   if(NOT DEFINED remake_prefix)
     remake_set(remake_prefix ${PLUGIN_PREFIX})
@@ -156,7 +166,7 @@ macro(remake_add_plugin remake_name)
 
   install(TARGETS ${remake_name}${remake_suffix}
     LIBRARY DESTINATION ${remake_plugins}
-    COMPONENT default)
+    COMPONENT ${remake_component})
 endmacro(remake_add_plugin)
 
 ### \brief Add executable targets.
@@ -165,6 +175,10 @@ endmacro(remake_add_plugin)
 #   resolved from the glob expressions. The target bears the name of the
 #   source file without the file extension. In addition, the macro takes a
 #   list of libraries that are linked into the executable targets.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults
+#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
+#     documentation for details.
 #   \optional[value] PREFIX:prefix An optional executable name prefix,
 #     defaults to the project's ${EXECUTABLE_PREFIX}. Note that passing
 #     OFF here results in an empty prefix.
@@ -179,6 +193,7 @@ macro(remake_add_executables)
   remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
     ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(EXECUTABLE_PREFIX)
   remake_project_get(EXECUTABLE_DESTINATION)
   if(NOT DEFINED remake_prefix)
@@ -210,7 +225,7 @@ macro(remake_add_executables)
 
     install(TARGETS ${remake_name}${remake_suffix}
       RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
-      COMPONENT default)
+      COMPONENT ${remake_component})
   endforeach(remake_source)
 endmacro(remake_add_executables)
 
@@ -252,11 +267,16 @@ endmacro(remake_add_headers)
 #   a list of glob expressions.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the scripts.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults
+#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
+#     documentation for details.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
 #     to the script names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_scripts)
-  remake_arguments(PREFIX remake_ VAR SUFFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR COMPONENT VAR SUFFIX ARGN globs ${ARGN})
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(SCRIPT_DESTINATION)
 
   if(REMAKE_BRANCH_COMPILE)
@@ -270,7 +290,7 @@ macro(remake_add_scripts)
       ${remake_script} ${remake_suffix})
     install(PROGRAMS ${remake_script}
       DESTINATION ${SCRIPT_DESTINATION}
-      COMPONENT default
+      COMPONENT ${remake_component}
       RENAME ${remake_script_suffixed})
   endforeach(remake_script)
 endmacro(remake_add_scripts)
@@ -282,11 +302,16 @@ endmacro(remake_add_scripts)
 #   prior to the install stage.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the configuration file templates.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults
+#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
+#     documentation for details.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
 #     to the configuration file names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_configurations)
-  remake_arguments(PREFIX remake_ VAR SUFFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR COMPONENT VAR SUFFIX ARGN globs ${ARGN})
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(CONFIGURATION_DESTINATION)
 
   if(REMAKE_BRANCH_COMPILE)
@@ -301,7 +326,7 @@ macro(remake_add_configurations)
       ${remake_config_relative} ${remake_suffix})
     install(FILES ${remake_config}
       DESTINATION ${CONFIGURATION_DESTINATION}
-      COMPONENT default
+      COMPONENT ${remake_component}
       RENAME ${remake_config_suffixed})
   endforeach(remake_config)
 endmacro(remake_add_configurations)
@@ -311,20 +336,21 @@ endmacro(remake_add_configurations)
 #   from a list of glob expressions.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the files.
-#   \optional[value] SUFFIX:suffix An optional suffix that is prepended
-#     to the file names during installation, forced to ${REMAKE_BRANCH_SUFFIX}
-#     if defined within a ReMake branch.
 #   \optional[value] INSTALL:dirname The directory that shall be passed as
 #     the files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults to default.
-#     See the CMake documentation for details.
+#     component that is passed to CMake's install() macro, defaults
+#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
+#     documentation for details.
+#   \optional[value] SUFFIX:suffix An optional suffix that is prepended
+#     to the file names during installation, forced to ${REMAKE_BRANCH_SUFFIX}
+#     if defined within a ReMake branch.
 macro(remake_add_files)
-  remake_arguments(PREFIX remake_ VAR SUFFIX VAR INSTALL VAR COMPONENT
+  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
     ARGN globs ${ARGN})
   remake_project_get(FILE_DESTINATION)
   remake_set(remake_install SELF DEFAULT ${FILE_DESTINATION})
-  remake_set(remake_component SELF DEFAULT default)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
 
   if(REMAKE_BRANCH_COMPILE)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
@@ -349,12 +375,17 @@ endmacro(remake_add_files)
 #     the correct behavior of directory inclusion might be sensitive to order.
 #     In some cases, it is therefore useful to specify directories in the
 #     correct order of inclusion.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is assigned to ${REMAKE_PROJECT_COMPONENT} before
+#     subdirectory inclusion, defaults to ${REMAKE_PROJECT_COMPONENT}. See
+#     ReMakeProject for details.
 #   \optional[value] IF:option The name of a project option variable that
 #     conditions directory inclusion. See ReMakeProject for the correct usage
 #     of ReMake project options.
 macro(remake_add_directories)
-  remake_arguments(PREFIX remake_ VAR IF ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR COMPONENT VAR IF ARGN globs ${ARGN})
   remake_set(remake_globs SELF DEFAULT *)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
 
   if(remake_if)
     remake_project_get(${remake_if} OUTPUT remake_option)
@@ -371,8 +402,12 @@ macro(remake_add_directories)
         remake_list_push(remake_dirs ${remake_file})
       endif(IS_DIRECTORY ${remake_file})
     endforeach(remake_file)
+
     foreach(remake_dir ${remake_dirs})
+      remake_set(remake_current_component ${REMAKE_PROJECT_COMPONENT})
+      remake_set(REMAKE_PROJECT_COMPONENT ${remake_component})
       add_subdirectory(${remake_dir})
+      remake_set(REMAKE_PROJECT_COMPONENT ${remake_current_component})
     endforeach(remake_dir)
   endif(remake_option)
 endmacro(remake_add_directories)
