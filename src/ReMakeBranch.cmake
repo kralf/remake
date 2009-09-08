@@ -203,35 +203,38 @@ endmacro(remake_branch_link)
 #   for which dependencies have been defined.
 #   \required[value] variable The name of a variable to be assigned the
 #     result list of include directories.
-#   \required[list] dirname The list of directories to be included. If a
-#     directory is located within any of the branches, it is substituted
-#     for a list of branch directories. Otherwise, the directory is assumed
-#     to be external and its name copied to the result list.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the directories to be added to the compiler's
+#     include path. If a directory is located within any of the branches, it
+#     is substituted for a list of branch directories. Otherwise, the directory
+#     is assumed to be external and its name copied to the result list.
 #   \optional[value] FROM:branch The optional branch name to include the
 #     directories from. This argument is used for recursively resolving
 #     include dependencies between branches and should not be passed directly
 #     from a CMakeLists.txt file.
 macro(remake_branch_include branch_var)
-  remake_arguments(PREFIX branch_ ARGN dirs VAR FROM ${ARGN})
+  remake_arguments(PREFIX branch_ ARGN globs VAR FROM ${ARGN})
   remake_set(branch_from SELF DEFAULT ${REMAKE_BRANCH_NAME})
   remake_branch_get(BRANCH_DEPENDS FROM ${branch_from})
 
   remake_set(${branch_var})
-  foreach(branch_dir ${branch_dirs})
-    get_filename_component(branch_dir ${branch_dir} ABSOLUTE)
-    if(branch_dir MATCHES ^${REMAKE_BRANCH_ROOT})
-      file(RELATIVE_PATH branch_relative ${REMAKE_BRANCH_ROOT} ${branch_dir})
+  foreach(branch_glob ${branch_globs})
+    get_filename_component(branch_glob ${branch_glob} ABSOLUTE)
+    if(branch_glob MATCHES ^${REMAKE_BRANCH_ROOT})
+      file(RELATIVE_PATH branch_relative_glob ${REMAKE_BRANCH_ROOT}
+        ${branch_glob})
       remake_branch_get(BRANCH_ROOT FROM ${branch_from})
-      if(IS_DIRECTORY ${BRANCH_ROOT}/${branch_relative})
-        remake_list_push(${branch_var} ${BRANCH_ROOT}/${branch_relative})
-      endif(IS_DIRECTORY ${BRANCH_ROOT}/${branch_relative})
-    else(branch_dir MATCHES ^${REMAKE_BRANCH_ROOT})
-      remake_list_push(${branch_var} ${branch_dir})
-    endif(branch_dir MATCHES ^${REMAKE_BRANCH_ROOT})
-  endforeach(branch_dir)
+      remake_file_glob(branch_dirs DIRECTORIES
+        ${BRANCH_ROOT}/${branch_relative_glob})
+      remake_list_push(${branch_var} ${branch_dirs})
+    else(branch_glob MATCHES ^${REMAKE_BRANCH_ROOT})
+      remake_file_glob(branch_dirs DIRECTORIES ${branch_glob})
+      remake_list_push(${branch_var} ${branch_dirs})
+    endif(branch_glob MATCHES ^${REMAKE_BRANCH_ROOT})
+  endforeach(branch_glob)
 
   foreach(branch_depends ${BRANCH_DEPENDS})
-    remake_branch_include(branch_depends_dirs ${branch_dirs}
+    remake_branch_include(branch_depends_dirs ${branch_globs}
       FROM ${branch_depends})
     remake_list_push(${branch_var} ${branch_depends_dirs})
   endforeach(branch_depends)

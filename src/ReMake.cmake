@@ -82,10 +82,10 @@ macro(remake_add_library remake_name)
     remake_branch_add_targets(${remake_name})
   endif(REMAKE_BRANCH_COMPILE)
 
-  remake_include()
   remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     ${remake_globs})
   remake_target_get_sources(remake_target_sources ${remake_name})
+  remake_include()
   add_library(${remake_name}${remake_suffix}
     SHARED ${remake_sources} ${remake_target_sources})
   set_target_properties(${remake_name}${remake_suffix}
@@ -394,15 +394,7 @@ macro(remake_add_directories)
   endif(remake_if)
 
   if(remake_option)
-    remake_file_glob(remake_files ${remake_globs})
-    remake_set(remake_dirs)
-
-    foreach(remake_file ${remake_files})
-      if(IS_DIRECTORY ${remake_file})
-        remake_list_push(remake_dirs ${remake_file})
-      endif(IS_DIRECTORY ${remake_file})
-    endforeach(remake_file)
-
+    remake_file_glob(remake_dirs DIRECTORIES ${remake_globs})
     foreach(remake_dir ${remake_dirs})
       remake_set(remake_current_component ${REMAKE_PROJECT_COMPONENT})
       remake_set(REMAKE_PROJECT_COMPONENT ${remake_component})
@@ -436,20 +428,20 @@ endmacro(remake_add_documentation)
 #   directory names into absolute-path names before passing them as
 #   arguments to include_directories(). If defined within a ReMake branch, 
 #   the macro calls remake_branch_include() instead.
-#   \optional[list] dirname The directories to be added to the compiler's
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the directories to be added to the compiler's
 #     include path, defaults to the current directory.
 macro(remake_include)
-  remake_arguments(PREFIX remake_ ARGN dirs ${ARGN})
-  remake_set(remake_dirs SELF DEFAULT .)
+  remake_arguments(PREFIX remake_ ARGN globs ${ARGN})
+  remake_set(remake_globs SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
 
   if(REMAKE_BRANCH_COMPILE)
-    remake_branch_include(remake_dirs ${remake_dirs})
+    remake_branch_include(remake_dirs ${remake_globs})
+  else(REMAKE_BRANCH_COMPILE)
+    remake_file_glob(remake_dirs DIRECTORIES ${remake_globs})
   endif(REMAKE_BRANCH_COMPILE)
 
-  foreach(remake_dir ${remake_dirs})
-    get_filename_component(remake_dir ${remake_dir} ABSOLUTE)
-    include_directories(${remake_dir})
-  endforeach(remake_dir)
+  include_directories(${remake_dirs})
 endmacro(remake_include)
 
 ### \brief Add a flag to the compiler command line.

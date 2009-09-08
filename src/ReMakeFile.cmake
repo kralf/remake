@@ -101,23 +101,25 @@ macro(remake_file_suffix file_var file_name)
   endif(file_suffixes)
 endmacro(remake_file_suffix)
 
-### \brief Find files using a glob expression.
-#   This macro searches the current directory for files having names that 
-#   match any of the glob expression passed to the macro and returns a result
-#   list of filenames. By default, hidden files will be excluded from the
-#   result list.
+### \brief Find files or directories using a glob expression.
+#   This macro searches the current directory for files or directories having
+#   names that match any of the glob expression passed to the macro and returns
+#   a result list of file/directory names. By default, hidden files/directories
+#   will be excluded from the result list.
 #   \required[value] variable The name of the output variable to hold the 
-#     matched filenames.
+#     matched file/directory names.
 #   \optional[value] WORKING_DIRECTORY:dirname An optional directory name that
 #     refers to the working directory for resolving relative-path glob 
 #     expressions, defaults to the current directory.
-#   \optional[option] HIDDEN If present, this option prevents hidden files
-#     from being excluded from the result list.
+#   \optional[option] HIDDEN If present, this option prevents hidden
+#     files/directories from being excluded from the result list.
+#   \optional[option] DIRECTORIES If present, this option causes the macro
+#     to find directories instead of regular files.
 #   \required[list] glob A list of glob expressions that is passed to CMake's
 #     file(GLOB ...) macro. See the CMake documentation for usage.
 macro(remake_file_glob file_var)
-  remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION HIDDEN ARGN globs
-    ${ARGN})
+  remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION HIDDEN 
+    OPTION DIRECTORIES ARGN globs ${ARGN})
 
   if(file_working_directory)
     remake_set(file_working_globs)
@@ -134,9 +136,24 @@ macro(remake_file_glob file_var)
   endif(file_working_directory)
 
   file(GLOB ${file_var} ${file_working_globs})
+  
+  if(file_directories)
+    foreach(file_name ${${file_var}})
+      if(NOT IS_DIRECTORY ${file_name})
+        list(REMOVE_ITEM ${file_var} ${file_name})
+      endif(NOT IS_DIRECTORY ${file_name})
+    endforeach(file_name)
+  else(file_directories)
+    foreach(file_name ${${file_var}})
+      if(IS_DIRECTORY ${file_name})
+        list(REMOVE_ITEM ${file_var} ${file_name})
+      endif(IS_DIRECTORY ${file_name})
+    endforeach(file_name)
+  endif(file_directories)
+
   if(NOT file_hidden)
     foreach(file_name ${${file_var}})
-      string(REGEX MATCH "^.*/[.].*$" file_matched ${file_name})
+      string(REGEX MATCH "^.*/[.][^/]*$" file_matched ${file_name})
       if(file_matched)
         list(REMOVE_ITEM ${file_var} ${file_name})
       endif(file_matched)
