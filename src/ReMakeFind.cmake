@@ -41,16 +41,22 @@ include(FindPkgConfig)
 #   \optional[list] arg A list of optional arguments to be forwared to
 #     CMake's find_package() and pkg_check_modules(), respectively. See the 
 #     CMake documentation for the correct usage.
+#   \optional[option] OPTIONAL If provided, this option is passed on to
+#     remake_find_result().
 macro(remake_find_package find_package)
-  remake_arguments(PREFIX find_ OPTION CONFIG ARGN args ${ARGN})
-  remake_var_name(find_package_var ${find_package} FOUND)
+  remake_arguments(PREFIX find_ OPTION CONFIG ARGN args OPTION OPTIONAL
+    ${ARGN})
 
   if(find_config)
-    pkg_check_modules(${find_package} ${find_args})
-    remake_find_result(${find_package} ${${find_package_var}} ${find_args})
+    remake_var_name(find_package_var ${find_package})
+    pkg_check_modules(${find_package_var} ${find_args})
+    remake_find_result(${find_package} ${${find_package_var}_FOUND}
+      ${OPTIONAL})
   else(find_config)
+    remake_var_name(find_package_var ${find_package} FOUND)
     find_package(${find_package} ${find_args})
-    remake_find_result(${find_package} ${${find_package_var}} ${find_args})
+    remake_find_result(${find_package} ${${find_package}_FOUND}
+      ${${find_package_var}} ${OPTIONAL})
   endif(find_config)
 endmacro(remake_find_package)
 
@@ -61,31 +67,32 @@ endmacro(remake_find_package)
 #   ${LIBRARY}_FOUND is set to TRUE. Furthermore, ${LIBRARY}_LIBRARY and
 #   ${LIBRARY}_HEADERS are initialized for linkage and header inclusion. 
 #   Arguments given in addition to the library and header name are forwarded
-#   to find_library(), find_path(), and remake_find_result().
+#   to find_library() and find_path().
 #   \required[value] library The name of the library to be discovered.
 #   \required[value] header The name of the header to be discovered.
 #   \optional[value] PACKAGE:package The name of the package containing the
 #     requested library, defaults to the provided library name and is used
 #     for display and to set the PATH_SUFFIXES argument for find_path().
 #   \optional[list] arg A list of optional arguments to be forwared to
-#     CMake's find_library(), find_path(), and remake_find_result().
-#     See the CMake documentation for the correct usage of find_library()
-#     and find_path().
+#     CMake's find_library() and find_path(). See the CMake documentation
+#     for correct usage.
+#   \optional[option] OPTIONAL If provided, this option is passed on to
+#     remake_find_result().
 macro(remake_find_library find_lib find_header)
-  remake_arguments(PREFIX find_ VAR PACKAGE ARGN args ${ARGN})
+  remake_arguments(PREFIX find_ VAR PACKAGE ARGN args OPTION OPTIONAL ${ARGN})
   remake_set(find_package SELF DEFAULT ${find_lib})
   remake_var_name(find_lib_var ${find_lib} LIBRARY)
   remake_var_name(find_headers_var ${find_lib} HEADERS)
 
-  find_library(${find_lib_var} NAMES ${find_lib} ${args})
+  find_library(${find_lib_var} NAMES ${find_lib} ${find_args})
   if(${find_lib_var})
     find_path(${find_headers_var} NAMES ${find_header} 
-      PATH_SUFFIXES ${find_package} ${args})
+      PATH_SUFFIXES ${find_package} ${find_args})
   else(${find_lib_var})
     remake_set(${find_headers_var})
   endif(${find_lib_var})
 
-  remake_find_result(${find_lib} ${${find_headers_var}} ${args})
+  remake_find_result(${find_lib} ${${find_headers_var}} ${OPTIONAL})
 endmacro(remake_find_library)
 
 ### \brief Find an executable program.
@@ -94,22 +101,23 @@ endmacro(remake_find_library)
 #   name conversion of ${PACKAGE}_FOUND is set to TRUE. Furthermore, 
 #   ${PACKAGE}_EXECUTABLE is initialized with the full path to the executable.
 #   Arguments given in addition to the executable name are forwarded to
-#   find_program() and remake_find_result().
+#   find_program().
 #   \required[value] executable The name of the executable to be discovered.
 #   \optional[value] PACKAGE:package The name of the package containing the
 #     requested executable, defaults to the upper-case conversion of the 
 #     executable name and is used to set ${PACKAGE}_FOUND.
 #   \optional[list] arg A list of optional arguments to be forwared to
-#     CMake's find_program() and remake_find_result(). See the CMake
-#     documentation for the correct usage of find_program().
+#     CMake's find_program(). See the CMake documentation for correct usage.
+#   \optional[option] OPTIONAL If provided, this option is passed on to
+#     remake_find_result().
 macro(remake_find_executable find_exec)
-  remake_arguments(PREFIX find_ VAR PACKAGE ARGN args ${ARGN})
+  remake_arguments(PREFIX find_ VAR PACKAGE ARGN args OPTION OPTIONAL ${ARGN})
   remake_set(find_package SELF DEFAULT ${find_exec})
   remake_var_name(find_exec_var ${find_package} EXECUTABLE)  
 
-  find_program(${find_exec_var} NAMES ${find_exec})
+  find_program(${find_exec_var} NAMES ${find_exec} ${find_args})
 
-  remake_find_result(${find_package} ${${find_exec_var}} ${find_args})
+  remake_find_result(${find_package} ${${find_exec_var}} ${OPTIONAL})
 endmacro(remake_find_executable)
 
 ### \brief Evaluate the result of a find operation.
