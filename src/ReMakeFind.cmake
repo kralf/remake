@@ -47,7 +47,7 @@ endmacro(remake_find_package)
 #   This macro calls CMake's find_library() and find_path() to discover
 #   a library and it's header files installed on the system. If the 
 #   library and the header were found, the variable name conversion of 
-#   ${LIBRARY}_FOUND is set to TRUE. In addition, ${LIBRARY}_LIBRARY and
+#   ${LIBRARY}_FOUND is set to TRUE. Furthermore, ${LIBRARY}_LIBRARY and
 #   ${LIBRARY}_HEADERS are initialized for linkage and header inclusion. 
 #   Arguments given in addition to the library and header name are forwarded
 #   to find_library(), find_path(), and remake_find_result().
@@ -79,10 +79,11 @@ endmacro(remake_find_library)
 
 ### \brief Find an executable program.
 #   This macro calls CMake's find_program() to discover an executable
-#   installed on the system. If the executable was found, the variable name
-#   conversion of ${PACKAGE}_FOUND is set to TRUE. Arguments given in 
-#   addition to the executable name are forwarded to find_program()
-#   and remake_find_result().
+#   installed on the system. If the executable was found, the variable
+#   name conversion of ${PACKAGE}_FOUND is set to TRUE. Furthermore, 
+#   ${PACKAGE}_EXECUTABLE is initialized with the full path to the executable.
+#   Arguments given in addition to the executable name are forwarded to
+#   find_program() and remake_find_result().
 #   \required[value] executable The name of the executable to be discovered.
 #   \optional[value] PACKAGE:package The name of the package containing the
 #     requested executable, defaults to the upper-case conversion of the 
@@ -91,7 +92,7 @@ endmacro(remake_find_library)
 #     CMake's find_program() and remake_find_result(). See the CMake
 #     documentation for the correct usage of find_program().
 macro(remake_find_executable find_exec)
-  remake_arguments(prefix find_ VAR PACKAGE ${ARGN})
+  remake_arguments(PREFIX find_ VAR PACKAGE ${ARGN})
   remake_set(find_package SELF DEFAULT ${find_exec})
   remake_var_name(find_exec_var ${find_package} EXECUTABLE)  
 
