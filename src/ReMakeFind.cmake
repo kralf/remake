@@ -20,27 +20,38 @@
 
 include(ReMakePrivate)
 
+include(FindPkgConfig)
+
 ### \brief ReMake package and file discovery macros
 #   The ReMake package and file discovery macros provide a useful abstraction
 #   to CMake's native find functionalities.
 
 ### \brief Find a package.
-#   This macro calls CMake's find_package() to find and load settings from an 
-#   external project installed on the system. If the package was found, 
-#   essential variables are initialized and the upper-case conversion
-#   of ${PACKAGE}_FOUND is set to TRUE. Arguments given in addition to the
-#   package name are forwarded to find_package() and remake_find_result().
+#   This macro calls CMake's find_package() or pkg_check_modules() to find
+#   and load settings from an external project installed on the system. If
+#   the package was found, essential variables are initialized and the
+#   upper-case conversion of ${PACKAGE}_FOUND is set to TRUE. Arguments 
+#   given in addition to the package name are forwarded to find_package() and
+#   pkg_check_modules(), respectively.
 #   \required[value] package The name of the package to be discovered. Note
 #     that CMake module naming conventions require the exact casing of
 #     package names here, usually starting with a capital letter.
+#   \optional[option] CONFIG If present, this option causes the macro to
+#     call CMake's pkg_check_modules() instead of find_package().
 #   \optional[list] arg A list of optional arguments to be forwared to
-#     CMake's find_package() and remake_find_result(). See the CMake
-#     documentation for the correct usage of find_package().
+#     CMake's find_package() and pkg_check_modules(), respectively. See the 
+#     CMake documentation for the correct usage.
 macro(remake_find_package find_package)
+  remake_arguments(PREFIX find_ OPTION CONFIG ARGN args ${ARGN})
   remake_var_name(find_package_var ${find_package} FOUND)
 
-  find_package(${find_package} ${ARGN})
-  remake_find_result(${find_package} ${${find_package_var}} ${ARGN})
+  if(find_config)
+    pkg_check_modules(${find_package} ${find_args})
+    remake_find_result(${find_package} ${${find_package_var}} ${find_args})
+  else(find_config)
+    find_package(${find_package} ${find_args})
+    remake_find_result(${find_package} ${${find_package_var}} ${find_args})
+  endif(find_config)
 endmacro(remake_find_package)
 
 ### \brief Find a library and it's header file.
@@ -92,13 +103,13 @@ endmacro(remake_find_library)
 #     CMake's find_program() and remake_find_result(). See the CMake
 #     documentation for the correct usage of find_program().
 macro(remake_find_executable find_exec)
-  remake_arguments(PREFIX find_ VAR PACKAGE ${ARGN})
+  remake_arguments(PREFIX find_ VAR PACKAGE ARGN args ${ARGN})
   remake_set(find_package SELF DEFAULT ${find_exec})
   remake_var_name(find_exec_var ${find_package} EXECUTABLE)  
 
   find_program(${find_exec_var} NAMES ${find_exec})
 
-  remake_find_result(${find_package} ${${find_exec_var}} ${ARGN})
+  remake_find_result(${find_package} ${${find_exec_var}} ${find_args})
 endmacro(remake_find_executable)
 
 ### \brief Evaluate the result of a find operation.
