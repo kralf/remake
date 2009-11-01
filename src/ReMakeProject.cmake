@@ -23,8 +23,8 @@ include(ReMakeFile)
 include(ReMakePrivate)
 
 ### \brief ReMake project macros
-#   The ReMake project macros are required by most processing macros in 
-#   ReMake. They maintain the environment necessary for initializing default 
+#   The ReMake project macros are required by most processing macros in
+#   ReMake. They maintain the environment necessary for initializing default
 #   values throughout the modules, thus introducing convenience and
 #   conventions into ReMake's naming schemes.
 
@@ -52,26 +52,29 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     usually a valid e-mail address.
 #   \optional[value] HOME:home A URL pointing to the project homepage, where
 #     users may find further documentation and bug tracking facilities.
-#   \optional[value] LICENSE:license The license specified in the project's 
+#   \optional[value] LICENSE:license The license specified in the project's
 #     copyleft/copyright agreement, defaults to LGPL. Common values are GPL,
 #     LGPL, MIT, BSD, naming just a few.
 #   \optional[value] COMPONENT:component The optional name of the project's
 #     default install component for targets, defaults to default.
+#   \optional[value] FILENAME:name An optional and valid filename that is
+#     used to initialize ${REMAKE_PROJECT_FILENAME}, defaults to the filename
+#     conversion of the project name.
 #   \optional[value] PREFIX:prefix The optional target prefix that is passed
 #     to remake_project_prefix(), defaults to ${REMAKE_PROJECT_FILENAME}-.
-#   \optional[value] INSTALL:dir The directory that shall be used as the 
+#   \optional[value] INSTALL:dir The directory that shall be used as the
 #     project's preset install prefix, defaults to /usr/local.
 #   \optional[value] SOURCES:dir The directory containing the project
 #     source tree, defaults to src.
 #   \optional[value] README:file The name of the readme file that will be
 #     shipped with the project package, defaults to README.
-#   \optional[value] COPYRIGHT:file The name of the copyright file that will 
+#   \optional[value] COPYRIGHT:file The name of the copyright file that will
 #     be shipped with the project package, defaults to copyright.
 macro(remake_project project_name)
-  remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY 
-    VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR PREFIX VAR COMPONENT
-    VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR README VAR COPYRIGHT
-    ${ARGN})
+  remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
+    VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
+    VAR COMPONENT VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR README
+    VAR COPYRIGHT ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   if(NOT project_summary)
@@ -87,20 +90,23 @@ macro(remake_project project_name)
     "GNU Lesser General Public License (LGPL)")
 
   remake_set(REMAKE_PROJECT_NAME ${project_name})
-  remake_file_name(REMAKE_PROJECT_FILENAME ${REMAKE_PROJECT_NAME})
+
+  remake_file_name(project_filename_conversion ${REMAKE_PROJECT_NAME})
+  remake_set(project_filename SELF DEFAULT ${project_filename_conversion})
+  remake_set(REMAKE_PROJECT_FILENAME ${project_filename})
 
   remake_set(project_regex "^([0-9]+)[.]?([0-9]*)[.]?([0-9]*)$")
-  string(REGEX REPLACE ${project_regex} "\\1" REMAKE_PROJECT_MAJOR 
+  string(REGEX REPLACE ${project_regex} "\\1" REMAKE_PROJECT_MAJOR
     ${project_version})
-  string(REGEX REPLACE ${project_regex} "\\2" REMAKE_PROJECT_MINOR 
+  string(REGEX REPLACE ${project_regex} "\\2" REMAKE_PROJECT_MINOR
     ${project_version})
-  string(REGEX REPLACE ${project_regex} "\\3" REMAKE_PROJECT_PATCH 
+  string(REGEX REPLACE ${project_regex} "\\3" REMAKE_PROJECT_PATCH
     ${project_version})
   remake_set(REMAKE_PROJECT_MAJOR SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_MINOR SELF DEFAULT 0)
   remake_svn_revision(project_revision)
   remake_set(REMAKE_PROJECT_PATCH SELF DEFAULT ${project_revision})
-  remake_set(REMAKE_PROJECT_VERSION 
+  remake_set(REMAKE_PROJECT_VERSION
     ${REMAKE_PROJECT_MAJOR}.${REMAKE_PROJECT_MINOR}.${REMAKE_PROJECT_PATCH})
   remake_set(REMAKE_PROJECT_RELEASE ${project_release})
 
@@ -124,30 +130,30 @@ macro(remake_project project_name)
     DEFAULT conf)
 
   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local 
+    remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local
       CACHE PATH "Install path prefix, prepended onto install directories."
       FORCE)
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
   remake_set(project_prefix SELF DEFAULT ${REMAKE_PROJECT_FILENAME}-)
-  remake_project_prefix(LIBRARY ${project_prefix} 
+  remake_project_prefix(LIBRARY ${project_prefix}
     PLUGIN ${project_prefix}
     EXECUTABLE ${project_prefix})
 
-  remake_project_set(LIBRARY_DESTINATION lib CACHE PATH 
+  remake_project_set(LIBRARY_DESTINATION lib CACHE PATH
     "Install destination of project libraries.")
-  remake_project_set(EXECUTABLE_DESTINATION bin CACHE PATH 
+  remake_project_set(EXECUTABLE_DESTINATION bin CACHE PATH
     "Install destination of project executables.")
-  remake_project_set(PLUGIN_DESTINATION 
+  remake_project_set(PLUGIN_DESTINATION
     lib/${REMAKE_PROJECT_FILENAME} CACHE PATH
     "Install destination of project plugins.")
   remake_project_set(SCRIPT_DESTINATION bin CACHE PATH
     "Install destination of project scripts.")
-  remake_project_set(FILE_DESTINATION share/${REMAKE_PROJECT_FILENAME} 
+  remake_project_set(FILE_DESTINATION share/${REMAKE_PROJECT_FILENAME}
     CACHE PATH "Install destination of project files.")
   remake_project_set(CONFIGURATION_DESTINATION /etc/${REMAKE_PROJECT_FILENAME}
     CACHE PATH "Install destination of configuration files.")
-  remake_project_set(HEADER_DESTINATION include/${REMAKE_PROJECT_FILENAME} 
+  remake_project_set(HEADER_DESTINATION include/${REMAKE_PROJECT_FILENAME}
     CACHE PATH "Install destination of project development headers.")
 
   message(STATUS "Project: ${REMAKE_PROJECT_NAME} "
@@ -183,10 +189,10 @@ macro(remake_project project_name)
 endmacro(remake_project)
 
 ### \brief Define the value of a ReMake project variable.
-#   This macro defines a variable matching the ReMake naming conventions. 
-#   The variable name is automatically prefixed with an upper-case 
-#   conversion of the project name. Thus, variables may appear in the cache 
-#   as ${PROJECT_NAME}_${VAR_NAME}. Additional arguments are passed on to 
+#   This macro defines a variable matching the ReMake naming conventions.
+#   The variable name is automatically prefixed with an upper-case
+#   conversion of the project name. Thus, variables may appear in the cache
+#   as ${PROJECT_NAME}_${VAR_NAME}. Additional arguments are passed on to
 #   CMake's set() macro.
 #   \required[value] variable The name of the project variable to be defined.
 #   \optional[list] arg The arguments to be passed on to CMake's set() macro.
@@ -219,7 +225,7 @@ endmacro(remake_project_get)
 #   This macro provides a ReMake project option for the user to select as ON
 #   or OFF. The option name is automatically converted into a ReMake project
 #   variable.
-#   \required[value] variable The name of the option variable that is 
+#   \required[value] variable The name of the option variable that is
 #     converted to match ReMake naming conventions for variables.
 #   \required[value] description A description string that explains the
 #     purpose of this option.
@@ -238,7 +244,7 @@ macro(remake_project_option project_option project_description project_default)
 endmacro(remake_project_option)
 
 ### \brief Define the ReMake project prefix for target output.
-#   This macro initializes the ReMake project prefix for libaries, plugins, 
+#   This macro initializes the ReMake project prefix for libaries, plugins,
 #   and executables produced by all targets. It gets invoked by
 #   remake_project() and needs not be called directly from a CMakeLists.txt
 #   file. Note that undefined prefixes default to ${REMAKE_PROJECT_FILENAME}-.
@@ -264,11 +270,11 @@ macro(remake_project_prefix)
 endmacro(remake_project_prefix)
 
 ### \brief Create the ReMake project configuration header.
-#   This macro creates the project configuration header, commonly named 
+#   This macro creates the project configuration header, commonly named
 #   config.h, by modifying the contents of a given header template based on
 #   ReMake project settings through remake_file_configure(). In addition,
 #   the macro initializes ${REMAKE_PROJECT_HEADER} with the configuration
-#   output file and adds the header's location to the include path of all 
+#   output file and adds the header's location to the include path of all
 #   project targets. See ReMakeFile for the correct usage of file
 #   configuration.
 #   \required[value] source The source template of the header to be configured
@@ -281,6 +287,6 @@ macro(remake_project_header project_source)
     get_filename_component(project_path ${REMAKE_PROJECT_HEADER} PATH)
     include_directories(${project_path})
   else(NOT REMAKE_PROJECT_HEADER)
-    message(FATAL_ERROR "Duplicate project configuration header!") 
+    message(FATAL_ERROR "Duplicate project configuration header!")
   endif(NOT REMAKE_PROJECT_HEADER)
 endmacro(remake_project_header)
