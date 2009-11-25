@@ -325,6 +325,7 @@ endmacro(remake_add_scripts)
 macro(remake_add_configurations)
   remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
     ARGN globs ${ARGN})
+  remake_project_get(CONFIGURATION_DESTINATION)
   remake_set(remake_install SELF DEFAULT ${CONFIGURATION_DESTINATION})
   remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(CONFIGURATION_DESTINATION)
