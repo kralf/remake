@@ -30,16 +30,16 @@ remake_set(REMAKE_SVN_DIR ReMakeSVN)
 #   This macro retrieves the Subversion head revision of the working directory.
 #   The macro defines an output variable with the name provided and assigns the
 #   revision number or 0 for non-versioned directories.
-#   \required[value] variable The name of a variable to be assigned the 
+#   \required[value] variable The name of a variable to be assigned the
 #     revision number.
 macro(remake_svn_revision svn_var)
   remake_set(${svn_var} 0)
-  
+
   if(SUBVERSION_FOUND)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
       execute_process(COMMAND ${Subversion_SVN_EXECUTABLE} info
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        OUTPUT_VARIABLE svn_info)
+        OUTPUT_VARIABLE svn_info ERROR_QUIET)
       string(REGEX REPLACE ".*Revision: ([0-9]*).*" "\\1" ${svn_var}
         ${svn_info})
     endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
@@ -60,7 +60,7 @@ endmacro(remake_svn_revision)
 macro(remake_svn_log svn_file)
   remake_arguments(PREFIX svn_ VAR REVISION VAR OUTPUT ${ARGN})
   remake_set(svn_revision SELF DEFAULT 0:HEAD)
-  
+
   if(SUBVERSION_FOUND)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
       if(NOT IS_ABSOLUTE ${svn_file})
@@ -72,12 +72,12 @@ macro(remake_svn_log svn_file)
       remake_file_mkdir(${REMAKE_SVN_DIR})
       remake_file(svn_head ${REMAKE_SVN_DIR}/head)
       add_custom_command(OUTPUT ${svn_head}
-        COMMAND ${Subversion_SVN_EXECUTABLE} info | grep ^Revision | 
+        COMMAND ${Subversion_SVN_EXECUTABLE} info | grep ^Revision |
           grep -o [0-9]\\+ > ${svn_head} VERBATIM
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries)
       add_custom_command(OUTPUT ${svn_absolute}
-        COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision} 
+        COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision}
           ${CMAKE_CURRENT_SOURCE_DIR} > ${svn_absolute}
         DEPENDS ${svn_head})
 
@@ -88,4 +88,4 @@ macro(remake_svn_log svn_file)
   endif(SUBVERSION_FOUND)
 endmacro(remake_svn_log)
 
-remake_find_package(Subversion QUIET)
+remake_find_package(Subversion QUIET OPTIONAL)

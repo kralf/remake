@@ -22,5 +22,5 @@ remake_doc(
   html
 )
 
-remake_pack_deb(ARCH all "cmake (>= 2.6)")
+remake_pack_deb(ARCH all "cmake (>= 2.6.2)")
 remake_pack_deb(ARCH all COMPONENT doc)

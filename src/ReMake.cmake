@@ -28,6 +28,7 @@ include(ReMakeQt4)
 include(ReMakeDoc)
 include(ReMakePack)
 include(ReMakeSVN)
+include(ReMakeTest)
 
 include(ReMakePrivate)
 
@@ -48,6 +49,9 @@ include(ReMakePrivate)
 #   library source directory is automatically added to the include path,
 #   thus allowing for the library headers to be found from subdirectories.
 #   \required[value] name The name of the shared library target to be defined.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the library sources, defaulting to *.c
+#     and *.cpp.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to CMake's install() macro, defaults
 #     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
@@ -57,9 +61,6 @@ include(ReMakePrivate)
 #     here results in an empty prefix.
 #   \optional[value] SUFFIX:suffix An optional library name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
-#   \optional[list] glob An optional list of glob expressions that are
-#     resolved in order to find the library sources, defaulting to *.c
-#     and *.cpp.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
 macro(remake_add_library remake_name)
@@ -112,6 +113,9 @@ endmacro(remake_add_library)
 #   target from a list of glob expressions. In addition, the macro takes a
 #   list of libraries that are linked into the plugin library target.
 #   \required[value] name The name of the plugin library target to be defined.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the plugin sources, defaulting to *.c
+#     and *.cpp.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to CMake's install() macro, defaults
 #     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
@@ -121,9 +125,6 @@ endmacro(remake_add_library)
 #     here results in an empty prefix.
 #   \optional[value] SUFFIX:suffix An optional plugin name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
-#   \optional[list] glob An optional list of glob expressions that are
-#     resolved in order to find the plugin sources, defaulting to *.c
-#     and *.cpp.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     plugin library target.
 macro(remake_add_plugin remake_name)
@@ -175,6 +176,12 @@ endmacro(remake_add_plugin)
 #   resolved from the glob expressions. The target bears the name of the
 #   source file without the file extension. In addition, the macro takes a
 #   list of libraries that are linked into the executable targets.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the executable sources, defaulting to *.c
+#     and *.cpp.
+#   \optional[option] TESTING With this option being present, the executable is
+#     assumed to be a testing binary. Consequently, a call to remake_test()
+#     creates a testing target for this executable. See ReMakeTest for details.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to CMake's install() macro, defaults
 #     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
@@ -184,14 +191,11 @@ endmacro(remake_add_plugin)
 #     OFF here results in an empty prefix.
 #   \optional[value] SUFFIX:suffix An optional executable name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
-#   \optional[list] glob An optional list of glob expressions that are
-#     resolved in order to find the executable sources, defaulting to *.c
-#     and *.cpp.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     executable targets.
 macro(remake_add_executables)
-  remake_arguments(PREFIX remake_ VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
-    ${ARGN})
+  remake_arguments(PREFIX remake_ OPTION TESTING VAR PREFIX VAR SUFFIX
+    ARGN globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(EXECUTABLE_PREFIX)
@@ -222,6 +226,9 @@ macro(remake_add_executables)
     if(remake_link)
       target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
     endif(remake_link)
+    if(remake_testing)
+      remake_test(${remake_name}${remake_suffix})
+    endif(remake_testing)
 
     install(TARGETS ${remake_name}${remake_suffix}
       RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
