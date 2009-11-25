@@ -135,7 +135,9 @@ macro(remake_project project_name)
       FORCE)
   endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-  remake_set(project_prefix SELF DEFAULT ${REMAKE_PROJECT_FILENAME}-)
+  if(NOT DEFINED project_prefix)
+    remake_set(project_prefix ${REMAKE_PROJECT_FILENAME}-)
+  endif(NOT DEFINED project_prefix)
   remake_project_prefix(LIBRARY ${project_prefix}
     PLUGIN ${project_prefix}
     EXECUTABLE ${project_prefix})
