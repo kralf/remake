@@ -32,7 +32,7 @@ include(ReMakeSVN)
 include(ReMakePrivate)
 
 ### \brief ReMake convenience macros
-#   ReMake provides a set of CMake macros that have originally been written to 
+#   ReMake provides a set of CMake macros that have originally been written to
 #   facilitate the restructuring of GNU Automake/Autoconf projects.
 #
 #   A key feature of ReMake is its branching concept. A branch is defined
@@ -63,7 +63,7 @@ include(ReMakePrivate)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
 macro(remake_add_library remake_name)
-  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX 
+  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
     ARGN globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
@@ -231,7 +231,7 @@ endmacro(remake_add_executables)
 
 ### \brief Add header install rules.
 #   This macro automatically defines install rules for header files from
-#   a list of glob expressions. The install destination of each header file 
+#   a list of glob expressions. The install destination of each header file
 #   is its relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the header files, defaulting to *.h, *.hpp,
@@ -302,6 +302,9 @@ endmacro(remake_add_scripts)
 #   prior to the install stage.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the configuration file templates.
+#   \optional[value] INSTALL:dirname The directory that shall be passed
+#     as the configuration files' install destination, defaults to
+#     ${PROJECT_CONFIGURATION_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to CMake's install() macro, defaults
 #     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
@@ -310,7 +313,9 @@ endmacro(remake_add_scripts)
 #     to the configuration file names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_configurations)
-  remake_arguments(PREFIX remake_ VAR COMPONENT VAR SUFFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
+    ARGN globs ${ARGN})
+  remake_set(remake_install SELF DEFAULT ${CONFIGURATION_DESTINATION})
   remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
   remake_project_get(CONFIGURATION_DESTINATION)
 
@@ -325,7 +330,7 @@ macro(remake_add_configurations)
     remake_file_suffix(remake_config_suffixed
       ${remake_config_relative} ${remake_suffix})
     install(FILES ${remake_config}
-      DESTINATION ${CONFIGURATION_DESTINATION}
+      DESTINATION ${remake_install}
       COMPONENT ${remake_component}
       RENAME ${remake_config_suffixed})
   endforeach(remake_config)
@@ -408,7 +413,7 @@ endmacro(remake_add_directories)
 #   This macro adds a documentation target, using the requested generator
 #   for document generation. Additional arguments passed to the macro are
 #   forwarded to the selected generator.
-#   \required[option] DOYXGEN|GROFF|CUSTOM The generator to be used for 
+#   \required[option] DOYXGEN|GROFF|CUSTOM The generator to be used for
 #     document generation.
 #   \required[list] arg The arguments to be forwared to the document
 #     generator. See ReMakeDoc for details.
@@ -426,7 +431,7 @@ endmacro(remake_add_documentation)
 #   This macro adds a list of directories to the compiler's include path.
 #   As opposed to CMake's include_directories(), the macro converts
 #   directory names into absolute-path names before passing them as
-#   arguments to include_directories(). If defined within a ReMake branch, 
+#   arguments to include_directories(). If defined within a ReMake branch,
 #   the macro calls remake_branch_include() instead.
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the directories to be added to the compiler's

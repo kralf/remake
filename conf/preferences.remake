@@ -1,0 +1,3 @@
+Package: ${REMAKE_PROJECT_FILENAME}
+Pin: version ${REMAKE_PROJECT_MAJOR}.*
+Pin-Priority: 500
