@@ -39,7 +39,7 @@ remake_set(REMAKE_BRANCH_TARGET_SUFFIX branch)
 #   this branch. A branch is identified by its unique branch name. All source
 #   files belonging to one and the same branch are required to reside under
 #   the branch root directory. This root directory is automatically added
-#   for CMake processing. The macro furthermore defines a build target named 
+#   for CMake processing. The macro furthermore defines a build target named
 #   ${BRANCH_NAME}_branch and a build option WITH_${BRANCH_NAME}_BRANCH for
 #   the newly created branch.
 #   \required[value] name The unique name the branch is identified by.
@@ -53,7 +53,7 @@ macro(remake_branch branch_name)
     ${ARGN})
   remake_set(REMAKE_BRANCH_NAME ${branch_name})
   remake_file_name(REMAKE_BRANCH_FILENAME ${REMAKE_BRANCH_NAME})
-  remake_set(REMAKE_BRANCH_ROOT ${branch_root} 
+  remake_set(REMAKE_BRANCH_ROOT ${branch_root}
     DEFAULT ${REMAKE_BRANCH_FILENAME})
   get_filename_component(REMAKE_BRANCH_ROOT ${REMAKE_BRANCH_ROOT} ABSOLUTE)
   remake_set(REMAKE_BRANCH_SUFFIX -${REMAKE_BRANCH_FILENAME})
@@ -65,7 +65,7 @@ macro(remake_branch branch_name)
   else(branch_optional)
     remake_set(branch_compile ON)
   endif(branch_optional)
-  remake_project_option(${REMAKE_BRANCH_OPTION} "${REMAKE_BRANCH_NAME} branch" 
+  remake_project_option(${REMAKE_BRANCH_OPTION} "${REMAKE_BRANCH_NAME} branch"
     ${branch_compile})
   remake_project_get(${REMAKE_BRANCH_OPTION} OUTPUT REMAKE_BRANCH_COMPILE)
 
@@ -96,9 +96,9 @@ macro(remake_branch branch_name)
 endmacro(remake_branch)
 
 ### \brief Define the value of a ReMake branch variable.
-#   This macro defines a variable matching the ReMake naming conventions. 
-#   The variable name is automatically prefixed with an upper-case 
-#   conversion of the branch name. Thus, variables may appear in the cache 
+#   This macro defines a variable matching the ReMake naming conventions.
+#   The variable name is automatically prefixed with an upper-case
+#   conversion of the branch name. Thus, variables may appear in the cache
 #   as ${BRANCH_NAME}_${VAR_NAME}. Additional arguments are passed on to
 #   CMake's set() macro.
 #   \required[value] variable The name of the branch variable to be defined.
@@ -153,7 +153,7 @@ endmacro(remake_branch_add_targets)
 #   branches for which dependencies have been defined.
 #   \required[value] variable The name of a variable to be assigned the
 #     result list of link libraries.
-#   \optional[value] TARGET:target The optional name of the branch library 
+#   \optional[value] TARGET:target The optional name of the branch library
 #     target for which the link dependencies are to be resolved. Passing a
 #     target's name causes the macro to take care of equally-named targets
 #     in branches with dependencies. In fact, a library target may thus
@@ -171,7 +171,7 @@ macro(remake_branch_link branch_var)
     remake_list_push(branch_libs ${branch_target})
     remake_set(branch_target_full ${branch_target}${REMAKE_BRANCH_SUFFIX})
   endif(branch_target)
-  
+
   remake_set(${branch_var})
   foreach(branch_lib ${branch_libs})
     if(${branch_lib} STREQUAL "${branch_target}")
@@ -198,7 +198,7 @@ macro(remake_branch_link branch_var)
 endmacro(remake_branch_link)
 
 ### \brief Resolve include dependencies for a ReMake branch.
-#   This macro resolves the include dependencies for a ReMake branch. It 
+#   This macro resolves the include dependencies for a ReMake branch. It
 #   retrieves a list of absolute-path directories contained in all branches
 #   for which dependencies have been defined.
 #   \required[value] variable The name of a variable to be assigned the
@@ -220,17 +220,19 @@ macro(remake_branch_include branch_var)
   remake_set(${branch_var})
   foreach(branch_glob ${branch_globs})
     get_filename_component(branch_glob ${branch_glob} ABSOLUTE)
-    if(branch_glob MATCHES ^${REMAKE_BRANCH_ROOT})
+    file(RELATIVE_PATH branch_relative_glob ${REMAKE_BRANCH_ROOT}
+      ${branch_glob})
+    if(branch_relative_glob MATCHES ^\\.\\.)
       file(RELATIVE_PATH branch_relative_glob ${REMAKE_BRANCH_ROOT}
         ${branch_glob})
       remake_branch_get(BRANCH_ROOT FROM ${branch_from})
       remake_file_glob(branch_dirs DIRECTORIES
         ${BRANCH_ROOT}/${branch_relative_glob})
       remake_list_push(${branch_var} ${branch_dirs})
-    else(branch_glob MATCHES ^${REMAKE_BRANCH_ROOT})
+    else(branch_relative_glob MATCHES ^\\.\\.)
       remake_file_glob(branch_dirs DIRECTORIES ${branch_glob})
       remake_list_push(${branch_var} ${branch_dirs})
-    endif(branch_glob MATCHES ^${REMAKE_BRANCH_ROOT})
+    endif(branch_relative_glob MATCHES ^\\.\\.)
   endforeach(branch_glob)
 
   foreach(branch_depends ${BRANCH_DEPENDS})

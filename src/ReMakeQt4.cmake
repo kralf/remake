@@ -28,7 +28,7 @@ include(ReMakePrivate)
 macro(remake_qt4)
   if(NOT DEFINED QT4_FOUND)
     remake_find_package(Qt4 QUIET)
-    remake_project_set(QT4_MOC ${QT4_FOUND} CACHE BOOL 
+    remake_project_set(QT4_MOC ${QT4_FOUND} CACHE BOOL
       "Process Qt4 meta-objects.")
   endif(NOT DEFINED QT4_FOUND)
 endmacro(remake_qt4)
@@ -44,7 +44,7 @@ macro(remake_qt4_include)
 endmacro(remake_qt4_include)
 
 ### \brief Add Qt4 meta-object sources for a target.
-#   This macro automatically defines meta-object sources for a target from 
+#   This macro automatically defines meta-object sources for a target from
 #   a list of glob expressions. The glob expressions should resolve to
 #   header files containing a Q_OBJECT declaration.
 #   \required[value] target The name of the target to add the meta-object
