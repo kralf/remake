@@ -222,17 +222,15 @@ macro(remake_branch_include branch_var)
     get_filename_component(branch_glob ${branch_glob} ABSOLUTE)
     file(RELATIVE_PATH branch_relative_glob ${REMAKE_BRANCH_ROOT}
       ${branch_glob})
-    if(branch_relative_glob MATCHES ^\\.\\.)
-      file(RELATIVE_PATH branch_relative_glob ${REMAKE_BRANCH_ROOT}
-        ${branch_glob})
+    if(NOT branch_relative_glob MATCHES ^\\.\\.)
       remake_branch_get(BRANCH_ROOT FROM ${branch_from})
       remake_file_glob(branch_dirs DIRECTORIES
         ${BRANCH_ROOT}/${branch_relative_glob})
       remake_list_push(${branch_var} ${branch_dirs})
-    else(branch_relative_glob MATCHES ^\\.\\.)
+    else(NOT branch_relative_glob MATCHES ^\\.\\.)
       remake_file_glob(branch_dirs DIRECTORIES ${branch_glob})
       remake_list_push(${branch_var} ${branch_dirs})
-    endif(branch_relative_glob MATCHES ^\\.\\.)
+    endif(NOT branch_relative_glob MATCHES ^\\.\\.)
   endforeach(branch_glob)
 
   foreach(branch_depends ${BRANCH_DEPENDS})
