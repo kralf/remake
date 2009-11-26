@@ -37,7 +37,9 @@ include(FindPkgConfig)
 #     that CMake module naming conventions require the exact casing of
 #     package names here, usually starting with a capital letter.
 #   \optional[option] CONFIG If present, this option causes the macro to
-#     call CMake's pkg_check_modules() instead of find_package().
+#     call CMake's pkg_check_modules() instead of find_package(). With no
+#     additional arguments provided, the package name is passed as
+#     module name to pkg_check_modules().
 #   \optional[list] arg A list of optional arguments to be forwared to
 #     CMake's find_package() and pkg_check_modules(), respectively. See the
 #     CMake documentation for the correct usage.
@@ -49,6 +51,7 @@ macro(remake_find_package find_package)
 
   if(find_config)
     remake_var_name(find_package_var ${find_package})
+    remake_set(find_args DEFAULT ${find_package})
     pkg_check_modules(${find_package_var} ${find_args})
     remake_find_result(${find_package} ${${find_package_var}_FOUND}
       ${OPTIONAL})
