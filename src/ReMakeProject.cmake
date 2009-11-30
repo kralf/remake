@@ -140,7 +140,8 @@ macro(remake_project project_name)
   endif(NOT DEFINED project_prefix)
   remake_project_prefix(LIBRARY ${project_prefix}
     PLUGIN ${project_prefix}
-    EXECUTABLE ${project_prefix})
+    EXECUTABLE ${project_prefix}
+    SCRIPT ${project_prefix})
 
   remake_project_set(LIBRARY_DESTINATION lib CACHE PATH
     "Install destination of project libraries.")
@@ -256,9 +257,11 @@ endmacro(remake_project_option)
 #     plugins, extending plugin names to ${PREFIX}${PLUGIN_NAME}.
 #   \optional[value] EXECUTABLE:prefix The prefix that is used for producing
 #     executables, extending executable names to ${PREFIX}${EXECUTABLE_NAME}.
+#   \optional[value] SCRIPT:prefix The prefix that is used for producing
+#     scripts, extending script names to ${PREFIX}${SCRIPT_NAME}.
 macro(remake_project_prefix)
   remake_arguments(PREFIX project_ VAR LIBRARY VAR PLUGIN VAR EXECUTABLE
-    ${ARGN})
+    VAR SCRIPT ${ARGN})
 
   remake_project_set(LIBRARY_PREFIX FROM project_library
     DEFAULT ${REMAKE_PROJECT_FILENAME}-
@@ -269,6 +272,9 @@ macro(remake_project_prefix)
   remake_project_set(EXECUTABLE_PREFIX FROM project_executable
     DEFAULT ${REMAKE_PROJECT_FILENAME}-
     CACHE STRING "Name prefix of project executables.")
+  remake_project_set(SCRIPT_PREFIX FROM project_script
+    DEFAULT ${REMAKE_PROJECT_FILENAME}-
+    CACHE STRING "Name prefix of project scripts.")
 endmacro(remake_project_prefix)
 
 ### \brief Create the ReMake project configuration header.

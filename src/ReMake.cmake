@@ -281,13 +281,25 @@ endmacro(remake_add_headers)
 #     component that is passed to CMake's install() macro, defaults
 #     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
 #     documentation for details.
+#   \optional[value] PREFIX:prefix An optional prefix that is prepended
+#     to the script names during installation, defaults to the project's
+#     ${SCRIPT_PREFIX}. Note that passing OFF here results in an empty
+#     prefix.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
 #     to the script names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_scripts)
-  remake_arguments(PREFIX remake_ VAR COMPONENT VAR SUFFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
+    ARGN globs ${ARGN})
   remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
+  remake_project_get(SCRIPT_PREFIX)
   remake_project_get(SCRIPT_DESTINATION)
+  if(NOT DEFINED remake_prefix)
+    remake_set(remake_prefix ${SCRIPT_PREFIX})
+  endif(NOT DEFINED remake_prefix)
+  if(NOT remake_prefix)
+    remake_set(remake_prefix)
+  endif(NOT remake_prefix)
 
   if(REMAKE_BRANCH_COMPILE)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
@@ -301,7 +313,7 @@ macro(remake_add_scripts)
     install(PROGRAMS ${remake_script}
       DESTINATION ${SCRIPT_DESTINATION}
       COMPONENT ${remake_component}
-      RENAME ${remake_script_suffixed})
+      RENAME ${remake_prefix}${remake_script_suffixed})
   endforeach(remake_script)
 endmacro(remake_add_scripts)
 
