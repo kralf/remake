@@ -89,8 +89,9 @@ macro(remake_find_library find_lib find_header)
 
   find_library(${find_lib_var} NAMES ${find_lib} ${find_args})
   if(${find_lib_var})
+    remake_file_name(find_path_suffix ${find_package})
     find_path(${find_headers_var} NAMES ${find_header}
-      PATH_SUFFIXES ${find_package} ${find_args})
+      PATH_SUFFIXES ${find_path_suffix} ${find_args})
   else(${find_lib_var})
     remake_set(${find_headers_var})
   endif(${find_lib_var})
