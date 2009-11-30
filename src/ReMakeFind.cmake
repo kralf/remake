@@ -95,7 +95,7 @@ macro(remake_find_library find_lib find_header)
     remake_set(${find_headers_var})
   endif(${find_lib_var})
 
-  remake_find_result(${find_lib} ${${find_headers_var}} ${OPTIONAL})
+  remake_find_result(${find_package} ${${find_headers_var}} ${OPTIONAL})
 endmacro(remake_find_library)
 
 ### \brief Find an executable program.

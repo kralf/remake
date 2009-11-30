@@ -40,7 +40,7 @@ include(ReMakePrivate)
 #   along with a list of dependencies that is automatically resolved
 #   by ReMake.
 #
-#   ReMake requires CMake version 2.6 or higher.
+#   ReMake requires CMake version 2.6.2 or higher.
 
 ### \brief Add a shared library target.
 #   This macro automatically defines build rules for a shared library
