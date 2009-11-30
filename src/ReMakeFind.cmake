@@ -51,7 +51,7 @@ macro(remake_find_package find_package)
 
   if(find_config)
     remake_var_name(find_package_var ${find_package})
-    remake_set(find_args DEFAULT ${find_package})
+    remake_set(find_args SELF DEFAULT ${find_package})
     pkg_check_modules(${find_package_var} ${find_args})
     remake_find_result(${find_package} ${${find_package_var}_FOUND}
       ${OPTIONAL})
