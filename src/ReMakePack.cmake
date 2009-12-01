@@ -94,8 +94,9 @@ endmacro(remake_pack)
 #   This macro configures package generation using CPack's DEB generator
 #   for Debian packages. It acquires all the information necessary from
 #   the current project settings and the arguments passed. In addition to
-#   creating a package build target through remake_pack(), the macro adds a
-#   simplified package install target.
+#   creating a package build target through remake_pack(), the macro adds
+#   simplified package install and uninstall targets. Project-internal
+#   dependencies between these targets are automatically resolved.
 #   \optional[value] ARCH:architecture The package architecture that is
 #     inscribed into the package manifest, defaults to the local system
 #     architecture as returned by 'dpkg --print-architecture'.
@@ -141,6 +142,16 @@ macro(remake_pack_deb)
       ${REMAKE_PROJECT_VERSION} ${pack_arch})
   endif(pack_suffix)
 
+  remake_set(pack_component_deps)
+  foreach(pack_dependency ${pack_dependencies})
+    if(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}")
+      string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME})[-]?(.*)$" "\\2"
+        pack_component_dep ${pack_dependency})
+      remake_set(pack_component_dep SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
+      remake_list_push(pack_component_deps ${pack_component_dep})
+    endif(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}")
+  endforeach(pack_dependency)
+
   string(REPLACE ";" ", " pack_replace "${pack_dependencies}")
   remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_replace})
   remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
@@ -163,4 +174,20 @@ macro(remake_pack_deb)
     COMMAND sudo dpkg --remove ${pack_name}
     COMMENT "Uninstalling ${pack_name} package")
   add_dependencies(${REMAKE_PACK_UNINSTALL_ALL_TARGET} ${pack_uninstall_target})
+
+  foreach(pack_component_dep ${pack_component_deps})
+    if(pack_component_dep STREQUAL REMAKE_PROJECT_COMPONENT)
+      remake_set(pack_prefix_dep)
+    else(pack_component_dep STREQUAL REMAKE_PROJECT_COMPONENT)
+      remake_set(pack_prefix_dep ${pack_component_dep})
+    endif(pack_component_dep STREQUAL REMAKE_PROJECT_COMPONENT)
+
+    remake_target_name(pack_install_target_dep ${pack_prefix_dep}
+      ${REMAKE_PACK_INSTALL_TARGET_SUFFIX})
+    remake_target_name(pack_uninstall_target_dep ${pack_prefix_dep}
+      ${REMAKE_PACK_UNINSTALL_TARGET_SUFFIX})
+
+    add_dependencies(${pack_install_target} ${pack_install_target_dep})
+    add_dependencies(${pack_uninstall_target_dep} ${pack_uninstall_target})
+  endforeach(pack_component_dep)
 endmacro(remake_pack_deb)
