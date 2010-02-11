@@ -234,8 +234,10 @@ macro(remake_branch_include branch_var)
   endforeach(branch_glob)
 
   foreach(branch_depends ${BRANCH_DEPENDS})
-    remake_branch_include(branch_depends_dirs ${branch_globs}
+    remake_var_name(branch_depends_var ${branch_depends} branch_depends_dirs)
+    remake_branch_include(${branch_depends_var} ${branch_globs}
       FROM ${branch_depends})
-    remake_list_push(${branch_var} ${branch_depends_dirs})
+    remake_var_name(branch_depends_var ${branch_depends} branch_depends_dirs)
+    remake_list_push(${branch_var} ${${branch_depends_var}})
   endforeach(branch_depends)
 endmacro(remake_branch_include)
