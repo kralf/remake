@@ -49,7 +49,7 @@ macro(remake_qt3_include)
   remake_qt3(${MT})
 
   if(QT_FOUND)
-    remake_include(${QT_INCLUDES})
+    remake_include(${QT_INCLUDE_DIR})
   endif(QT_FOUND)
 endmacro(remake_qt3_include)
 
