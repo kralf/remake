@@ -20,30 +20,40 @@
 
 include(ReMakePrivate)
 
-### \brief Configure Qt4 meta-object processing.
-#   This macro discovers the Qt4 package configuration and enables Qt4
+### \brief Configure Qt3 meta-object processing.
+#   This macro discovers the Qt3 package configuration and enables Qt3
 #   meta-object processing. Note that the macro automatically gets
 #   invoked by the macros defined in this module. It needs not be called
 #   directly from a CMakeLists.txt file.
-macro(remake_qt4)
-  if(NOT DEFINED QT4_FOUND)
-    remake_find_package(Qt4 QUIET)
-    remake_project_set(QT4_MOC ${QT4_FOUND} CACHE BOOL
-      "Process Qt4 meta-objects.")
-  endif(NOT DEFINED QT4_FOUND)
-endmacro(remake_qt4)
+#   \optional[option] MT If provided, the macro tries to discover the
+#     package configuration for the multithreaded version of Qt3.
+macro(remake_qt3)
+  remake_arguments(PREFIX qt3_ OPTION MT ${ARGN})
+  remake_set(QT_MT_REQUIRED ${qt3_mt})
 
-### \brief Add the Qt4 header directories to the include path.
-#   This macro adds the Qt4 header directories to the compiler's include path.
-macro(remake_qt4_include)
-  remake_qt4()
+  if(NOT DEFINED QT_FOUND)
+    remake_find_package(KDE3 QUIET)
+    remake_find_package(Qt3 QUIET ALIAS Qt)
+    remake_project_set(QT3_MOC ${QT_FOUND} CACHE BOOL
+      "Process Qt3 meta-objects.")
+  endif(NOT DEFINED QT_FOUND)
+endmacro(remake_qt3)
 
-  if(QT4_FOUND)
+### \brief Add the Qt3 header directories to the include path.
+#   This macro adds the Qt3 header directories to the compiler's include path.
+#   \optional[option] MT If provided, the macro adds the header directories
+#     of the multithreaded version of Qt3.
+macro(remake_qt3_include)
+  remake_arguments(PREFIX qt3_ OPTION MT ${ARGN})
+
+  remake_qt3(${MT})
+
+  if(QT_FOUND)
     remake_include(${QT_INCLUDES})
-  endif(QT4_FOUND)
-endmacro(remake_qt4_include)
+  endif(QT_FOUND)
+endmacro(remake_qt3_include)
 
-### \brief Add Qt4 meta-object sources for a target.
+### \brief Add Qt3 meta-object sources for a target.
 #   This macro automatically defines meta-object sources for a target from
 #   a list of glob expressions. The glob expressions should resolve to
 #   header files containing a Q_OBJECT declaration.
@@ -52,17 +62,19 @@ endmacro(remake_qt4_include)
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the header files with Q_OBJECT declarations,
 #     defaulting to *.h, *.hpp, and *.tpp.
-macro(remake_qt4_moc qt4_target)
-  remake_arguments(PREFIX qt4_ ARGN globs ${ARGN})
-  remake_set(qt4_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+#   \optional[option] MT If provided, the macro defines meta-object sources
+#     for the multithreaded version of Qt3.
+macro(remake_qt3_moc qt3_target)
+  remake_arguments(PREFIX qt3_ ARGN globs OPTION MT ${ARGN})
+  remake_set(qt3_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
 
-  remake_qt4()
+  remake_qt3(${MT})
 
-  remake_project_get(QT4_MOC)
-  if(QT4_MOC)
-    remake_file_glob(qt4_headers ${qt4_globs})
-    remake_set(qt4_sources)
-    qt4_wrap_cpp(qt4_sources ${qt4_headers} OPTIONS -nw)
-    remake_target_add_sources(${qt4_target} ${qt4_sources})
-  endif(QT4_MOC)
-endmacro(remake_qt4_moc)
+  remake_project_get(QT3_MOC)
+  if(QT3_MOC)
+    remake_file_glob(qt3_headers ${qt3_globs})
+    remake_set(qt3_sources)
+    kde3_add_moc_files(qt3_sources ${qt3_headers})
+    remake_target_add_sources(${qt3_target} ${qt3_sources})
+  endif(QT3_MOC)
+endmacro(remake_qt3_moc)

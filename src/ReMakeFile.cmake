@@ -28,7 +28,7 @@ remake_set(REMAKE_FILE_DIR ReMakeFiles)
 
 ### \brief Define a ReMake file.
 #   This macro creates a variable to hold the ReMake-compliant path to a
-#   a regular file or directory with the specified name. If the file or 
+#   a regular file or directory with the specified name. If the file or
 #   directory name contains a relative path, it is assumed to be located
 #   below the ReMake directory ${REMAKE_FILE_DIR}.
 #   \required[value] variable name of the output variable to be assigned the
@@ -39,7 +39,7 @@ remake_set(REMAKE_FILE_DIR ReMakeFiles)
 #     directory below ${CMAKE_BINARY_DIR}. Otherwise, the file or directory
 #     resides in the local ReMake directory below ${CMAKE_CURRENT_BINARY_DIR}.
 macro(remake_file file_var file_name)
-  remake_arguments(OPTION TOPLEVEL ${ARGN})
+  remake_arguments(PREFIX file_ OPTION TOPLEVEL ${ARGN})
 
   if(IS_ABSOLUTE ${file_name})
     remake_set(${file_var} ${file_name})
@@ -68,12 +68,12 @@ macro(remake_file_name file_var)
 endmacro(remake_file_name)
 
 ### \brief Append a list of suffixes to a filename.
-#   This macro appends a list of suffixes to a filename. The suffixes are 
+#   This macro appends a list of suffixes to a filename. The suffixes are
 #   appended to the filename itself, not to the filename's extension.
 #   \required[value] variable The name of the variable that is assigned the
 #     resulting suffixed filename.
 #   \required[value] filename The input filename to be suffixed.
-#   \required[list] suffix The list of suffixes to be appended to the 
+#   \required[list] suffix The list of suffixes to be appended to the
 #     filename. Note that the list can be empty in which case the input
 #     filename is returned.
 macro(remake_file_suffix file_var file_name)
@@ -83,7 +83,7 @@ macro(remake_file_suffix file_var file_name)
     get_filename_component(file_path ${file_name} PATH)
     get_filename_component(file_name_we ${file_name} NAME_WE)
     get_filename_component(file_ext ${file_name} EXT)
-  
+
     if(file_path)
       remake_set(${file_var} "${file_path}/")
     else(file_path)
@@ -106,10 +106,10 @@ endmacro(remake_file_suffix)
 #   names that match any of the glob expression passed to the macro and returns
 #   a result list of file/directory names. By default, hidden files/directories
 #   will be excluded from the result list.
-#   \required[value] variable The name of the output variable to hold the 
+#   \required[value] variable The name of the output variable to hold the
 #     matched file/directory names.
 #   \optional[value] WORKING_DIRECTORY:dirname An optional directory name that
-#     refers to the working directory for resolving relative-path glob 
+#     refers to the working directory for resolving relative-path glob
 #     expressions, defaults to the current directory.
 #   \optional[option] HIDDEN If present, this option prevents hidden
 #     files/directories from being excluded from the result list.
@@ -123,7 +123,7 @@ endmacro(remake_file_suffix)
 #   \required[list] glob A list of glob expressions that is passed to CMake's
 #     file(GLOB ...) macro. See the CMake documentation for usage.
 macro(remake_file_glob file_var)
-  remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION HIDDEN 
+  remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION HIDDEN
     OPTION FILES OPTION DIRECTORIES ARGN globs ${ARGN})
 
   if(file_working_directory)
@@ -132,7 +132,7 @@ macro(remake_file_glob file_var)
       if(IS_ABSOLUTE ${file_glob})
         remake_list_push(file_working_globs ${file_glob})
       else(IS_ABSOLUTE ${file_glob})
-        remake_list_push(file_working_globs 
+        remake_list_push(file_working_globs
           ${file_working_directory}/${file_glob})
       endif(IS_ABSOLUTE ${file_glob})
     endforeach(file_glob)
@@ -150,7 +150,7 @@ macro(remake_file_glob file_var)
     endforeach(file_name)
     remake_set(file_files ON)
   endif(NOT file_directories)
-  
+
   if(NOT file_files)
     foreach(file_name ${${file_var}})
       if(NOT IS_DIRECTORY ${file_name})
@@ -170,7 +170,7 @@ macro(remake_file_glob file_var)
 endmacro(remake_file_glob)
 
 ### \brief Create a directory.
-#   This macro creates a ReMake directory. The directory name is automatically 
+#   This macro creates a ReMake directory. The directory name is automatically
 #   converted into a ReMake location by a call to remake_file().
 #   \required[value] dirname The name of the directory to be created.
 #   \optional[option] TOPLEVEL If this option is present, the directory
@@ -185,7 +185,7 @@ macro(remake_file_mkdir file_dir_name)
 endmacro(remake_file_mkdir)
 
 ### \brief Create an empty file.
-#   This macro creates an empty ReMake file. The filename is automatically 
+#   This macro creates an empty ReMake file. The filename is automatically
 #   converted into a ReMake location by a call to remake_file(). Optionally,
 #   the macro allows for selectively re-creating outdated files. Therefor,
 #   the file modification date is tested against ReMake's timestamp file,
@@ -212,7 +212,7 @@ macro(remake_file_create file_name)
   endif(EXISTS ${file_create})
 endmacro(remake_file_create)
 
-### \brief Read content from file. 
+### \brief Read content from file.
 #   This macro reads file content into a string variable. The name of the file
 #   to be read is automatically converted into a ReMake location by a call to
 #   remake_file().
@@ -232,10 +232,10 @@ macro(remake_file_read file_var file_name)
   endif(EXISTS ${file_read})
 endmacro(remake_file_read)
 
-### \brief Write content to file. 
+### \brief Write content to file.
 #   This macro appends a list of string values to a file. The name of the file
-#   to be written is automatically converted into a ReMake location by a call 
-#   to remake_file(). If the file does not exists yets, it will automatically 
+#   to be written is automatically converted into a ReMake location by a call
+#   to remake_file(). If the file does not exists yets, it will automatically
 #   be created.
 #   \required[value] filename The name of the file to be written to.
 #   \optional[option] TOPLEVEL If this option is present, the file
@@ -289,7 +289,7 @@ macro(remake_file_configure)
   remake_arguments(PREFIX file_ VAR DESTINATION VAR OUTPUT OPTION ESCAPE_QUOTES
     OPTION ESCAPE_NEWLINES ARGN globs ${ARGN})
 
-  file(RELATIVE_PATH file_relative_path ${CMAKE_SOURCE_DIR} 
+  file(RELATIVE_PATH file_relative_path ${CMAKE_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR})
   remake_set(file_destination SELF
     DEFAULT ${CMAKE_BINARY_DIR}/${file_relative_path})

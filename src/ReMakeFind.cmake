@@ -40,14 +40,18 @@ include(FindPkgConfig)
 #     call CMake's pkg_check_modules() instead of find_package(). With no
 #     additional arguments provided, the package name is passed as
 #     module name to pkg_check_modules().
+#   \optional[value] ALIAS:alias An optional package alias that is used for
+#     evaluating if ${ALIAS}_FOUND is set to TRUE. The alias has to be
+#     provided in cases where the package name differs from the variable
+#     prefix assumed by CMake's find_package().
 #   \optional[list] arg A list of optional arguments to be forwared to
 #     CMake's find_package() and pkg_check_modules(), respectively. See the
 #     CMake documentation for the correct usage.
 #   \optional[option] OPTIONAL If provided, this option is passed on to
 #     remake_find_result().
 macro(remake_find_package find_package)
-  remake_arguments(PREFIX find_ OPTION CONFIG ARGN args OPTION OPTIONAL
-    ${ARGN})
+  remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS ARGN args
+    OPTION OPTIONAL ${ARGN})
 
   if(find_config)
     remake_var_name(find_package_var ${find_package})
@@ -56,7 +60,11 @@ macro(remake_find_package find_package)
     remake_find_result(${find_package} ${${find_package_var}_FOUND}
       ${OPTIONAL})
   else(find_config)
-    remake_var_name(find_package_var ${find_package} FOUND)
+    if(find_alias)
+      remake_var_name(find_package_var ${find_alias} FOUND)
+    else(find_alias)
+      remake_var_name(find_package_var ${find_package} FOUND)
+    endif(find_alias)
     find_package(${find_package} ${find_args})
     remake_find_result(${find_package} ${${find_package}_FOUND}
       ${${find_package_var}} ${OPTIONAL})
