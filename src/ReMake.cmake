@@ -173,18 +173,86 @@ macro(remake_add_plugin remake_name)
     COMPONENT ${remake_component})
 endmacro(remake_add_plugin)
 
-### \brief Add executable targets.
-#   This macro automatically defines build rules for executable targets from
-#   a list of glob expressions. One target is added for each executable source
-#   resolved from the glob expressions. The target bears the name of the
-#   source file without the file extension. In addition, the macro takes a
-#   list of libraries that are linked into the executable targets.
+### \brief Add a single executable target.
+#   This macro automatically defines build rules for a single executable target
+#   from a list of glob expressions. One target is added that combines all
+#   executable sources resolved from the glob expressions. The target bears
+#   the specified name. In addition, the macro takes a list of libraries that
+#   are linked into the executable target.
+#   \required[value] name The name of the executable target to be defined.
 #   \optional[list] glob An optional list of glob expressions that are
-#     resolved in order to find the executable sources, defaulting to *.c
+#     resolved in order to find the executable's sources, defaulting to *.c
 #     and *.cpp.
 #   \optional[option] TESTING With this option being present, the executable is
 #     assumed to be a testing binary. Consequently, a call to remake_test()
 #     creates a testing target for this executable. See ReMakeTest for details.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to CMake's install() macro, defaults
+#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
+#     documentation for details.
+#   \optional[value] PREFIX:prefix An optional executable name prefix,
+#     defaults to the project's ${EXECUTABLE_PREFIX}. Note that passing
+#     OFF here results in an empty prefix.
+#   \optional[value] SUFFIX:suffix An optional executable name suffix, forced
+#     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
+#   \optional[list] LINK:lib The list of libraries to be linked into the
+#     executable target.
+macro(remake_add_executable remake_name)
+  remake_arguments(PREFIX remake_ OPTION TESTING VAR PREFIX VAR SUFFIX
+    ARGN globs LIST LINK ${ARGN})
+
+  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
+  remake_project_get(EXECUTABLE_PREFIX)
+  remake_project_get(EXECUTABLE_DESTINATION)
+  if(NOT DEFINED remake_prefix)
+    remake_set(remake_prefix ${EXECUTABLE_PREFIX})
+  endif(NOT DEFINED remake_prefix)
+  if(NOT remake_prefix)
+    remake_set(remake_prefix)
+  endif(NOT remake_prefix)
+
+  if(REMAKE_BRANCH_COMPILE)
+    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+  endif(REMAKE_BRANCH_COMPILE)
+
+  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+    ${remake_globs})
+  remake_branch_link(remake_link ${remake_link})
+
+  if(REMAKE_BRANCH_COMPILE)
+    remake_branch_add_targets(${remake_name})
+  endif(REMAKE_BRANCH_COMPILE)
+  remake_target_get_sources(remake_target_sources ${remake_name})
+  add_executable(${remake_name}${remake_suffix}
+    ${remake_sources} ${remake_target_sources})
+  set_target_properties(${remake_name}${remake_suffix} PROPERTIES
+    OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
+  if(remake_link)
+    target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
+  endif(remake_link)
+  if(remake_testing)
+    remake_test(${remake_name}${remake_suffix})
+  endif(remake_testing)
+
+  install(TARGETS ${remake_name}${remake_suffix}
+    RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
+    COMPONENT ${remake_component})
+endmacro(remake_add_executable)
+
+### \brief Add multiple executable targets.
+#   This macro automatically defines build rules for executable targets from
+#   a list of glob expressions. One target is added for each executable source
+#   resolved from the glob expressions. The targets bear the name of the
+#   source file without the file extension. In addition, the macro takes a
+#   list of libraries that are linked into the executable targets.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the executables' sources, defaulting to *.c
+#     and *.cpp.
+#   \optional[option] TESTING With this option being present, the executables
+#     are assumed to be a testing binary. Consequently, a call to remake_test()
+#     creates a testing target for these executables. See ReMakeTest for
+#     details.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to CMake's install() macro, defaults
 #     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
