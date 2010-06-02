@@ -70,11 +70,13 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     shipped with the project package, defaults to README.
 #   \optional[value] COPYRIGHT:file The name of the copyright file that will
 #     be shipped with the project package, defaults to copyright.
+#   \optional[value] TODO:file The name of the TODO file that will
+#     be shipped with the project package, defaults to TODO.
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
     VAR COMPONENT VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR README
-    VAR COPYRIGHT ${ARGN})
+    VAR COPYRIGHT VAR TODO ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   if(NOT project_summary)
@@ -119,6 +121,7 @@ macro(remake_project project_name)
   remake_set(REMAKE_PROJECT_COMPONENT ${project_component} DEFAULT default)
   remake_set(REMAKE_PROJECT_README ${project_readme} DEFAULT README)
   remake_set(REMAKE_PROJECT_COPYRIGHT ${project_copyright} DEFAULT copyright)
+  remake_set(REMAKE_PROJECT_TODO ${project_todo} DEFAULT TODO)
   remake_set(REMAKE_PROJECT_CHANGELOG changelog)
 
   remake_set(REMAKE_PROJECT_BUILD_SYSTEM ${CMAKE_SYSTEM_NAME})
@@ -176,8 +179,11 @@ macro(remake_project project_name)
 
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
-  install(FILES ${project_readme} ${project_copyright} ${project_changelog}
-    DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
+  if(REMAKE_PROJECT_TODO)
+    remake_file_configure(${REMAKE_PROJECT_TODO} OUTPUT project_todo)
+  endif(REMAKE_PROJECT_TODO)
+  install(FILES ${project_readme} ${project_copyright} ${project_todo}
+    ${project_changelog} DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
     COMPONENT ${REMAKE_PROJECT_COMPONENT})
   remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
 
