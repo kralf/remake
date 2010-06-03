@@ -55,8 +55,9 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[value] LICENSE:license The license specified in the project's
 #     copyleft/copyright agreement, defaults to LGPL. Common values are GPL,
 #     LGPL, MIT, BSD, naming just a few.
-#   \optional[value] COMPONENT:component The optional name of the project's
-#     default install component for targets, defaults to default.
+#   \optional[value] COMPONENT:component An optional and valid name of the
+#     project's default install component for targets, defaults to default.
+#     See ReMakeComponent for details.
 #   \optional[value] FILENAME:name An optional and valid filename that is
 #     used to initialize ${REMAKE_PROJECT_FILENAME}, defaults to the filename
 #     conversion of the project name.
@@ -173,6 +174,9 @@ macro(remake_project project_name)
   endif(REMAKE_PROJECT_HOME)
   message(STATUS "License: ${REMAKE_PROJECT_LICENSE}")
 
+  remake_component(${REMAKE_PROJECT_COMPONENT} DEFAULT)
+  remake_component_set(${REMAKE_PROJECT_COMPONENT})
+
   remake_svn_log(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
   remake_target(${REMAKE_PROJECT_CHANGELOG_TARGET} ALL
     DEPENDS ${project_changelog})
@@ -182,9 +186,9 @@ macro(remake_project project_name)
   if(REMAKE_PROJECT_TODO)
     remake_file_configure(${REMAKE_PROJECT_TODO} OUTPUT project_todo)
   endif(REMAKE_PROJECT_TODO)
-  install(FILES ${project_readme} ${project_copyright} ${project_todo}
-    ${project_changelog} DESTINATION share/doc/${REMAKE_PROJECT_FILENAME}
-    COMPONENT ${REMAKE_PROJECT_COMPONENT})
+  remake_component_install(FILES ${project_readme} ${project_copyright}
+    ${project_todo} ${project_changelog}
+    DESTINATION share/doc/${REMAKE_PROJECT_FILENAME})
   remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
 
   project(${REMAKE_PROJECT_NAME})

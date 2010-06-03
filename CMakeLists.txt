@@ -5,7 +5,7 @@ include(ReMake)
 
 remake_project(
   ReMake
-  VERSION 0.1
+  VERSION 0.2
   RELEASE beta
   SUMMARY "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
   AUTHOR "Ralf Kaestner"
@@ -22,5 +22,12 @@ remake_doc(
   html
 )
 
-remake_pack_deb(ARCH all "cmake (>= 2.6.2)")
-remake_pack_deb(ARCH all COMPONENT doc)
+remake_pack_deb(
+  ARCH all
+  "cmake (>= 2.6.2)"
+)
+remake_pack_deb(
+  ARCH all
+  COMPONENT doc
+  DESCRIPTION "documentation"
+)

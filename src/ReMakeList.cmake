@@ -73,6 +73,26 @@ macro(remake_list_pop list_name)
   endwhile(list_vars)
 endmacro(remake_list_pop)
 
+### \brief Replace values in a list.
+#   This macro searches a list for matching values and replaces the matches
+#   with another value.
+#   \required[value] list The name of the list to replace values in.
+#   \required[value] value The list value to be matched and replaced.
+#   \optional[value] REPLACE:value The optional replacement value that is
+#     used to substitute matching list values, defaults to the empty string.
+macro(remake_list_replace list_name list_value)
+  remake_arguments(PREFIX list_ VAR REPLACE ${ARGN})
+
+  string(REGEX REPLACE "[;]${list_value}[;]" ";${list_replace};"
+    ${list_name} ${${list_name}})
+  string(REGEX REPLACE "^${list_value}[;]" "${list_replace};"
+    ${list_name} ${${list_name}})
+  string(REGEX REPLACE "[;]${list_value}$" ";${list_replace}"
+    ${list_name} ${${list_name}})
+  string(REGEX REPLACE "^${list_value}$" "${list_replace}"
+    ${list_name} ${${list_name}})
+endmacro(remake_list_replace)
+
 ### \brief Search a list for existing values.
 #   This macro iterates a list in order to determine missing list values.
 #   \required[value] list The name of the list to be searched for existing
@@ -91,9 +111,9 @@ macro(remake_list_contains list_name)
   remake_arguments(PREFIX list_ VAR ALL VAR ANY VAR CONTAINED VAR MISSING
     ARGN values ${ARGN})
 
-  if(list_all)
+  if(list_all AND ${list_name})
     remake_set(${list_all} TRUE)
-  endif(list_all)
+  endif(list_all AND ${list_name})
   if(list_any)
     remake_set(${list_any})
   endif(list_any)

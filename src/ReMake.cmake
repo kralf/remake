@@ -20,6 +20,7 @@
 
 include(ReMakeProject)
 include(ReMakeBranch)
+include(ReMakeComponent)
 include(ReMakeFind)
 include(ReMakeFile)
 include(ReMakeList)
@@ -54,9 +55,9 @@ include(ReMakePrivate)
 #     resolved in order to find the library sources, defaulting to *.c
 #     and *.cpp.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults
-#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
-#     documentation for details.
+#     component that is passed to remake_component_install(), defaults
+#     to ${REMAKE_COMPONENT}. See ReMakeComponent and the CMake documentation
+#     for details.
 #   \optional[value] PREFIX:prefix An optional library name prefix,
 #     defaults to the project's ${LIBRARY_PREFIX}. Note that passing OFF
 #     here results in an empty prefix.
@@ -67,47 +68,54 @@ include(ReMakePrivate)
 macro(remake_add_library remake_name)
   remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
     ARGN globs LIST LINK ${ARGN})
-  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
-  remake_project_get(LIBRARY_PREFIX)
-  remake_project_get(LIBRARY_DESTINATION)
-  remake_project_get(PLUGIN_DESTINATION)
-  if(NOT DEFINED remake_prefix)
-    remake_set(remake_prefix ${LIBRARY_PREFIX})
-  endif(NOT DEFINED remake_prefix)
-  if(NOT remake_prefix)
-    remake_set(remake_prefix)
-  endif(NOT remake_prefix)
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-    remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
-    remake_branch_add_targets(${remake_name})
-  endif(REMAKE_BRANCH_COMPILE)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${remake_globs})
-  remake_target_get_sources(remake_target_sources ${remake_name})
-  remake_include()
-  add_library(${remake_name}${remake_suffix}
-    SHARED ${remake_sources} ${remake_target_sources})
-  set_target_properties(${remake_name}${remake_suffix}
-    PROPERTIES OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
-  if(remake_link)
-    target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
-  endif(remake_link)
+  if(remake_build)
+    remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+    remake_project_get(LIBRARY_PREFIX)
+    remake_project_get(LIBRARY_DESTINATION)
+    remake_project_get(PLUGIN_DESTINATION)
+    if(NOT DEFINED remake_prefix)
+      remake_set(remake_prefix ${LIBRARY_PREFIX})
+    endif(NOT DEFINED remake_prefix)
+    if(NOT remake_prefix)
+      remake_set(remake_prefix)
+    endif(NOT remake_prefix)
 
-  remake_set(remake_plugins
-    ${PLUGIN_DESTINATION}/${remake_name}/*${CMAKE_SHARED_LIBRARY_SUFFIX})
-  if(IS_ABSOLUTE ${PLUGIN_DESTINATION})
-    remake_define(PLUGINS QUOTED "${remake_plugins}")
-  else(IS_ABSOLUTE ${PLUGIN_DESTINATION})
-    remake_define(PLUGINS QUOTED "${CMAKE_INSTALL_PREFIX}/${remake_plugins}")
-  endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
+    if(REMAKE_BRANCH_COMPILE)
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+      remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
+      remake_branch_add_targets(${remake_name})
+    endif(REMAKE_BRANCH_COMPILE)
 
-  install(TARGETS ${remake_name}${remake_suffix}
-    LIBRARY DESTINATION ${LIBRARY_DESTINATION}
-    COMPONENT ${remake_component})
+    remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      ${remake_globs})
+    remake_target_get_sources(remake_target_sources ${remake_name})
+    remake_include()
+    add_library(${remake_name}${remake_suffix}
+      SHARED ${remake_sources} ${remake_target_sources})
+    set_target_properties(${remake_name}${remake_suffix}
+      PROPERTIES OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
+    if(remake_link)
+      target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
+    endif(remake_link)
+
+    remake_set(remake_plugins
+      ${PLUGIN_DESTINATION}/${remake_name}/*${CMAKE_SHARED_LIBRARY_SUFFIX})
+    if(IS_ABSOLUTE ${PLUGIN_DESTINATION})
+      remake_define(PLUGINS QUOTED "${remake_plugins}")
+    else(IS_ABSOLUTE ${PLUGIN_DESTINATION})
+      remake_define(PLUGINS QUOTED "${CMAKE_INSTALL_PREFIX}/${remake_plugins}")
+    endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
+
+    remake_component_install(
+      TARGETS ${remake_name}${remake_suffix}
+      LIBRARY DESTINATION ${LIBRARY_DESTINATION}
+      COMPONENT ${remake_component})
+  endif(remake_build)
 endmacro(remake_add_library)
 
 ### \brief Add a plugin library target.
@@ -119,9 +127,9 @@ endmacro(remake_add_library)
 #     resolved in order to find the plugin sources, defaulting to *.c
 #     and *.cpp.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults
-#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
-#     documentation for details.
+#     component that is passed to remake_component_install(), defaults
+#     to ${REMAKE_COMPONENT}. See ReMakeComponent and the CMake documentation
+#     for details.
 #   \optional[value] PREFIX:prefix An optional plugin name prefix,
 #     defaults to the project's ${PLUGIN_PREFIX}. Note that passing OFF
 #     here results in an empty prefix.
@@ -132,45 +140,52 @@ endmacro(remake_add_library)
 macro(remake_add_plugin remake_name)
   remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
     ARGN globs LIST LINK ${ARGN})
-  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
-  remake_project_get(PLUGIN_PREFIX)
-  if(NOT DEFINED remake_prefix)
-    remake_set(remake_prefix ${PLUGIN_PREFIX})
-  endif(NOT DEFINED remake_prefix)
-  if(NOT remake_prefix)
-    remake_set(remake_prefix)
-  endif(NOT remake_prefix)
 
-  get_property(remake_definitions DIRECTORY PROPERTY COMPILE_DEFINITIONS)
-  remake_list_values(remake_definitions remake_plugins PLUGINS)
-  if(remake_plugins)
-    string(REGEX REPLACE "\"(.*)/[^/]*\"" "\\1" remake_plugins
-      ${remake_plugins})
-  else(remake_plugins)
-    remake_project_get(PLUGIN_DESTINATION OUTPUT remake_plugins)
-  endif(remake_plugins)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-    remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
-    remake_branch_add_targets(${remake_name})
-  endif(REMAKE_BRANCH_COMPILE)
+  if(remake_build)
+    remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+    remake_project_get(PLUGIN_PREFIX)
+    if(NOT DEFINED remake_prefix)
+      remake_set(remake_prefix ${PLUGIN_PREFIX})
+    endif(NOT DEFINED remake_prefix)
+    if(NOT remake_prefix)
+      remake_set(remake_prefix)
+    endif(NOT remake_prefix)
 
-  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${remake_globs})
-  remake_target_get_sources(remake_target_sources ${remake_name})
-  add_library(${remake_name}${remake_suffix}
-    SHARED ${remake_sources} ${remake_target_sources})
-  set_target_properties(${remake_name}${remake_suffix} PROPERTIES
-    OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
-  if(remake_link)
-    target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
-  endif(remake_link)
+    get_property(remake_definitions DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+    remake_list_values(remake_definitions remake_plugins PLUGINS)
+    if(remake_plugins)
+      string(REGEX REPLACE "\"(.*)/[^/]*\"" "\\1" remake_plugins
+        ${remake_plugins})
+    else(remake_plugins)
+      remake_project_get(PLUGIN_DESTINATION OUTPUT remake_plugins)
+    endif(remake_plugins)
 
-  install(TARGETS ${remake_name}${remake_suffix}
-    LIBRARY DESTINATION ${remake_plugins}
-    COMPONENT ${remake_component})
+    if(REMAKE_BRANCH_COMPILE)
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+      remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
+      remake_branch_add_targets(${remake_name})
+    endif(REMAKE_BRANCH_COMPILE)
+
+    remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      ${remake_globs})
+    remake_target_get_sources(remake_target_sources ${remake_name})
+    add_library(${remake_name}${remake_suffix}
+      SHARED ${remake_sources} ${remake_target_sources})
+    set_target_properties(${remake_name}${remake_suffix} PROPERTIES
+      OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
+    if(remake_link)
+      target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
+    endif(remake_link)
+
+    remake_component_install(
+      TARGETS ${remake_name}${remake_suffix}
+      LIBRARY DESTINATION ${remake_plugins}
+      COMPONENT ${remake_component})
+  endif(remake_build)
 endmacro(remake_add_plugin)
 
 ### \brief Add a single executable target.
@@ -187,9 +202,9 @@ endmacro(remake_add_plugin)
 #     assumed to be a testing binary. Consequently, a call to remake_test()
 #     creates a testing target for this executable. See ReMakeTest for details.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults
-#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
-#     documentation for details.
+#     component that is passed to remake_component_install(), defaults
+#     to ${REMAKE_COMPONENT}. See ReMakeComponent and the CMake documentation
+#     for details.
 #   \optional[value] PREFIX:prefix An optional executable name prefix,
 #     defaults to the project's ${EXECUTABLE_PREFIX}. Note that passing
 #     OFF here results in an empty prefix.
@@ -198,46 +213,52 @@ endmacro(remake_add_plugin)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     executable target.
 macro(remake_add_executable remake_name)
-  remake_arguments(PREFIX remake_ OPTION TESTING VAR PREFIX VAR SUFFIX
-    ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ OPTION TESTING VAR COMPONENT VAR PREFIX
+    VAR SUFFIX ARGN globs LIST LINK ${ARGN})
 
-  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
-  remake_project_get(EXECUTABLE_PREFIX)
-  remake_project_get(EXECUTABLE_DESTINATION)
-  if(NOT DEFINED remake_prefix)
-    remake_set(remake_prefix ${EXECUTABLE_PREFIX})
-  endif(NOT DEFINED remake_prefix)
-  if(NOT remake_prefix)
-    remake_set(remake_prefix)
-  endif(NOT remake_prefix)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  if(remake_build)
+    remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+    remake_project_get(EXECUTABLE_PREFIX)
+    remake_project_get(EXECUTABLE_DESTINATION)
+    if(NOT DEFINED remake_prefix)
+      remake_set(remake_prefix ${EXECUTABLE_PREFIX})
+    endif(NOT DEFINED remake_prefix)
+    if(NOT remake_prefix)
+      remake_set(remake_prefix)
+    endif(NOT remake_prefix)
 
-  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${remake_globs})
-  remake_branch_link(remake_link ${remake_link})
+    if(REMAKE_BRANCH_COMPILE)
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+    endif(REMAKE_BRANCH_COMPILE)
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_branch_add_targets(${remake_name})
-  endif(REMAKE_BRANCH_COMPILE)
-  remake_target_get_sources(remake_target_sources ${remake_name})
-  add_executable(${remake_name}${remake_suffix}
-    ${remake_sources} ${remake_target_sources})
-  set_target_properties(${remake_name}${remake_suffix} PROPERTIES
-    OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
-  if(remake_link)
-    target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
-  endif(remake_link)
-  if(remake_testing)
-    remake_test(${remake_name}${remake_suffix})
-  endif(remake_testing)
+    remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      ${remake_globs})
+    remake_branch_link(remake_link ${remake_link})
 
-  install(TARGETS ${remake_name}${remake_suffix}
-    RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
-    COMPONENT ${remake_component})
+    if(REMAKE_BRANCH_COMPILE)
+      remake_branch_add_targets(${remake_name})
+    endif(REMAKE_BRANCH_COMPILE)
+    remake_target_get_sources(remake_target_sources ${remake_name})
+    add_executable(${remake_name}${remake_suffix}
+      ${remake_sources} ${remake_target_sources})
+    set_target_properties(${remake_name}${remake_suffix} PROPERTIES
+      OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
+    if(remake_link)
+      target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
+    endif(remake_link)
+    if(remake_testing)
+      remake_test(${remake_name}${remake_suffix})
+    endif(remake_testing)
+
+    remake_component_install(
+      TARGETS ${remake_name}${remake_suffix}
+      RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
+      COMPONENT ${remake_component})
+  endif(remake_build)
 endmacro(remake_add_executable)
 
 ### \brief Add multiple executable targets.
@@ -254,9 +275,9 @@ endmacro(remake_add_executable)
 #     creates a testing target for these executables. See ReMakeTest for
 #     details.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults
-#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
-#     documentation for details.
+#     component that is passed to remake_component_install(), defaults
+#     to ${REMAKE_COMPONENT}. See ReMakeComponent and the CMake documentation
+#     for details.
 #   \optional[value] PREFIX:prefix An optional executable name prefix,
 #     defaults to the project's ${EXECUTABLE_PREFIX}. Note that passing
 #     OFF here results in an empty prefix.
@@ -265,47 +286,54 @@ endmacro(remake_add_executable)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     executable targets.
 macro(remake_add_executables)
-  remake_arguments(PREFIX remake_ OPTION TESTING VAR PREFIX VAR SUFFIX
-    ARGN globs LIST LINK ${ARGN})
-  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
-  remake_project_get(EXECUTABLE_PREFIX)
-  remake_project_get(EXECUTABLE_DESTINATION)
-  if(NOT DEFINED remake_prefix)
-    remake_set(remake_prefix ${EXECUTABLE_PREFIX})
-  endif(NOT DEFINED remake_prefix)
-  if(NOT remake_prefix)
-    remake_set(remake_prefix)
-  endif(NOT remake_prefix)
+  remake_arguments(PREFIX remake_ OPTION TESTING VAR COMPONENT VAR PREFIX
+    VAR SUFFIX ARGN globs LIST LINK ${ARGN})
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${remake_globs})
-  remake_branch_link(remake_link ${remake_link})
-  foreach(remake_source ${remake_sources})
-    get_filename_component(remake_name ${remake_source} NAME_WE)
+  if(remake_build)
+    remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+    remake_project_get(EXECUTABLE_PREFIX)
+    remake_project_get(EXECUTABLE_DESTINATION)
+    if(NOT DEFINED remake_prefix)
+      remake_set(remake_prefix ${EXECUTABLE_PREFIX})
+    endif(NOT DEFINED remake_prefix)
+    if(NOT remake_prefix)
+      remake_set(remake_prefix)
+    endif(NOT remake_prefix)
+
     if(REMAKE_BRANCH_COMPILE)
-      remake_branch_add_targets(${remake_name})
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
     endif(REMAKE_BRANCH_COMPILE)
-    remake_target_get_sources(remake_target_sources ${remake_name})
-    add_executable(${remake_name}${remake_suffix}
-      ${remake_source} ${remake_target_sources})
-    set_target_properties(${remake_name}${remake_suffix} PROPERTIES
-      OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
-    if(remake_link)
-      target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
-    endif(remake_link)
-    if(remake_testing)
-      remake_test(${remake_name}${remake_suffix})
-    endif(remake_testing)
 
-    install(TARGETS ${remake_name}${remake_suffix}
-      RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
-      COMPONENT ${remake_component})
-  endforeach(remake_source)
+    remake_file_glob(remake_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      ${remake_globs})
+    remake_branch_link(remake_link ${remake_link})
+    foreach(remake_source ${remake_sources})
+      get_filename_component(remake_name ${remake_source} NAME_WE)
+      if(REMAKE_BRANCH_COMPILE)
+        remake_branch_add_targets(${remake_name})
+      endif(REMAKE_BRANCH_COMPILE)
+      remake_target_get_sources(remake_target_sources ${remake_name})
+      add_executable(${remake_name}${remake_suffix}
+        ${remake_source} ${remake_target_sources})
+      set_target_properties(${remake_name}${remake_suffix} PROPERTIES
+        OUTPUT_NAME ${remake_prefix}${remake_name}${remake_suffix})
+      if(remake_link)
+        target_link_libraries(${remake_name}${remake_suffix} ${remake_link})
+      endif(remake_link)
+      if(remake_testing)
+        remake_test(${remake_name}${remake_suffix})
+      endif(remake_testing)
+
+      remake_component_install(
+        TARGETS ${remake_name}${remake_suffix}
+        RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
+        COMPONENT ${remake_component})
+    endforeach(remake_source)
+  endif(remake_build)
 endmacro(remake_add_executables)
 
 ### \brief Add header install rules.
@@ -320,25 +348,34 @@ endmacro(remake_add_executables)
 #     install destination defaults to its relative-path location below
 #     ${CMAKE_CURRENT_SOURCE_DIR}.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults to dev.
-#     See the CMake documentation for details.
+#     component that is passed to remake_component_install(), defaults to
+#     ${REMAKE_COMPONENT}-dev. See ReMakeComponent and the CMake documentation
+#     for details.
 macro(remake_add_headers)
   remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
-  remake_set(remake_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
-  remake_set(remake_component SELF DEFAULT dev)
-  remake_project_get(HEADER_DESTINATION)
 
-  foreach(remake_glob ${remake_globs})
-    remake_file_glob(remake_headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-      ${remake_glob})
-    get_filename_component(remake_header_dir ${remake_glob} PATH)
-    remake_set(remake_header_dir FROM remake_install
-      DEFAULT ${remake_header_dir})
+  remake_component_name(remake_doc_component ${REMAKE_COMPONENT} dev)
+  remake_set(remake_component SELF DEFAULT ${remake_doc_component})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-    install(FILES ${remake_headers}
-      DESTINATION ${HEADER_DESTINATION}/${remake_header_dir}
-      COMPONENT ${remake_component})
-  endforeach(remake_glob)
+  if(remake_build)
+    remake_set(remake_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+    remake_project_get(HEADER_DESTINATION)
+
+    foreach(remake_glob ${remake_globs})
+      remake_file_glob(remake_headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+        ${remake_glob})
+      get_filename_component(remake_header_dir ${remake_glob} PATH)
+      remake_set(remake_header_dir FROM remake_install
+        DEFAULT ${remake_header_dir})
+
+      remake_component_install(
+        FILES ${remake_headers}
+        DESTINATION ${HEADER_DESTINATION}/${remake_header_dir}
+        COMPONENT ${remake_component})
+    endforeach(remake_glob)
+  endif(remake_build)
 endmacro(remake_add_headers)
 
 ### \brief Add script install rules.
@@ -347,9 +384,9 @@ endmacro(remake_add_headers)
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the scripts.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults
-#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
-#     documentation for details.
+#     component that is passed to remake_component_install(), defaults
+#     to ${REMAKE_COMPONENT}. See ReMakeComponent and the CMake documentation
+#     for details.
 #   \optional[value] PREFIX:prefix An optional prefix that is prepended
 #     to the script names during installation, defaults to the project's
 #     ${SCRIPT_PREFIX}. Note that passing OFF here results in an empty
@@ -360,30 +397,37 @@ endmacro(remake_add_headers)
 macro(remake_add_scripts)
   remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
     ARGN globs ${ARGN})
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
-  remake_project_get(SCRIPT_PREFIX)
-  remake_project_get(SCRIPT_DESTINATION)
-  if(NOT DEFINED remake_prefix)
-    remake_set(remake_prefix ${SCRIPT_PREFIX})
-  endif(NOT DEFINED remake_prefix)
-  if(NOT remake_prefix)
-    remake_set(remake_prefix)
-  endif(NOT remake_prefix)
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  remake_file_glob(remake_scripts RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${remake_globs})
-  foreach(remake_script ${remake_scripts})
-    remake_file_suffix(remake_script_suffixed
-      ${remake_script} ${remake_suffix})
-    install(PROGRAMS ${remake_script}
-      DESTINATION ${SCRIPT_DESTINATION}
-      COMPONENT ${remake_component}
-      RENAME ${remake_prefix}${remake_script_suffixed})
-  endforeach(remake_script)
+  if(remake_build)
+    remake_project_get(SCRIPT_PREFIX)
+    remake_project_get(SCRIPT_DESTINATION)
+    if(NOT DEFINED remake_prefix)
+      remake_set(remake_prefix ${SCRIPT_PREFIX})
+    endif(NOT DEFINED remake_prefix)
+    if(NOT remake_prefix)
+      remake_set(remake_prefix)
+    endif(NOT remake_prefix)
+
+    if(REMAKE_BRANCH_COMPILE)
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+    endif(REMAKE_BRANCH_COMPILE)
+
+    remake_file_glob(remake_scripts RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      ${remake_globs})
+    foreach(remake_script ${remake_scripts})
+      remake_file_suffix(remake_script_suffixed
+        ${remake_script} ${remake_suffix})
+      remake_component_install(
+        PROGRAMS ${remake_script}
+        DESTINATION ${SCRIPT_DESTINATION}
+        COMPONENT ${remake_component}
+        RENAME ${remake_prefix}${remake_script_suffixed})
+    endforeach(remake_script)
+  endif(remake_build)
 endmacro(remake_add_scripts)
 
 ### \brief Add configuration file install rules.
@@ -397,35 +441,42 @@ endmacro(remake_add_scripts)
 #     as the configuration files' install destination, defaults to
 #     ${PROJECT_CONFIGURATION_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults
-#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
-#     documentation for details.
+#     component that is passed to remake_component_install(), defaults
+#     to ${REMAKE_COMPONENT}. See ReMakeComponent and the CMake documentation
+#     for details.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
 #     to the configuration file names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_configurations)
   remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
     ARGN globs ${ARGN})
-  remake_project_get(CONFIGURATION_DESTINATION)
-  remake_set(remake_install SELF DEFAULT ${CONFIGURATION_DESTINATION})
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
-  remake_project_get(CONFIGURATION_DESTINATION)
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  remake_file_configure(${remake_globs} OUTPUT remake_configs)
-  foreach(remake_config ${remake_configs})
-    file(RELATIVE_PATH remake_config_relative ${CMAKE_CURRENT_BINARY_DIR}
-      ${remake_config})
-    remake_file_suffix(remake_config_suffixed
-      ${remake_config_relative} ${remake_suffix})
-    install(FILES ${remake_config}
-      DESTINATION ${remake_install}
-      COMPONENT ${remake_component}
-      RENAME ${remake_config_suffixed})
-  endforeach(remake_config)
+  if(remake_build)
+    remake_project_get(CONFIGURATION_DESTINATION)
+    remake_set(remake_install SELF DEFAULT ${CONFIGURATION_DESTINATION})
+    remake_project_get(CONFIGURATION_DESTINATION)
+
+    if(REMAKE_BRANCH_COMPILE)
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+    endif(REMAKE_BRANCH_COMPILE)
+
+    remake_file_configure(${remake_globs} OUTPUT remake_configs)
+    foreach(remake_config ${remake_configs})
+      file(RELATIVE_PATH remake_config_relative ${CMAKE_CURRENT_BINARY_DIR}
+        ${remake_config})
+      remake_file_suffix(remake_config_suffixed
+        ${remake_config_relative} ${remake_suffix})
+      remake_component_install(
+        FILES ${remake_config}
+        DESTINATION ${remake_install}
+        COMPONENT ${remake_component}
+        RENAME ${remake_config_suffixed})
+    endforeach(remake_config)
+  endif(remake_build)
 endmacro(remake_add_configurations)
 
 ### \brief Add file install rules.
@@ -436,32 +487,39 @@ endmacro(remake_add_configurations)
 #   \optional[value] INSTALL:dirname The directory that shall be passed as
 #     the files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults
-#     to ${REMAKE_PROJECT_COMPONENT}. See ReMakeProject and the CMake
-#     documentation for details.
+#     component that is passed to remake_component_install(), defaults
+#     to ${REMAKE_COMPONENT}. See ReMakeComponent and the CMake documentation
+#     for details.
 #   \optional[value] SUFFIX:suffix An optional suffix that is prepended
 #     to the file names during installation, forced to ${REMAKE_BRANCH_SUFFIX}
 #     if defined within a ReMake branch.
 macro(remake_add_files)
   remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
     ARGN globs ${ARGN})
-  remake_project_get(FILE_DESTINATION)
-  remake_set(remake_install SELF DEFAULT ${FILE_DESTINATION})
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
 
-  if(REMAKE_BRANCH_COMPILE)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  remake_file_glob(remake_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${remake_globs})
-  foreach(remake_file ${remake_files})
-    remake_file_suffix(remake_file_suffixed ${remake_file} ${remake_suffix})
-    install(FILES ${remake_file}
-      DESTINATION ${remake_install}
-      COMPONENT ${remake_component}
-      RENAME ${remake_file_suffixed})
-  endforeach(remake_file)
+  if(remake_build)
+    remake_project_get(FILE_DESTINATION)
+    remake_set(remake_install SELF DEFAULT ${FILE_DESTINATION})
+
+    if(REMAKE_BRANCH_COMPILE)
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+    endif(REMAKE_BRANCH_COMPILE)
+
+    remake_file_glob(remake_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+      ${remake_globs})
+    foreach(remake_file ${remake_files})
+      remake_file_suffix(remake_file_suffixed ${remake_file} ${remake_suffix})
+      remake_component_install(
+        FILES ${remake_file}
+        DESTINATION ${remake_install}
+        COMPONENT ${remake_component}
+        RENAME ${remake_file_suffixed})
+    endforeach(remake_file)
+  endif(remake_build)
 endmacro(remake_add_files)
 
 ### \brief Add subdirectories.
@@ -473,32 +531,37 @@ endmacro(remake_add_files)
 #     In some cases, it is therefore useful to specify directories in the
 #     correct order of inclusion.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is assigned to ${REMAKE_PROJECT_COMPONENT} before
-#     subdirectory inclusion, defaults to ${REMAKE_PROJECT_COMPONENT}. See
-#     ReMakeProject for details.
+#     component that is passed to remake_component_set() before subdirectory
+#     inclusion, defaults to ${REMAKE_COMPONENT}. See ReMakeComponent for
+#     details.
 #   \optional[value] IF:option The name of a project option variable that
 #     conditions directory inclusion. See ReMakeProject for the correct usage
 #     of ReMake project options.
 macro(remake_add_directories)
   remake_arguments(PREFIX remake_ VAR COMPONENT VAR IF ARGN globs ${ARGN})
-  remake_set(remake_globs SELF DEFAULT *)
-  remake_set(remake_component SELF DEFAULT ${REMAKE_PROJECT_COMPONENT})
 
-  if(remake_if)
-    remake_project_get(${remake_if} OUTPUT remake_option)
-  else(remake_if)
-    remake_set(remake_option ON)
-  endif(remake_if)
+  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
 
-  if(remake_option)
-    remake_file_glob(remake_dirs DIRECTORIES ${remake_globs})
-    foreach(remake_dir ${remake_dirs})
-      remake_set(remake_current_component ${REMAKE_PROJECT_COMPONENT})
-      remake_set(REMAKE_PROJECT_COMPONENT ${remake_component})
-      add_subdirectory(${remake_dir})
-      remake_set(REMAKE_PROJECT_COMPONENT ${remake_current_component})
-    endforeach(remake_dir)
-  endif(remake_option)
+  if(remake_build)
+    remake_set(remake_globs SELF DEFAULT *)
+    if(remake_if)
+      remake_project_get(${remake_if} OUTPUT remake_option)
+    else(remake_if)
+      remake_set(remake_option ON)
+    endif(remake_if)
+
+    if(remake_option)
+      remake_file_glob(remake_dirs DIRECTORIES ${remake_globs})
+      foreach(remake_dir ${remake_dirs})
+        remake_component_set(${remake_component} CURRENT
+          remake_current_component)
+        add_subdirectory(${remake_dir})
+        remake_component_set(${remake_current_component})
+      endforeach(remake_dir)
+    endif(remake_option)
+  endif(remake_build)
 endmacro(remake_add_directories)
 
 ### \brief Add a documentation target.
@@ -507,16 +570,29 @@ endmacro(remake_add_directories)
 #   forwarded to the selected generator.
 #   \required[option] DOYXGEN|GROFF|CUSTOM The generator to be used for
 #     document generation.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to the generator macro, defaults to the
+#     component name conversion of ${REMAKE_COMPONENT}-doc. See ReMakeComponent
+#     and the ReMakeDoc for details.
 #   \required[list] arg The arguments to be forwared to the document
 #     generator. See ReMakeDoc for details.
 macro(remake_add_documentation remake_generator)
-  if(${remake_generator} MATCHES "DOXYGEN")
-    remake_doc_doxygen(${ARGN})
-  elseif(${remake_generator} MATCHES "GROFF")
-    remake_doc_groff(${ARGN})
-  elseif(${remake_generator} MATCHES "CUSTOM")
-    remake_doc_custom(${ARGN})
-  endif(${remake_generator} MATCHES "DOXYGEN")
+  remake_arguments(PREFIX remake_ VAR COMPONENT ARGN args ${ARGN})
+
+  remake_component_name(remake_doc_component ${REMAKE_COMPONENT} doc)
+  remake_set(remake_component SELF DEFAULT ${remake_doc_component})
+  remake_component(${remake_component})
+  remake_component_build(${remake_component} remake_build)
+
+  if(remake_build)
+    if(${remake_generator} MATCHES "DOXYGEN")
+      remake_doc_doxygen(${remake_args} COMPONENT ${remake_component})
+    elseif(${remake_generator} MATCHES "GROFF")
+      remake_doc_groff(${remake_args} COMPONENT ${remake_component})
+    elseif(${remake_generator} MATCHES "CUSTOM")
+      remake_doc_custom(${remake_args} COMPONENT ${remake_component})
+    endif(${remake_generator} MATCHES "DOXYGEN")
+  endif(remake_build)
 endmacro(remake_add_documentation)
 
 ### \brief Add directories to the include path.

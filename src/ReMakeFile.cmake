@@ -184,6 +184,22 @@ macro(remake_file_mkdir file_dir_name)
   endif(NOT IS_DIRECTORY ${file_dir})
 endmacro(remake_file_mkdir)
 
+### \brief Recursively remove a directory.
+#   This macro recursively removes a ReMake directory. The directory name
+#   is automatically converted into a ReMake location by a call to
+#   remake_file().
+#   \required[value] dirname The name of the directory to be removed.
+#   \optional[option] TOPLEVEL If this option is present, the directory
+#     to be removed is a top-level ReMake directory.
+macro(remake_file_rmdir file_dir_name)
+  remake_arguments(PREFIX file_ OPTION TOPLEVEL ${ARGN})
+  remake_file(file_dir ${file_dir_name} ${TOPLEVEL})
+
+  if(IS_DIRECTORY  ${file_dir})
+    file(REMOVE_RECURSE ${file_dir})
+  endif(IS_DIRECTORY ${file_dir})
+endmacro(remake_file_rmdir)
+
 ### \brief Create an empty file.
 #   This macro creates an empty ReMake file. The filename is automatically
 #   converted into a ReMake location by a call to remake_file(). Optionally,

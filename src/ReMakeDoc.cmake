@@ -58,21 +58,19 @@ include(ReMakeFile)
 #     install destintations for the given document types. All directories
 #     default to share/doc/${REMAKE_PROJECT_FILENAME}. See remake_doc_install() 
 #     for details.
-#   \optional[value] COMPONENT:component The optional name of the default 
-#     install component for documentation targets, defaults to doc.
 #   \optional[value] CONFIGURATION:dir The directory containing the project
 #     document configuration, defaults to doc.
 macro(remake_doc)
-  remake_arguments(PREFIX doc_ VAR OUTPUT VAR INSTALL VAR COMPONENT
-    VAR CONFIGURATION ARGN types ${ARGN})
+  remake_arguments(PREFIX doc_ VAR OUTPUT VAR INSTALL VAR CONFIGURATION
+    ARGN types ${ARGN})
 
   foreach(doc_type ${doc_types})
     remake_file_name(doc_file ${doc_type})
     remake_list_pop(doc_output doc_type_output DEFAULT ${doc_file})
-    remake_list_pop(doc_install doc_type_install 
+    remake_list_pop(doc_install doc_type_install
       DEFAULT "share/doc/${REMAKE_PROJECT_FILENAME}")
 
-    remake_project_set(DOC_${doc_type} ON CACHE BOOL 
+    remake_project_set(DOC_${doc_type} ON CACHE BOOL
       "Generate documentation of type ${doc_type}.")
     remake_var_name(doc_type_var REMAKE_DOC ${doc_type})
     remake_project_get(DOC_${doc_type} OUTPUT ${doc_type_var})
@@ -94,13 +92,14 @@ macro(remake_doc)
     message(STATUS "Documentation: not available")
   endif(REMAKE_DOC_TYPES)
 
-  remake_set(REMAKE_DOC_COMPONENT ${doc_component} DEFAULT doc)
   remake_set(REMAKE_DOC_CONFIGURATION_DIR ${doc_configuration} DEFAULT doc)
   if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_DOC_CONFIGURATION_DIR})
     remake_add_directories(${REMAKE_DOC_CONFIGURATION_DIR})
   endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_DOC_CONFIGURATION_DIR})
 
-  remake_target(${REMAKE_DOC_TARGET} ALL)
+  if(NOT TARGET ${REMAKE_DOC_TARGET})
+    remake_target(${REMAKE_DOC_TARGET} ALL NON_EMPTY)
+  endif(NOT TARGET ${REMAKE_DOC_TARGET})
 endmacro(remake_doc)
 
 ### \brief Evaluate support for the documentation types requested.
@@ -113,7 +112,7 @@ endmacro(remake_doc)
 #   \required[list] type The list of documentation types supported by the
 #      named generator.
 macro(remake_doc_support doc_generator)
-  remake_var_name(doc_supported_types_var REMAKE_DOC ${doc_generator} 
+  remake_var_name(doc_supported_types_var REMAKE_DOC ${doc_generator}
     SUPPORTED_TYPES)
   remake_var_name(doc_types_var REMAKE_DOC ${doc_generator} TYPES)
 
@@ -297,8 +296,8 @@ endmacro(remake_doc_custom)
 #   \required[list] type The documentation types for which to add install
 #     rules.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to CMake's install() macro, defaults to
-#     ${REMAKE_DOC_COMPONENT}. See the CMake documentation for details.
+#     component that is passed to remake_component_install(), defaults to
+#     ${REMAKE_COMPONENT}. See ReMakeComponent for details.
 macro(remake_doc_install)
   remake_arguments(PREFIX doc_ VAR COMPONENT ARGN types ${ARGN})
   remake_set(doc_component SELF DEFAULT ${REMAKE_DOC_COMPONENT})
@@ -307,7 +306,9 @@ macro(remake_doc_install)
     remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
     remake_var_name(doc_install_var REMAKE_DOC ${doc_type} DESTINATION)
 
-    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}}
-      DESTINATION ${${doc_install_var}} COMPONENT ${doc_component})
+    remake_component_install(
+      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}}
+      DESTINATION ${${doc_install_var}}
+      COMPONENT ${doc_component})
   endforeach(doc_type)
 endmacro(remake_doc_install)

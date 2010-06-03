@@ -35,25 +35,38 @@ remake_set(REMAKE_TARGET_DIR ReMakeTargets)
 #   If any commands have been stored for that target, these commands will 
 #   automatically be added as custom build rules.
 #   \required[value] name The name of the target to be created.
+#   \optional[option] NON_EMPTY With this option being present, the target will
+#     not be defined if it is empty, i.e. if no commands have been added to
+#     this target by a previous call to remake_target_add_command().
 #   \optional[list] arg The arguments to be passed on to CMake's 
 #     add_custom_target() macro.
 macro(remake_target target_name)
-  if(NOT TARGET ${target_name})
-    add_custom_target(${target_name} ${ARGN})
-  endif(NOT TARGET ${target_name})
+  remake_arguments(PREFIX target_ OPTION NON_EMPTY ARGN args ${ARGN})
 
-  remake_file_read(target_cmds ${REMAKE_TARGET_DIR}/${target_name}.commands 
+  remake_file_read(target_cmds ${REMAKE_TARGET_DIR}/${target_name}.commands
     TOPLEVEL LINES)
-  while(target_cmds)
-    remake_list_pop(target_cmds target_command SPLIT \n)
-    add_custom_command(TARGET ${target_name} ${target_command})
-  endwhile(target_cmds)
+  if(target_cmds)
+    if(NOT TARGET ${target_name})
+      add_custom_target(${target_name} ${target_args})
+    endif(NOT TARGET ${target_name})
+
+    while(target_cmds)
+      remake_list_pop(target_cmds target_command SPLIT \n)
+      add_custom_command(TARGET ${target_name} ${target_command})
+    endwhile(target_cmds)
+  else(target_cmds)
+    if(NOT target_non_empty)
+      if(NOT TARGET ${target_name})
+        add_custom_target(${target_name} ${target_args})
+      endif(NOT TARGET ${target_name})
+    endif(NOT target_non_empty)
+  endif(target_cmds)
 endmacro(remake_target)
 
 ### \brief Output a valid target name from a set of strings.
 #   This macro is a helper macro to generate valid target names from arbitrary
 #   strings. It replaces whitespace characters and CMake list separators by
-#   underscores and performs an upper-case conversion of the result.
+#   underscores and performs a lower-case conversion of the result.
 #   \required[value] variable The name of a variable to be assigned the
 #     generated target name.
 #   \required[list] string A list of strings to be concatenated to the
@@ -67,7 +80,7 @@ endmacro(remake_target_name)
 #   This macro adds a custom build rule to a target. Whereas CMake's
 #   add_custom_command() only behaves correctly in the top-level source 
 #   directory, this macro is designed to also work in directories below the 
-#   top-level. Therefor, build rules are stored for later collection in a
+#   top-level. Therefore, build rules are stored for later collection in a
 #   temporary file ${TARGET_NAME}.commands in 
 #   ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}. A subsequent call to 
 #   remake_target() will automatically collect and add these rules.
@@ -115,3 +128,5 @@ macro(remake_target_get_sources target_var target_name)
   remake_var_name(target_global_var ${target_name} SOURCES)
   remake_set(${target_var} ${${target_global_var}})
 endmacro(remake_target_get_sources)
+
+remake_file_rmdir(${REMAKE_TARGET_DIR} TOPLEVEL)
