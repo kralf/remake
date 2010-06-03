@@ -84,13 +84,13 @@ macro(remake_list_replace list_name list_value)
   remake_arguments(PREFIX list_ VAR REPLACE ${ARGN})
 
   string(REGEX REPLACE "[;]${list_value}[;]" ";${list_replace};"
-    ${list_name} ${${list_name}})
+    ${list_name} "${${list_name}}")
   string(REGEX REPLACE "^${list_value}[;]" "${list_replace};"
-    ${list_name} ${${list_name}})
+    ${list_name} "${${list_name}}")
   string(REGEX REPLACE "[;]${list_value}$" ";${list_replace}"
-    ${list_name} ${${list_name}})
+    ${list_name} "${${list_name}}")
   string(REGEX REPLACE "^${list_value}$" "${list_replace}"
-    ${list_name} ${${list_name}})
+    ${list_name} "${${list_name}}")
 endmacro(remake_list_replace)
 
 ### \brief Search a list for existing values.
