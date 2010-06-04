@@ -133,11 +133,9 @@ macro(remake_project project_name)
   remake_set(REMAKE_PROJECT_CONFIGURATION_DIR ${project_configurations}
     DEFAULT conf)
 
-  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local
-      CACHE PATH "Install path prefix, prepended onto install directories."
-      FORCE)
-  endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local
+    CACHE PATH "Install path prefix, prepended onto install directories."
+    FORCE INIT)
 
   if(NOT DEFINED project_prefix)
     remake_set(project_prefix ${REMAKE_PROJECT_FILENAME}-)

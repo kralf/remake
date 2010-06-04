@@ -193,27 +193,42 @@ endmacro(remake_var_regex)
 #     ignore external variable assignments. A typical use for this
 #     functionality is to assign default values to otherwise undefined or 
 #     empty variables.
+#   \optional[option] INIT If present, this option causes cache variables
+#     to be initialized only during the first run of cmake. This is
+#     particularly useful when attempting to change the default value of
+#     CMake variables, such as compiler flags. Note that both the CACHE
+#     and the FORCE option have to present in order for this initialization
+#     to take effect.
 #   \optional[value] DEFAULT:value An optional default value to be assigned
 #     to an otherwise undefined or empty variable.
 #   \optional[list] value An optional list of values to be passed on to
 #     CMake's set() macro. See the CMake documentation for correct usage.
 macro(remake_set private_var)
   remake_arguments(PREFIX private_ VAR FROM VAR DEFAULT OPTION SELF 
-    ARGN values ${ARGN})
+    OPTION INIT ARGN values ${ARGN})
 
-  if(private_from)
-    set(${private_var} ${${private_from}} ${private_values})
-  else(private_from)
-    if(NOT private_self)
-      set(${private_var} ${private_values})
-    endif(NOT private_self)
-  endif(private_from)
+  set(private_initialized OFF)
+  if(private_init)
+    if (NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+      remake_set(private_initialized ON)
+    endif (NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  endif(private_init)
 
-  if(NOT ${private_var})
-    if(DEFINED private_default)
-      set(${private_var} ${private_default} ${private_values})
-    endif(DEFINED private_default)
-  endif(NOT ${private_var})
+  if(NOT private_initialized)
+    if(private_from)
+      set(${private_var} ${${private_from}} ${private_values})
+    else(private_from)
+      if(NOT private_self)
+        set(${private_var} ${private_values})
+      endif(NOT private_self)
+    endif(private_from)
+
+    if(NOT ${private_var})
+      if(DEFINED private_default)
+        set(${private_var} ${private_default} ${private_values})
+      endif(DEFINED private_default)
+    endif(NOT ${private_var})
+  endif(NOT private_initialized)
 endmacro(remake_set)
 
 ### \brief Generate debugging output from a list of variables.
