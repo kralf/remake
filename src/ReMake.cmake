@@ -354,8 +354,8 @@ endmacro(remake_add_executables)
 macro(remake_add_headers)
   remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
 
-  remake_component_name(remake_doc_component ${REMAKE_COMPONENT} dev)
-  remake_set(remake_component SELF DEFAULT ${remake_doc_component})
+  remake_component_name(remake_default_component ${REMAKE_COMPONENT} dev)
+  remake_set(remake_component SELF DEFAULT ${remake_default_component})
   remake_component(${remake_component})
   remake_component_build(${remake_component} remake_build)
 
@@ -568,8 +568,8 @@ endmacro(remake_add_directories)
 #   This macro adds a documentation target, using the requested generator
 #   for document generation. Additional arguments passed to the macro are
 #   forwarded to the selected generator.
-#   \required[option] DOYXGEN|GROFF|CUSTOM The generator to be used for
-#     document generation.
+#   \required[option] SOURCE|DOYXGEN|GROFF|CUSTOM The generator to be used
+#     for document generation.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to the generator macro, defaults to the
 #     component name conversion of ${REMAKE_COMPONENT}-doc. See ReMakeComponent
@@ -579,19 +579,21 @@ endmacro(remake_add_directories)
 macro(remake_add_documentation remake_generator)
   remake_arguments(PREFIX remake_ VAR COMPONENT ARGN args ${ARGN})
 
-  remake_component_name(remake_doc_component ${REMAKE_COMPONENT} doc)
-  remake_set(remake_component SELF DEFAULT ${remake_doc_component})
+  remake_component_name(remake_default_component ${REMAKE_COMPONENT} doc)
+  remake_set(remake_component SELF DEFAULT ${remake_default_component})
   remake_component(${remake_component})
   remake_component_build(${remake_component} remake_build)
 
   if(remake_build)
-    if(${remake_generator} MATCHES "DOXYGEN")
+    if(${remake_generator} MATCHES "SOURCE")
+      remake_doc_source(${remake_args} COMPONENT ${remake_component})
+    elseif(${remake_generator} MATCHES "DOXYGEN")
       remake_doc_doxygen(${remake_args} COMPONENT ${remake_component})
     elseif(${remake_generator} MATCHES "GROFF")
       remake_doc_groff(${remake_args} COMPONENT ${remake_component})
     elseif(${remake_generator} MATCHES "CUSTOM")
       remake_doc_custom(${remake_args} COMPONENT ${remake_component})
-    endif(${remake_generator} MATCHES "DOXYGEN")
+    endif(${remake_generator} MATCHES "SOURCE")
   endif(remake_build)
 endmacro(remake_add_documentation)
 

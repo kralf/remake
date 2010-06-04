@@ -126,6 +126,35 @@ macro(remake_doc_support doc_generator)
   endif(NOT ${doc_types_var})
 endmacro(remake_doc_support)
 
+### \brief Generate documentation from source.
+#   This macro defines documentation build and install rules for a source
+#   generator. It calls remake_file_configure() for pre-built documentation
+#   templates. The configured files are placed into the output directory
+#   defined for the specified documentation type. See ReMakeFile for details.
+#   \required[value] type The document type of the documentation templates.
+#   \required[list] glob A list of glob expressions resolving to documentation
+#     file templates. Note that each file gets configured and processed
+#     independently, disregarding any output conflicts.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to remake_doc_install() for defining the
+#     install rule.
+macro(remake_doc_source doc_type)
+  remake_arguments(PREFIX doc_ VAR COMPONENT ARGN globs ${ARGN})
+
+  remake_doc_support(source ${doc_type})
+
+  remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
+  remake_set(doc_output_dir ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}})
+  remake_file_mkdir(${doc_output_dir})
+
+  remake_file_glob(doc_files FILES ${doc_globs})
+  foreach(doc_file ${doc_files})
+    remake_file_configure(${doc_file} DESTINATION ${doc_output_dir})
+  endforeach(doc_file)
+
+  remake_doc_install(TYPES ${doc_type} ${COMPONENT})
+endmacro(remake_doc_source)
+
 ### \brief Generate Doxygen documentation.
 #   This macro defines documentation build and install rules for the Doxygen
 #   generator. It configures a list of Doxygen configuration files using
@@ -166,7 +195,7 @@ macro(remake_doc_doxygen)
         COMMAND ${DOXYGEN_EXECUTABLE} ${doc_file})
     endforeach(doc_file)
 
-    remake_doc_install(${REMAKE_DOC_TYPES} ${COMPONENT})
+    remake_doc_install(TYPES ${REMAKE_DOC_TYPES} ${COMPONENT})
   endif(DOXYGEN_FOUND)
 endmacro(remake_doc_doxygen)
 
@@ -220,7 +249,7 @@ macro(remake_doc_groff)
       endif(${doc_macro} STREQUAL ${doc_type})
     endforeach(doc_type)
 
-    remake_doc_install(${REMAKE_DOC_TYPES} ${COMPONENT})
+    remake_doc_install(TYPES ${REMAKE_DOC_TYPES} ${COMPONENT})
   endif(GROFF_FOUND)
 endmacro(remake_doc_groff)
 
@@ -284,31 +313,42 @@ macro(remake_doc_custom doc_generator doc_command)
     endif(doc_input)
   endforeach(doc_type)
 
-  remake_doc_install(${${doc_types_var}} ${COMPONENT})
+  remake_doc_install(TYPES ${${doc_types_var}} ${COMPONENT})
 endmacro(remake_doc_custom)
 
 ### \brief Add documentation install rule.
 #   This macro is a helper macro to define documentation install rules for
 #   all requested document types. It expects generated documentation content
-#   in the defined output location. Note that the macro gets invoked by the 
-#   generator-specific macros defined in this module. It should not be called 
-#   directly from a CMakeLists.txt file.
-#   \required[list] type The documentation types for which to add install
-#     rules.
+#   in the defined output location of the build directory. Note that the macro
+#   gets invoked by the generator-specific macros defined in this module. In
+#   most cases, it will therefore not be necessary to call it directly from a
+#   CMakeLists.txt file.
+#   \required[list] TYPES:type The list of documentation types for which to
+#     add install rules.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(), defaults to
-#     ${REMAKE_COMPONENT}. See ReMakeComponent for details.
+#     ${REMAKE_COMPONENT}-doc. See ReMakeComponent for details.
+#   \optional[list] arg Additional arguments to be passed on to
+#     remake_component_install(). See ReMakeComponent for details.
 macro(remake_doc_install)
-  remake_arguments(PREFIX doc_ VAR COMPONENT ARGN types ${ARGN})
+  remake_arguments(PREFIX doc_ LIST TYPES VAR COMPONENT ARGN args ${ARGN})
   remake_set(doc_component SELF DEFAULT ${REMAKE_DOC_COMPONENT})
 
-  foreach(doc_type ${doc_types})
-    remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
-    remake_var_name(doc_install_var REMAKE_DOC ${doc_type} DESTINATION)
+  remake_component_name(doc_default_component ${REMAKE_COMPONENT} doc)
+  remake_set(doc_component SELF DEFAULT ${doc_default_component})
+  remake_component(${doc_component})
+  remake_component_build(${doc_component} doc_install)
 
-    remake_component_install(
-      DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}}
-      DESTINATION ${${doc_install_var}}
-      COMPONENT ${doc_component})
-  endforeach(doc_type)
+  if(doc_install)
+    foreach(doc_type ${doc_types})
+      remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
+      remake_var_name(doc_install_var REMAKE_DOC ${doc_type} DESTINATION)
+
+      remake_component_install(
+        DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}}
+        DESTINATION ${${doc_install_var}}
+        COMPONENT ${doc_component}
+        ${doc_args})
+    endforeach(doc_type)
+  endif(doc_install)
 endmacro(remake_doc_install)
