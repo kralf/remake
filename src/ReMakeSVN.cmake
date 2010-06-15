@@ -77,8 +77,9 @@ macro(remake_svn_log svn_file)
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries)
       add_custom_command(OUTPUT ${svn_absolute}
-        COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision}
-          ${CMAKE_CURRENT_SOURCE_DIR} > ${svn_absolute}
+        COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision} >
+          ${svn_absolute}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${svn_head})
 
       if(svn_output)
