@@ -110,7 +110,11 @@ endmacro(remake_file_suffix)
 #     matched file/directory names.
 #   \optional[value] WORKING_DIRECTORY:dirname An optional directory name that
 #     refers to the working directory for resolving relative-path glob
-#     expressions, defaults to the current directory.
+#     expressions, defaults to ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[option] RELATIVE If called with this option, the macro returns
+#     relative-path file and directory names with respect to the specified
+#     working directory. If no working directory is provided, the option will
+#     not affect the output.
 #   \optional[option] HIDDEN If present, this option prevents hidden
 #     files/directories from being excluded from the result list.
 #   \optional[option] FILES If present, this option causes the macro
@@ -123,39 +127,38 @@ endmacro(remake_file_suffix)
 #   \required[list] glob A list of glob expressions that is passed to CMake's
 #     file(GLOB ...) macro. See the CMake documentation for usage.
 macro(remake_file_glob file_var)
-  remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION HIDDEN
-    OPTION FILES OPTION DIRECTORIES ARGN globs ${ARGN})
+  remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION RELATIVE
+    OPTION HIDDEN OPTION FILES OPTION DIRECTORIES ARGN globs ${ARGN})
+  remake_set(file_working_directory SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
 
-  if(file_working_directory)
-    remake_set(file_working_globs)
-    foreach(file_glob ${file_globs})
-      if(IS_ABSOLUTE ${file_glob})
-        remake_list_push(file_working_globs ${file_glob})
-      else(IS_ABSOLUTE ${file_glob})
-        remake_list_push(file_working_globs
-          ${file_working_directory}/${file_glob})
-      endif(IS_ABSOLUTE ${file_glob})
-    endforeach(file_glob)
-  else(file_working_directory)
-    remake_set(file_working_globs ${file_globs})
-  endif(file_working_directory)
+  remake_set(file_working_globs)
+  foreach(file_glob ${file_globs})
+    if(IS_ABSOLUTE ${file_glob})
+      remake_list_push(file_working_globs ${file_glob})
+    else(IS_ABSOLUTE ${file_glob})
+      remake_list_push(file_working_globs
+        ${file_working_directory}/${file_glob})
+    endif(IS_ABSOLUTE ${file_glob})
+  endforeach(file_glob)
 
   file(GLOB ${file_var} ${file_working_globs})
 
   if(NOT file_directories)
     foreach(file_name ${${file_var}})
-      if(IS_DIRECTORY ${file_name})
+      get_filename_component(file_abs ${file_name} ABSOLUTE)
+      if(IS_DIRECTORY ${file_abs})
         list(REMOVE_ITEM ${file_var} ${file_name})
-      endif(IS_DIRECTORY ${file_name})
+      endif(IS_DIRECTORY ${file_abs})
     endforeach(file_name)
     remake_set(file_files ON)
   endif(NOT file_directories)
 
   if(NOT file_files)
     foreach(file_name ${${file_var}})
-      if(NOT IS_DIRECTORY ${file_name})
+      get_filename_component(file_abs ${file_name} ABSOLUTE)
+      if(NOT IS_DIRECTORY ${file_abs})
         list(REMOVE_ITEM ${file_var} ${file_name})
-      endif(NOT IS_DIRECTORY ${file_name})
+      endif(NOT IS_DIRECTORY ${file_abs})
     endforeach(file_name)
   endif(NOT file_files)
 
@@ -167,6 +170,15 @@ macro(remake_file_glob file_var)
       endif(file_matched)
     endforeach(file_name)
   endif(NOT file_hidden)
+
+  if(file_relative)
+    foreach(file_name ${${file_var}})
+      file(RELATIVE_PATH file_name_relative ${file_working_directory}
+        ${file_name})
+      remake_list_replace(${file_var} ${file_name}
+        REPLACE ${file_name_relative})
+    endforeach(file_name)
+  endif(file_relative)
 endmacro(remake_file_glob)
 
 ### \brief Create a directory.
@@ -203,7 +215,7 @@ endmacro(remake_file_rmdir)
 ### \brief Create an empty file.
 #   This macro creates an empty ReMake file. The filename is automatically
 #   converted into a ReMake location by a call to remake_file(). Optionally,
-#   the macro allows for selectively re-creating outdated files. Therefor,
+#   the macro allows for selectively re-creating outdated files. Therefore,
 #   the file modification date is tested against ReMake's timestamp file,
 #   a special file created at inclusion time.
 #   \required[value] filename The name of the file to be created.
@@ -282,6 +294,36 @@ macro(remake_file_write file_name)
   endif(EXISTS ${file_write})
 endmacro(remake_file_write)
 
+### \brief Copy files.
+#   This macro copies one or multiple files. The destination is automatically
+#   converted into a ReMake location by a call to remake_file().
+#   \required[value] destination The name of the destination file or
+#     directory. If a directory name is provided, the files will be
+#     copied into the specified directory whilst the names will be preserved.
+#   \required[list] glob A list of glob expressions that are matched to find
+#     the source files. Note that if the glob expression resolves to multiple
+#     files, the destination will be required to name a directory.
+#   \optional[option] TOPLEVEL If this option is present, the destination
+#     is a top-level ReMake file or directory.
+macro(remake_file_copy file_destination)
+  remake_arguments(PREFIX file_ OPTION TOPLEVEL ARGN globs ${ARGN})
+  remake_file(file_copy ${file_destination} ${TOPLEVEL})
+
+  remake_file_glob(file_sources FILES ${file_globs})
+  foreach(file_src ${file_sources})
+    if(IS_DIRECTORY ${file_copy})
+      get_filename_component(file_src_name ${file_src} NAME)
+      remake_set(file_dst ${file_copy}/${file_src_name})
+    else(IS_DIRECTORY ${file_copy})
+      remake_set(file_dst ${file_copy})
+    endif(IS_DIRECTORY ${file_copy})
+
+    remake_file_read(file_content ${file_src})
+    remake_file_create(${file_dst})
+    remake_file_write(${file_dst} FROM file_content)
+  endforeach(file_src)
+endmacro(remake_file_copy)
+
 ### \brief Configure files using ReMake variables.
 #   This macro takes a glob expression and, in all matching input files,
 #   replaces variables referenced as ${VAR} with their values as determined
@@ -313,8 +355,7 @@ macro(remake_file_configure)
     set(${file_output})
   endif(file_output)
 
-  remake_file_glob(file_sources RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    ${file_globs})
+  remake_file_glob(file_sources ${file_globs} RELATIVE)
   foreach(file_src ${file_sources})
     remake_file_read(file_content ${CMAKE_CURRENT_SOURCE_DIR}/${file_src})
     if(file_src MATCHES "[.]remake$")

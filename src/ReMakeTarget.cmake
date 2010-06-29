@@ -44,7 +44,7 @@ macro(remake_target target_name)
   remake_arguments(PREFIX target_ OPTION NON_EMPTY ARGN args ${ARGN})
 
   remake_file_read(target_cmds ${REMAKE_TARGET_DIR}/${target_name}.commands
-    TOPLEVEL LINES)
+    TOPLEVEL)
   if(target_cmds)
     if(NOT TARGET ${target_name})
       add_custom_target(${target_name} ${target_args})
@@ -92,14 +92,14 @@ macro(remake_target_add_command target_name)
   remake_arguments(PREFIX target_ VAR WORKING_DIRECTORY ARGN args ${ARGN})
   remake_set(target_working_directory SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
-  if(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  if(TARGET ${target_name})
     add_custom_command(TARGET ${target_name} ${ARGN})
-  else(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  else(TARGET ${target_name})
     remake_file_create(${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
       OUTDATED)
     remake_file_write(${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
       ${target_args} WORKING_DIRECTORY ${target_working_directory} \n)
-  endif(${CMAKE_CURRENT_BINARY_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  endif(TARGET ${target_name})
 endmacro(remake_target_add_command)
 
 ### \brief Add sources to a target.

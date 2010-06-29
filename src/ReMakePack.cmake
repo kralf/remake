@@ -48,10 +48,9 @@ remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 #     to generate the package from, defaults to ${REMAKE_DEFAULT_COMPONENT}.
 macro(remake_pack pack_generator)
   remake_arguments(PREFIX pack_ VAR NAME VAR COMPONENT ${ARGN})
-
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
-  remake_component_build(${pack_component} pack_build)
 
+  remake_component_get(${pack_component} BUILD OUTPUT pack_build)
   if(pack_build)
     if(NOT TARGET ${REMAKE_PACK_ALL_TARGET})
       remake_target(${REMAKE_PACK_ALL_TARGET})
@@ -88,14 +87,22 @@ macro(remake_pack pack_generator)
     remake_set(CPACK_PACKAGE_CONTACT
       "${REMAKE_PROJECT_ADMIN} <${REMAKE_PROJECT_CONTACT}>")
 
-    message(STATUS "Package: ${pack_name}, "
-      "using component ${pack_component} (${pack_generator})")
+    if(${pack_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
+      message(STATUS "Package: ${pack_name} (${pack_generator})")
+    else(${pack_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
+      message(STATUS "Package: ${pack_name}, "
+        "using component ${pack_component} (${pack_generator})")
+    endif(${pack_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
 
     include(CPack)
 
     remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET_SUFFIX})
-    remake_target(${pack_target} COMMAND cpack --config ${pack_config}
+    remake_target(${pack_target}
+      COMMAND cpack --config ${pack_config}
       COMMENT "Building ${pack_name} package")
+    remake_component_add_dependencies(
+      COMPONENT ${pack_component}
+      PROVIDES ${pack_target})
     add_dependencies(${REMAKE_PACK_ALL_TARGET} ${pack_target})
 
     remake_var_regex(pack_variables "^CPACK_")
@@ -130,10 +137,9 @@ endmacro(remake_pack)
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT VAR DESCRIPTION
     ARGN dependencies ${ARGN})
-
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
-  remake_component_build(${pack_component} pack_build)
 
+  remake_component_get(${pack_component} BUILD OUTPUT pack_build)
   if(pack_build)
     if(NOT TARGET ${REMAKE_PACK_INSTALL_ALL_TARGET})
       remake_target(${REMAKE_PACK_INSTALL_ALL_TARGET})

@@ -19,6 +19,7 @@
 ############################################################################
 
 include(ReMakeFile)
+include(ReMakeComponent)
 
 include(ReMakePrivate)
 
@@ -55,9 +56,9 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[value] LICENSE:license The license specified in the project's
 #     copyleft/copyright agreement, defaults to LGPL. Common values are GPL,
 #     LGPL, MIT, BSD, naming just a few.
-#   \optional[value] COMPONENT:component An optional and valid name of the
-#     project's default install component for targets, defaults to default.
-#     See ReMakeComponent for details.
+#   \optional[value] COMPONENT:component An optional and valid name of
+#     the project's default install component for targets, defaults to
+#     default. See ReMakeComponent for details.
 #   \optional[value] FILENAME:name An optional and valid filename that is
 #     used to initialize ${REMAKE_PROJECT_FILENAME}, defaults to the filename
 #     conversion of the project name.
@@ -173,11 +174,14 @@ macro(remake_project project_name)
   message(STATUS "License: ${REMAKE_PROJECT_LICENSE}")
 
   remake_component(${REMAKE_PROJECT_COMPONENT} DEFAULT)
-  remake_component_set(${REMAKE_PROJECT_COMPONENT})
+  remake_component_switch(${REMAKE_PROJECT_COMPONENT})
 
   remake_svn_log(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
   remake_target(${REMAKE_PROJECT_CHANGELOG_TARGET} ALL
     DEPENDS ${project_changelog})
+  remake_component_add_dependencies(
+    COMPONENT ${REMAKE_PROJECT_COMPONENT}
+    DEPENDS ${REMAKE_PROJECT_CHANGELOG_TARGET})
 
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
@@ -200,11 +204,11 @@ macro(remake_project project_name)
 endmacro(remake_project)
 
 ### \brief Define the value of a ReMake project variable.
-#   This macro defines a variable matching the ReMake naming conventions.
-#   The variable name is automatically prefixed with an upper-case
-#   conversion of the project name. Thus, variables may appear in the cache
-#   as ${PROJECT_NAME}_${VAR_NAME}. Additional arguments are passed on to
-#   CMake's set() macro.
+#   This macro defines a project variable matching the ReMake naming
+#   conventions. The variable name is automatically prefixed with an
+#   upper-case conversion of the project name. Thus, variables may appear in
+#   the cache as ${PROJECT_NAME}_${VAR_NAME}. Additional arguments are passed
+#   on to CMake's set() macro.
 #   \required[value] variable The name of the project variable to be defined.
 #   \optional[list] arg The arguments to be passed on to CMake's set() macro.
 macro(remake_project_set project_var)
@@ -213,11 +217,11 @@ macro(remake_project_set project_var)
 endmacro(remake_project_set)
 
 ### \brief Retrieve the value of a ReMake project variable.
-#   This macro retrieves a variable matching the ReMake naming conventions.
-#   Specifically, variables named ${PROJECT_NAME}_${VAR_NAME} can be found
-#   by passing ${VAR_NAME} to this macro. By default, the macro defines an
-#   output variable named ${VAR_NAME} which will be assigned the value of the
-#   queried project variable.
+#   This macro retrieves a project variable matching the ReMake naming
+#   conventions. Specifically, variables named ${PROJECT_NAME}_${VAR_NAME}
+#   can be found by passing ${VAR_NAME} to this macro. By default, the macro
+#   defines an output variable named ${VAR_NAME} which will be assigned the
+#   value of the queried project variable.
 #   \required[value] variable The name of the project variable to be retrieved.
 #   \optional[value] OUTPUT:variable The optional name of an output variable
 #     that will be assigned the value of the queried project variable.

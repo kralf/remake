@@ -165,3 +165,32 @@ macro(remake_list_values list_name list_var)
     endforeach(list_match)
   endforeach(list_key)
 endmacro(remake_list_values)
+
+### \brief Perform string operations on list elements.
+#   This macro calls CMake's string() iteratively for all the elements
+#   contained in a list. The output of the operation is then used to
+#   construct a result list.
+#   \required[value] list The name of the list to perform the string
+#     operations for.
+#   \required[value] value The list value to be matched and replaced.
+#   \required[value] variable The name of an output variable to be assigned
+#     the list of output values of string().
+#   \required[list] arg The arguments to be passed on to CMake's
+#     string() macro. Note that the actual string and the output variable
+#     must not be contained in the list of arguments. They will be passed
+#     and utilized by this macro. See the CMake documentation for details.
+macro(remake_list_string list_name list_var)
+  remake_arguments(PREFIX list_ ARGN args ${ARGN})
+
+  remake_set(${list_var})
+  foreach(list_value ${${list_name}})
+    remake_list_contains(list_args ANY list_contains REGEX REPLACE)
+
+    if(list_any)
+      string(${list_args} list_ouput ${list_value})
+    else(list_any)
+      string(${list_args} ${list_value} list_ouput)
+    endif(list_any)
+    remake_list_push(${list_var} ${list_ouput})
+  endforeach(list_value)
+endmacro(remake_list_string)
