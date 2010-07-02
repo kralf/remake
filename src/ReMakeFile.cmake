@@ -67,20 +67,81 @@ macro(remake_file_name file_var)
   string(REGEX REPLACE "[ ;]" "_" ${file_var} "${file_lower}")
 endmacro(remake_file_name)
 
+### \brief Substitute selected components of filenames.
+#   This macro substitutes the components of a list of filenames. Specifically,
+#   one can choose to replace the filename's path, name, or extension.
+#   \required[value] variable The name of the variable that is assigned the
+#     list of substituted filenames.
+#   \required[list] filename The list of input filenames to be substituted.
+#   \optional[value] PATH:path The path to be used as a subsitute to the
+#     filenames' paths.
+#   \optional[option] TO_ABSOLUTE With this option provided, a filename's
+#     path will only be substituted if it indicates a relative path.
+#   \optional[value] NAME_WE:name The name to be used as a subsitute to the
+#     filenames' names (excluding the extension).
+#   \optional[value] EXT:extension The extension to be used as a subsitute
+#     to the filenames' extensions, without the period.
+macro(remake_file_name_substitute file_var)
+  remake_arguments(PREFIX file_ VAR PATH OPTION TO_ABSOLUTE VAR NAME_WE
+    VAR EXT ARGN names ${ARGN})
+
+  remake_set(${file_var})
+  foreach(file_name ${file_names})
+    get_filename_component(file_org_path ${file_name} PATH)
+    get_filename_component(file_org_name_we ${file_name} NAME_WE)
+    get_filename_component(file_org_ext ${file_name} EXT)
+
+    if(file_path)
+      if(file_to_absolute)
+        if(IS_ABSOLUTE ${file_org_path})
+          remake_set(file_substitute "${file_org_path}")
+        else(IS_ABSOLUTE ${file_org_path})
+          remake_set(file_substitute "${file_path}")
+        endif(IS_ABSOLUTE ${file_org_path})
+      else(file_to_absolute)
+        remake_set(file_substitute "${file_path}")
+      endif(file_to_absolute)
+    else(file_path)
+      remake_set(file_substitute "${file_org_path}")
+    endif(file_path)
+
+    if(file_name_we)
+      remake_set(file_substitute "${file_substitute}/${file_name_we}")
+    else(file_name_we)
+      remake_set(file_substitute "${file_substitute}/${file_org_name_we}")
+    endif(file_name_we)
+
+    if(file_ext)
+      remake_set(file_substitute "${file_substitute}.${file_ext}")
+    else(file_ext)
+      remake_set(file_substitute "${file_substitute}${file_org_ext}")
+    endif(file_ext)
+
+    remake_list_push(${file_var} ${file_substitute})
+  endforeach(file_name)
+endmacro(remake_file_name_substitute)
+
 ### \brief Append a list of suffixes to a filename.
 #   This macro appends a list of suffixes to a filename. The suffixes are
 #   appended to the filename itself, not to the filename's extension.
 #   \required[value] variable The name of the variable that is assigned the
 #     resulting suffixed filename.
 #   \required[value] filename The input filename to be suffixed.
+#   \optional[option] STRIP If present, this option causes the macro to
+#     only return the suffixed filename whilst any path information will be
+#     stripped from the output.
 #   \required[list] suffix The list of suffixes to be appended to the
 #     filename. Note that the list can be empty in which case the input
 #     filename is returned.
 macro(remake_file_suffix file_var file_name)
-  remake_arguments(PREFIX file_ ARGN suffixes ${ARGN})
+  remake_arguments(PREFIX file_ OPTION STRIP ARGN suffixes ${ARGN})
 
   if(file_suffixes)
-    get_filename_component(file_path ${file_name} PATH)
+    if(file_strip)
+      remake_set(file_path)
+    else(file_strip)
+      get_filename_component(file_path ${file_name} PATH)
+    endif(file_strip)
     get_filename_component(file_name_we ${file_name} NAME_WE)
     get_filename_component(file_ext ${file_name} EXT)
 

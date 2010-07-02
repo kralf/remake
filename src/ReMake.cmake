@@ -340,7 +340,7 @@ macro(remake_add_scripts)
   remake_file_glob(remake_scripts ${remake_globs})
   foreach(remake_script ${remake_scripts})
     remake_file_suffix(remake_script_suffixed
-      ${remake_script} ${remake_suffix})
+      ${remake_script} ${remake_suffix} STRIP)
     remake_component_install(
       PROGRAMS ${remake_script}
       DESTINATION ${SCRIPT_DESTINATION}
@@ -382,7 +382,7 @@ macro(remake_add_configurations)
     file(RELATIVE_PATH remake_config_relative ${CMAKE_CURRENT_BINARY_DIR}
       ${remake_config})
     remake_file_suffix(remake_config_suffixed
-      ${remake_config_relative} ${remake_suffix})
+      ${remake_config_relative} ${remake_suffix} STRIP)
     remake_component_install(
       FILES ${remake_config}
       DESTINATION ${remake_install}
@@ -417,11 +417,12 @@ macro(remake_add_files)
 
   remake_file_glob(remake_files ${remake_globs})
   foreach(remake_file ${remake_files})
-    remake_file_suffix(remake_file_suffixed ${remake_file} ${remake_suffix})
+    remake_file_suffix(remake_file_suffixed
+      ${remake_file} ${remake_suffix} STRIP)
     remake_component_install(
       FILES ${remake_file}
       DESTINATION ${remake_install}
-      RENAME ${remake_file_suffixed}
+      RENAME ${remake_blabla}
       ${COMPONENT})
   endforeach(remake_file)
 endmacro(remake_add_files)

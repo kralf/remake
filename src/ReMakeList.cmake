@@ -78,10 +78,10 @@ endmacro(remake_list_pop)
 #   with another value.
 #   \required[value] list The name of the list to replace values in.
 #   \required[value] value The list value to be matched and replaced.
-#   \optional[value] REPLACE:value The optional replacement value that is
+#   \optional[list] REPLACE:value The optional replacement value that is
 #     used to substitute matching list values, defaults to the empty string.
 macro(remake_list_replace list_name list_value)
-  remake_arguments(PREFIX list_ VAR REPLACE ${ARGN})
+  remake_arguments(PREFIX list_ LIST REPLACE ${ARGN})
 
   string(REGEX REPLACE "[;]${list_value}[;]" ";${list_replace};"
     ${list_name} "${${list_name}}")
@@ -172,7 +172,6 @@ endmacro(remake_list_values)
 #   construct a result list.
 #   \required[value] list The name of the list to perform the string
 #     operations for.
-#   \required[value] value The list value to be matched and replaced.
 #   \required[value] variable The name of an output variable to be assigned
 #     the list of output values of string().
 #   \required[list] arg The arguments to be passed on to CMake's
