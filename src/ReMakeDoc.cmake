@@ -137,25 +137,28 @@ endmacro(remake_doc_support)
 #   \required[list] glob A list of glob expressions resolving to the pre-built
 #     documentation files.
 #   \optional[value] COMPONENT:component The optional name of the install
-#     component that is passed to remake_component_install() for defining the
-#     install rules. See ReMakeComponent for details.
+#     component that is passed to remake_component_install(), defaults to
+#     ${REMAKE_COMPONENT}-${REMAKE_DOC_COMPONENT_SUFFIX}. See ReMakeComponent
+#     for details.
 macro(remake_doc_source doc_type)
   remake_arguments(PREFIX doc_ VAR COMPONENT ARGN globs ${ARGN})
+  remake_component_name(doc_default_component ${REMAKE_COMPONENT}
+    ${REMAKE_DOC_COMPONENT_SUFFIX})
+  remake_set(doc_component SELF DEFAULT ${doc_default_component})
 
   remake_doc_support(source ${doc_type})
 
   remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
   remake_var_name(doc_install_var REMAKE_DOC ${doc_type} DESTINATION)
+  remake_file_glob(doc_files ${doc_globs}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} RELATIVE)
 
-  remake_file_glob(doc_files FILES
-    RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${doc_globs})
   foreach(doc_file ${doc_files})
     get_filename_component(doc_path ${doc_file} PATH)
-
     remake_component_install(
-      FILES ${doc_files}
+      FILES ${doc_file}
       DESTINATION ${${doc_install_var}}/${${doc_output_var}}/${doc_path}
-      ${COMPONENT})
+      COMPONENT ${doc_component})
   endforeach(doc_file)
 endmacro(remake_doc_source)
 
