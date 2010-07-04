@@ -169,6 +169,8 @@ endmacro(remake_file_suffix)
 #   will be excluded from the result list.
 #   \required[value] variable The name of the output variable to hold the
 #     matched file/directory names.
+#   \required[list] glob A list of glob expressions that is passed to CMake's
+#     file(GLOB ...) macro. See the CMake documentation for usage.
 #   \optional[value] WORKING_DIRECTORY:dirname An optional directory name that
 #     refers to the working directory for resolving relative-path glob
 #     expressions, defaults to ${CMAKE_CURRENT_SOURCE_DIR}.
@@ -188,8 +190,6 @@ endmacro(remake_file_suffix)
 #   \optional[list] RECURSE:dirname An optional list of directories that will
 #     be searched recursively for files or directories matching the given
 #     glob expressions.
-#   \required[list] glob A list of glob expressions that is passed to CMake's
-#     file(GLOB ...) macro. See the CMake documentation for usage.
 macro(remake_file_glob file_var)
   remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION RELATIVE
     OPTION HIDDEN OPTION FILES OPTION DIRECTORIES LIST RECURSE ARGN globs
