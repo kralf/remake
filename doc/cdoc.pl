@@ -2,7 +2,7 @@
 
 use Getopt::Std;
 
-getopt("ct");
+getopts("qc:t:o:");
 require $opt_c;
 
 use File::Find;
@@ -15,8 +15,14 @@ use IO::Compress::Gzip;
 my $generator = "CDoc";
 
 my $doc_type = $opt_t;
-my $doc_input = @ARGV[0];
-my $doc_output = @ARGV[1];
+my $doc_output = $opt_o;
+my $doc_quiet = $opt_q;
+
+sub print_stdout {
+  if (!$doc_quiet) {
+    print STDOUT @ARGN;
+  }
+}
 
 sub read_source {
   my $source_name = shift;
@@ -354,11 +360,11 @@ sub find_source {
   my $source_name = $File::Find::name;
   
   return unless -f $source_name;
-  return unless basename($source_name)  =~ /$source_pattern/;
+  return unless basename($source_name)  =~ /$find_pattern/;
 
-  print "$generator: Parsing ".basename($source_name)."\n";
+  print_stdout "$generator: Parsing ".basename($source_name)."\n";
   read_source($source_name, \%module, \@variables, \@macros, \%references);
-  print "$generator: - $module{name}: ".@macros." macro(s), ".
+  print_stdout "$generator: - $module{name}: ".@macros." macro(s), ".
     keys(%references)." reference(s)\n";
 
   my $man_name = lc($project_name);
@@ -374,12 +380,13 @@ sub find_source {
   }
   
   my $man;
-  print "$generator: - $module{name}: Generating $man_name($man_extension)\n";
+  print_stdout "$generator: - $module{name}: Generating ".
+    "$man_name($man_extension)\n";
   generate_man($man_name, \%module, \@variables, \@macros, \%references, \$man);
 
   if ($doc_type =~ /man/) {
     my $doc_name = "man${man_extension}/$man_name.$man_extension.gz";
-    print "Writing $doc_name\n";
+    print_stdout "Writing $doc_name\n";
     mkpath("${doc_output}/man${man_extension}");
     my $z = new IO::Compress::Gzip "$doc_output/$doc_name" or 
       die("Error: Failed to compress $doc_name!\n");
@@ -388,7 +395,7 @@ sub find_source {
   }
   else {
     my $doc_name = "$man_name.".lc($doc_type);
-    print "Writing $doc_name\n";
+    print_stdout "Writing $doc_name\n";
     mkpath(${doc_output});
     my $pid = open(file, "| $groff_executable -t -e -man -T${doc_type} - >".
       "$doc_output/$doc_name") or 
@@ -397,4 +404,6 @@ sub find_source {
   }
 }
 
-find(\&find_source, $doc_input);
+foreach $glob (@ARGV) {
+  find(\&find_source, $glob);
+}

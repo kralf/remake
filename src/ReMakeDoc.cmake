@@ -64,6 +64,7 @@ remake_set(REMAKE_DOC_COMPONENT_SUFFIX doc)
 macro(remake_doc)
   remake_arguments(PREFIX doc_ VAR OUTPUT VAR INSTALL VAR CONFIGURATION
     ARGN types ${ARGN})
+  remake_set(doc_configuration SELF DEFAULT doc) 
 
   foreach(doc_type ${doc_types})
     remake_file_name(doc_file ${doc_type})
@@ -90,10 +91,11 @@ macro(remake_doc)
     string(REPLACE ";" ", " doc_types "${REMAKE_DOC_TYPES}")
     message(STATUS "Documentation: ${doc_types}")
 
-    remake_set(REMAKE_DOC_CONFIGURATION_DIR ${doc_configuration} DEFAULT doc)
-    if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_DOC_CONFIGURATION_DIR})
+    get_filename_component(REMAKE_DOC_CONFIGURATION_DIR
+      ${doc_configuration} ABSOLUTE)
+    if(EXISTS ${REMAKE_DOC_CONFIGURATION_DIR})
       remake_add_directories(${REMAKE_DOC_CONFIGURATION_DIR})
-    endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_DOC_CONFIGURATION_DIR})
+    endif(EXISTS ${REMAKE_DOC_CONFIGURATION_DIR})
   else(REMAKE_DOC_TYPES)
     message(STATUS "Documentation: not available")
   endif(REMAKE_DOC_TYPES)
@@ -196,11 +198,26 @@ endmacro(remake_doc_configure)
 #   \required[list] glob A list of glob expressions resolving to Doxygen
 #     configuration files. Note that each file gets configured and processed
 #     independently, disregarding any output conflicts.
+#   \required[list] INPUT:glob A list of glob expressions that
+#     resolves to a set of input directories for Doxygen, defaults to
+#     ${REMAKE_PROJECT_SOURCE_DIR}.
+#   \optional[list] PATTERNS:pattern An optional list of glob patterns that
+#     are used to filter input files for Doxygen, defaults to *.h, *.hpp,
+#     and *.tpp.
+#   \optional[value] OUTPUT:dirname An optional directory name that
+#     identifies the base output directory for Doxygen, defaults to
+#     ${CMAKE_CURRENT_BINARY_DIR}. Note that the base output directory will
+#     automatically be suffixed by the filename conversion of the current
+#     document type.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_doc_build() and remake_doc_install()
 #     for defining the build and install rules, respectively.
 macro(remake_doc_doxygen)
-  remake_arguments(PREFIX doc_ VAR COMPONENT ARGN globs ${ARGN})
+  remake_arguments(PREFIX doc_ LIST INPUT LIST PATTERNS VAR OUTPUT
+    VAR COMPONENT ARGN globs ${ARGN})
+  remake_set(doc_input SELF DEFAULT ${REMAKE_PROJECT_SOURCE_DIR})
+  remake_set(doc_patterns SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+  remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(NOT DEFINED DOXYGEN_FOUND)
     remake_find_package(Doxygen QUIET)
@@ -210,25 +227,37 @@ macro(remake_doc_doxygen)
   endif(NOT DEFINED DOXYGEN_FOUND)
 
   if(DOXYGEN_FOUND)
-    foreach(doc_type ${REMAKE_DOC_DOXYGEN_SUPPORTED_TYPES})
-      remake_var_name(doc_type_var REMAKE_DOC ${doc_type})
-      remake_list_contains(REMAKE_DOC_TYPES ${doc_type} ALL doc_contains)
-      if(doc_contains)
-        remake_set(${doc_type_var} YES)
-      else(doc_contains)
-        remake_set(${doc_type_var} NO)
-      endif(doc_contains)
-    endforeach(doc_type)
-
+    remake_file_glob(doc_input_dirs DIRECTORIES ${doc_input})
+    remake_file_glob(doc_input_files ${doc_patterns} RECURSE ${doc_input_dirs})
+    string(REPLACE ";" " " REMAKE_DOC_INPUT "${doc_input_dirs}")
+    string(REPLACE ";" " " REMAKE_DOC_PATTERNS "${doc_patterns}")
     remake_file_glob(doc_files ${doc_globs})
-    foreach(doc_file ${doc_files})
-      remake_file_configure(${doc_file} OUTPUT doc_configured)
-      file(RELATIVE_PATH doc_relative ${CMAKE_SOURCE_DIR} ${doc_file})
-      remake_doc_build(
-        COMMAND ${DOXYGEN_EXECUTABLE} ${doc_configured}
-        COMMENT "Generating Doxygen documentation from ${doc_relative}"
-        ${COMPONENT})
-    endforeach(doc_file)
+
+    foreach(doc_type ${REMAKE_DOC_TYPES})
+      remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
+      remake_set(doc_output_dir ${doc_output}/${${doc_output_var}})
+
+      foreach(doc_supported_type ${REMAKE_DOC_DOXYGEN_SUPPORTED_TYPES})
+        remake_var_name(doc_type_var REMAKE_DOC ${doc_supported_type})
+        if(${doc_type} STREQUAL ${doc_supported_type})
+          remake_set(${doc_type_var} YES)
+        else(${doc_type} STREQUAL ${doc_supported_type})
+          remake_set(${doc_type_var} NO)
+        endif(${doc_type} STREQUAL ${doc_supported_type})
+      endforeach(doc_supported_type)
+
+      foreach(doc_file ${doc_files})
+        remake_file_configure(${doc_file} EXT ${doc_type}
+          OUTPUT doc_configured)
+        file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output_dir})
+        remake_doc_build(${doc_type}
+          COMMAND ${DOXYGEN_EXECUTABLE} ${doc_configured}
+          DEPENDS ${doc_input_files} ${doc_configured}
+          COMMENT "Generating Doxygen documentation ${doc_relative}"
+          OUTPUT ${doc_output_dir}
+          ${COMPONENT})
+      endforeach(doc_file)
+    endforeach(doc_type)
 
     remake_doc_install(TYPES ${REMAKE_DOC_TYPES} ${COMPONENT})
   endif(DOXYGEN_FOUND)
@@ -244,12 +273,19 @@ endmacro(remake_doc_doxygen)
 #     by the named groff macro.
 #   \optional[value] MACRO:macro The groff macro to be used for interpreting 
 #     the input, defaults to man.
+#   \optional[value] OUTPUT:dirname An optional directory name that
+#     identifies the base output directory for groff, defaults to
+#     ${CMAKE_CURRENT_BINARY_DIR}. Note that the base output directory will
+#     automatically be suffixed by the filename conversion of the current
+#     document type.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_doc_build() and remake_doc_install()
 #     for defining the build and install rules, respectively.
 macro(remake_doc_groff)
-  remake_arguments(PREFIX doc_ VAR MACRO VAR COMPONENT ARGN globs ${ARGN})
+  remake_arguments(PREFIX doc_ VAR MACRO VAR OUTPUT VAR COMPONENT
+    ARGN globs ${ARGN})
   remake_set(doc_macro SELF DEFAULT man)
+  remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(NOT DEFINED GROFF_FOUND)
     remake_find_executable(groff)
@@ -259,29 +295,36 @@ macro(remake_doc_groff)
   endif(NOT DEFINED GROFF_FOUND)
 
   if(GROFF_FOUND)
-    remake_var_name(doc_input_var REMAKE_DOC ${doc_macro} OUTPUT)
-    remake_set(doc_input ${CMAKE_CURRENT_BINARY_DIR}/${${doc_input_var}})
-      
     foreach(doc_type ${REMAKE_DOC_TYPES})
-      remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
-      remake_set(doc_output ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}})
-      remake_file_mkdir(${doc_output})
+      remake_var_name(doc_output_var REMAKE_DOC ${doc_macro} OUTPUT)
+      remake_set(doc_output_dir ${doc_output}/${${doc_output_var}})
+      remake_file_mkdir(${doc_output_dir})
 
       if(${doc_macro} STREQUAL ${doc_type})
-        remake_file_configure(${doc_globs} DESTINATION ${doc_output})
+        remake_file_configure(${doc_globs} DESTINATION ${doc_output_dir})
       else(${doc_macro} STREQUAL ${doc_type})
         string(REGEX REPLACE "^m" "" doc_macro_file ${doc_macro})
+        remake_file_glob(doc_files ${doc_globs})
         remake_file_name(doc_extension ${doc_type})
 
-        remake_file_glob(doc_files ${doc_globs})
+        remake_set(doc_commands)
+        remake_set(doc_output_files)
         foreach(doc_file ${doc_files})
           get_filename_component(doc_name ${doc_file} NAME)
-          remake_doc_build(
-            COMMAND ${GROFF_EXECUTABLE} -t -e -m${doc_macro_file} 
-              -T${doc_type} ${doc_file} > 
-              ${doc_output}/${doc_name}.${doc_extension}
-            ${COMPONENT})
+          remake_set(doc_output_file
+            ${doc_output_dir}/${doc_name}.${doc_extension})
+          remake_list_push(doc_commands
+            COMMAND ${GROFF_EXECUTABLE} -t -e -m${doc_macro_file}
+              -T${doc_type} ${doc_file} > ${doc_output_file})
+          remake_list_push(doc_output_files ${doc_output_file})
         endforeach(doc_file)
+
+        file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output_dir})
+        remake_doc_build(${doc_type} ${doc_commands}
+          DEPENDS ${doc_macro_file} ${doc_files}
+          COMMENT "Generating groff documentation ${doc_relative}"
+          OUTPUT ${doc_output_files}
+          ${COMPONENT})
       endif(${doc_macro} STREQUAL ${doc_type})
     endforeach(doc_type)
 
@@ -297,58 +340,58 @@ endmacro(remake_doc_groff)
 #   \required[value] command The command that executes the custom generator.
 #     Assuming that the generator is provided with the sources, the working 
 #     directory for this command defaults to ${CMAKE_CURRENT_SOURCE_DIR}.
+#     Placeholders may be used for command-line substitution of arguments
+#     to the generator command. Details are provided with the corresponding
+#     macro parameters.
 #   \optional[list] arg An optional list of command line arguments to be
 #     passed to the generator command.
-#   \optional[list] INPUT:glob An optional list of glob expressions that
-#     resolves to a set of input files or directories for the generator.
-#     The presence of this option causes the definition of multiple document
-#     build rules, one for each input file or directory, where the input 
-#     filename is appended to the generator's command line arguments.
+#   \required[list] INPUT:glob A list of glob expressions that resolves to
+#     a set of input files for the generator. The list of input files may
+#     be substituted for the command-line placeholder %INPUT%.
+#   \optional[value] OUTPUT:dirname An optional directory name that identifies
+#     the base output directory for the document generator, defaults to
+#     ${CMAKE_CURRENT_BINARY_DIR}. Note that the base output directory will
+#     automatically be suffixed by the filename conversion of the current
+#     document type. The type-specific output directories may be substituted
+#     for the command-line placeholder %OUTPUT%.
 #   \optional[list] TYPES:type The optional list of document types generated
 #     by the custom generator, defaults to ${REMAKE_DOC_TYPES}. For each 
 #     document type requested, the generator gets called with the document
 #     type and and the name of the respective output directory added to its 
-#     command line arguments.
+#     command line arguments. The current document type may be substituted for
+#     the command-line placeholder %TYPE%.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_doc_build() and remake_doc_install()
 #     for defining the build and install rules, respectively.
 macro(remake_doc_custom doc_generator doc_command)
   remake_arguments(PREFIX doc_ LIST TYPES VAR COMPONENT LIST INPUT
-    ARGN custom_args ${ARGN})
+    LIST OUTPUT ARGN custom_args ${ARGN})
   remake_set(doc_types SELF DEFAULT ${REMAKE_DOC_TYPES})
+  remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   remake_doc_support(${doc_generator} ${doc_types})
   remake_var_name(doc_types_var REMAKE_DOC ${doc_generator} TYPES)
 
+  remake_file_glob(doc_inputs ${doc_input})
+  remake_list_replace(doc_custom_args %INPUT% REPLACE ${doc_inputs})
+
   foreach(doc_type ${${doc_types_var}})
     remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
-    remake_set(doc_output_dir ${CMAKE_CURRENT_BINARY_DIR}/${${doc_output_var}})
-    remake_file_mkdir(${doc_output_dir})
+    remake_set(doc_output_dir ${doc_output}/${${doc_output_var}})
 
-    if(doc_input)
-      remake_file_glob(doc_input_files FILES DIRECTORIES ${doc_input})
-      remake_file_name(doc_extension ${doc_type})
+    remake_file_name(doc_extension ${doc_type})
+    remake_set(doc_type_args ${doc_custom_args})
+    remake_list_replace(doc_type_args %TYPE% REPLACE ${doc_type})
+    remake_list_replace(doc_type_args %OUTPUT% REPLACE ${doc_output_dir})
 
-      foreach(doc_input_file ${doc_input_files})
-        get_filename_component(doc_input_name ${doc_input_file} NAME_WE)
-        remake_list_pop(doc_output doc_output_file DEFAULT 
-          ${doc_input_name}.${doc_extension})
-        if(doc_output_file)
-          remake_set(doc_output_file ${doc_output_dir}/${doc_output_file})
-        endif(doc_output_file)
-
-        remake_doc_build(
-          COMMAND ${doc_command} ${doc_custom_args} ${doc_type}
-            ${doc_input_file} ${doc_output_dir}
-          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-          ${COMPONENT})
-      endforeach(doc_input_file)
-    else(doc_input)
-      remake_doc_build(
-        COMMAND ${doc_command} ${doc_custom_args} ${doc_type} ${doc_output_dir}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        ${COMPONENT})
-    endif(doc_input)
+    file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output_dir})
+    remake_doc_build(${doc_type}
+      COMMAND ${doc_command} ${doc_type_args}
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      DEPENDS ${doc_inputs}
+      COMMENT "Generating ${doc_generator} documentation ${doc_relative}"
+      OUTPUT ${doc_output_dir}
+      ${COMPONENT})
   endforeach(doc_type)
 
   remake_doc_install(TYPES ${${doc_types_var}} ${COMPONENT})
@@ -359,21 +402,26 @@ endmacro(remake_doc_custom)
 #   that the macro gets invoked by the generator-specific macros defined in
 #   this module. In most cases, it will therefore not be necessary to call it
 #   directly from a CMakeLists.txt file.
+#   \required[value] type The document type that will be built by this
+#     rule. Note that here the document type will only be used to generate
+#     a component-specific documentation target name.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_add_command(), defaults to
 #     ${REMAKE_COMPONENT}-${REMAKE_DOC_COMPONENT_SUFFIX}. See ReMakeComponent
 #     for details.
 #   \optional[list] arg Additional arguments to be passed on to
 #     remake_component_add_command(). See ReMakeComponent for details.
-macro(remake_doc_build)
+macro(remake_doc_build doc_type)
   remake_arguments(PREFIX doc_ VAR COMPONENT ARGN build_args ${ARGN})
   remake_component_name(doc_default_component ${REMAKE_COMPONENT}
     ${REMAKE_DOC_COMPONENT_SUFFIX})
   remake_set(doc_component SELF DEFAULT ${doc_default_component})
 
+  remake_component_target_name(doc_target ${doc_type}
+    COMPONENT ${doc_component})
   remake_component_add_command(
-    COMPONENT ${doc_component}
-    ${doc_build_args})
+    ${doc_build_args} AS ${doc_target}
+    COMPONENT ${doc_component})
 endmacro(remake_doc_build)
 
 ### \brief Add documentation install rule.

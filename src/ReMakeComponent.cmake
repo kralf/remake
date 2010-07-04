@@ -85,6 +85,26 @@ macro(remake_component_name component_var)
   string(REGEX REPLACE "[ ;]" "-" ${component_var} "${component_lower}")
 endmacro(remake_component_name)
 
+### \brief Output a component-specific target name from a set of strings.
+#   This macro is a helper macro to generate component-specific target names
+#   from arbitrary strings. It therefore prepends the component name to the
+#   set of strings and passes them to remake_target_name(). See ReMakeTarget
+#   for details.
+#   \required[value] variable The name of a variable to be assigned the
+#     generated target name.
+#   \required[list] string A list of strings to be concatenated to the
+#     target name.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is used to generate the target name, defaults to
+#     ${REMAKE_COMPONENT}.
+macro(remake_component_target_name component_var)
+  remake_arguments(PREFIX component_ VAR COMPONENT ARGN strings ${ARGN})
+  remake_set(component_name FROM component_component
+    DEFAULT ${REMAKE_COMPONENT})
+
+  remake_target_name(${component_var} ${component_name} ${component_strings})
+endmacro(remake_component_target_name)
+
 ### \brief Define the value of a ReMake component variable.
 #   This macro defines a component variable matching the ReMake naming
 #   conventions. The variable name is automatically prefixed with an

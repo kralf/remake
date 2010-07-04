@@ -68,6 +68,10 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     project's preset install prefix, defaults to /usr/local.
 #   \optional[value] SOURCES:dir The directory containing the project
 #     source tree, defaults to src.
+#   \optional[value] CONFIGURATIONS:dir The directory containing the project
+#     configuration files, defaults to conf.
+#   \optional[value] MODULES:dir The directory containing the project's
+#     custom CMake modules, defaults to modules.
 #   \optional[value] README:file The name of the readme file that will be
 #     shipped with the project package, defaults to README.
 #   \optional[value] COPYRIGHT:file The name of the copyright file that will
@@ -77,10 +81,16 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
-    VAR COMPONENT VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR README
-    VAR COPYRIGHT VAR TODO ${ARGN})
+    VAR COMPONENT VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR MODULES
+    VAR README VAR COPYRIGHT VAR TODO ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
+  remake_set(project_sources SELF DEFAULT src)
+  remake_set(project_configurations SELF DEFAULT conf)
+  remake_set(project_modules SELF DEFAULT modules)
+  remake_set(project_readme SELF DEFAULT README)
+  remake_set(project_copyright SELF DEFAULT copyright)
+  remake_set(project_todo SELF DEFAULT TODO)
   if(NOT project_summary)
     message(FATAL_ERROR "The project definition requires a summary!")
   endif(NOT project_summary)
@@ -121,18 +131,19 @@ macro(remake_project project_name)
   remake_set(REMAKE_PROJECT_HOME ${project_home})
   remake_set(REMAKE_PROJECT_LICENSE ${project_license})
   remake_set(REMAKE_PROJECT_COMPONENT ${project_component} DEFAULT default)
-  remake_set(REMAKE_PROJECT_README ${project_readme} DEFAULT README)
-  remake_set(REMAKE_PROJECT_COPYRIGHT ${project_copyright} DEFAULT copyright)
-  remake_set(REMAKE_PROJECT_TODO ${project_todo} DEFAULT TODO)
+  get_filename_component(REMAKE_PROJECT_README ${project_readme} ABSOLUTE)
+  get_filename_component(REMAKE_PROJECT_COPYRIGHT ${project_copyright} ABSOLUTE)
+  get_filename_component(REMAKE_PROJECT_TODO ${project_todo} ABSOLUTE)
   remake_set(REMAKE_PROJECT_CHANGELOG changelog)
 
   remake_set(REMAKE_PROJECT_BUILD_SYSTEM ${CMAKE_SYSTEM_NAME})
   remake_set(REMAKE_PROJECT_BUILD_ARCH ${CMAKE_SYSTEM_PROCESSOR})
   remake_set(REMAKE_PROJECT_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
-  remake_set(REMAKE_PROJECT_SOURCE_DIR ${project_sources} DEFAULT src)
-  remake_set(REMAKE_PROJECT_CONFIGURATION_DIR ${project_configurations}
-    DEFAULT conf)
+  get_filename_component(REMAKE_PROJECT_SOURCE_DIR ${project_sources} ABSOLUTE)
+  get_filename_component(REMAKE_PROJECT_CONFIGURATION_DIR
+    ${project_configurations} ABSOLUTE)
+  get_filename_component(REMAKE_PROJECT_MODULE_DIR ${project_modules} ABSOLUTE)
 
   remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local
     CACHE PATH "Install path prefix, prepended onto install directories."
@@ -195,12 +206,21 @@ macro(remake_project project_name)
 
   project(${REMAKE_PROJECT_NAME})
 
-  if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
+  if(EXISTS ${REMAKE_PROJECT_MODULE_DIR})
+    set(CMAKE_MODULE_PATH ${REMAKE_PROJECT_MODULE_DIR})
+    remake_file_glob(project_module_files ${REMAKE_PROJECT_MODULE_DIR}/*.cmake)
+    foreach(project_module_file ${project_module_files})
+      get_filename_component(project_module_include
+        ${project_module_file} NAME_WE)
+      include(${project_module_include})
+    endforeach(project_module_file)
+  endif(EXISTS ${REMAKE_PROJECT_MODULE_DIR})
+  if(EXISTS ${REMAKE_PROJECT_SOURCE_DIR})
     remake_add_directories(${REMAKE_PROJECT_SOURCE_DIR})
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_SOURCE_DIR})
-  if(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
+  endif(EXISTS ${REMAKE_PROJECT_SOURCE_DIR})
+  if(EXISTS ${REMAKE_PROJECT_CONFIGURATION_DIR})
     remake_add_directories(${REMAKE_PROJECT_CONFIGURATION_DIR})
-  endif(EXISTS ${CMAKE_SOURCE_DIR}/${REMAKE_PROJECT_CONFIGURATION_DIR})
+  endif(EXISTS ${REMAKE_PROJECT_CONFIGURATION_DIR})
 endmacro(remake_project)
 
 ### \brief Define the value of a ReMake project variable.

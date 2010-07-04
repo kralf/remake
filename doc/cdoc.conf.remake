@@ -13,6 +13,7 @@ $groff_executable = '${GROFF_EXECUTABLE}';
 
 $man_extension = '3';
 
+$find_pattern = '^ReMake[^.]*\.cmake$';
 $source_pattern = '\.cmake$';
 $name_pattern = '^'.$project_name.'(\w+)$';
 $comment_pattern = '#\s*(.*?)\s*$';
@@ -39,5 +40,5 @@ $option_pattern = 'option';
 );
 $man_reference_pattern = '([\w]+)\s*(\(\d\)[.,;]?)';
 
-$include_pattern = '^\s*include\(\s*([^\s\)]*)\s*\)\s*$';
+$include_pattern = '^\s*include\(\s*([^\s\)]*)[^\)]*\)\s*$';
 $macro_pattern = '^\s*macro\(\s*([^\s\)]*).*\)?\s*$';

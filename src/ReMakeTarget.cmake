@@ -52,7 +52,7 @@ macro(remake_target target_name)
 
     while(target_cmds)
       remake_list_pop(target_cmds target_command SPLIT \n)
-      add_custom_command(TARGET ${target_name} ${target_command})
+      remake_target_add_command(TARGET ${target_name} ${target_command})
     endwhile(target_cmds)
   else(target_cmds)
     if(NOT target_non_empty)
@@ -76,29 +76,61 @@ macro(remake_target_name target_var)
   string(REGEX REPLACE "[ ;]" "_" ${target_var} "${target_lower}")
 endmacro(remake_target_name)
 
-### \brief Add custom build rule to a top-level target.
-#   This macro adds a custom build rule to a target. Whereas CMake's
+### \brief Add custom build command to a top-level target.
+#   This macro adds a custom build command to a target. Whereas CMake's
 #   add_custom_command() only behaves correctly in the top-level source 
 #   directory, this macro is designed to also work in directories below the 
 #   top-level. Therefore, build rules are stored for later collection in a
 #   temporary file ${TARGET_NAME}.commands in 
-#   ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}. A subsequent call to 
+#   ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}. A subsequent call to
 #   remake_target() will automatically collect and add these rules.
+#   Note that CMake currently does not support the definition of file-level
+#   dependencies for already defined targets. If this case is detected, the
+#   macro will create a corresponding top-level output target with a custom
+#   command driving the build.
 #   \required[value] name The name of the top-level target to add the build
 #     rule to. 
 #   \required[list] args The arguments to be passed to CMake's
 #     add_custom_command() during collection.
+#   \optional[list] OUTPUT:filename The optional list of output files created
+#     by the build command.
+#   \optional[value] AS:target A target name that will be used as top-level
+#     output target with file-level dependencies to the command's output files.
+#     Note that the failure to provide an output target with a list of
+#     output filenames will result in a fatal error.
 macro(remake_target_add_command target_name)
-  remake_arguments(PREFIX target_ VAR WORKING_DIRECTORY ARGN args ${ARGN})
+  remake_arguments(PREFIX target_ LIST OUTPUT VAR AS VAR WORKING_DIRECTORY
+    ARGN args ${ARGN})
   remake_set(target_working_directory SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(TARGET ${target_name})
-    add_custom_command(TARGET ${target_name} ${ARGN})
+    if(target_output)
+      if(target_as)
+        add_custom_command(
+          OUTPUT ${target_output}
+          WORKING_DIRECTORY ${target_working_directory}
+          ${target_args})
+        remake_target(${target_as} DEPENDS ${target_output})
+        add_dependencies(${target_name} ${target_as})
+      else(target_as)
+        message(FATAL_ERROR
+          "Command output specified, but no output target given!")
+      endif(target_as)
+    else(target_as)
+      add_custom_command(
+        TARGET ${target_name}
+        WORKING_DIRECTORY ${target_working_directory}
+        ${ARGN})
+    endif(target_output)
   else(TARGET ${target_name})
-    remake_file_create(${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
+    remake_file_create(
+      ${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
       OUTDATED)
-    remake_file_write(${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
-      ${target_args} WORKING_DIRECTORY ${target_working_directory} \n)
+    remake_file_write(
+      ${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
+      ${OUTPUT} ${AS}
+      WORKING_DIRECTORY ${target_working_directory}
+      ${target_args}\n)
   endif(TARGET ${target_name})
 endmacro(remake_target_add_command)
 

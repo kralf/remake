@@ -33,6 +33,7 @@ include(ReMakePack)
 include(ReMakePython)
 include(ReMakeSVN)
 include(ReMakeTest)
+include(ReMakeVersion OPTIONAL)
 
 include(ReMakePrivate)
 
@@ -45,6 +46,22 @@ include(ReMakePrivate)
 #   by ReMake.
 #
 #   ReMake requires CMake version 2.6.2 or higher.
+
+### \brief Set the minimum required version of ReMake for a module.
+#   In analogy to CMake's cmake_minimum_required() macro, this macro
+#   compares ReMake's version against the version requirements of a
+#   custom ReMake module. A fatal error will be risen if the current
+#   version of ReMake is lower than the requested minimum version.
+#   \required[value] VERSION:version The required minimum version of
+#     ReMake as requested by the module.
+macro(remake_minimum_required)
+  remake_arguments(PREFIX remake_ VAR VERSION ${ARGN})
+
+  if(${REMAKE_VERSION} VERSION_LESS ${remake_version})
+    message(FATAL_ERROR "ReMake ${remake_version} or higher is required. "
+      "You are running version ${REMAKE_VERSION}")
+  endif(${REMAKE_VERSION} VERSION_LESS ${remake_version})
+endmacro(remake_minimum_required)
 
 ### \brief Add a shared library target.
 #   This macro automatically defines build rules for a shared library
