@@ -63,6 +63,22 @@ macro(remake_minimum_required)
   endif(${REMAKE_VERSION} VERSION_LESS ${remake_version})
 endmacro(remake_minimum_required)
 
+### \brief Add a list of ReMake modules.
+#   This macro includes a list of custom ReMake modules. It evaluates glob
+#   expressions to locate the module files and calls CMake's include() to
+#   read code from the files.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the modules sources, defaulting to *.cmake.
+macro(remake_add_modules)
+  remake_arguments(PREFIX remake_ ARGN globs ${ARGN})
+  remake_set(remake_globs SELF DEFAULT *.cmake)
+
+  remake_file_glob(remake_modules ${remake_globs})
+  foreach(remake_module ${remake_modules})
+    include(${remake_module})
+  endforeach(remake_module)
+endmacro(remake_add_modules)
+
 ### \brief Add a shared library target.
 #   This macro automatically defines build rules for a shared library
 #   target from a list of glob expressions. In addition, the macro takes a
