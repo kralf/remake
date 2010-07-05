@@ -62,7 +62,7 @@ macro(remake_generate_flex generate_target)
         PATH ${CMAKE_CURRENT_BINARY_DIR}
         EXT ${generate_extension})
       remake_generate(Flex ${generate_target} ${FLEX_EXECUTABLE}
-        ARGS ${generate_flex_args} -o ${generate_sources} ${generate_input}
+        ARGS ${generate_flex_args} -o ${generate_source} ${generate_input}
         INPUT ${generate_input}
         SOURCES ${generate_source})
     endforeach(generate_input)
