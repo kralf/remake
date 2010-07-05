@@ -221,6 +221,14 @@ macro(remake_file_glob file_var)
     endif(file_recurse)
   endforeach(file_glob)
 
+  foreach(file_glob ${file_working_globs})
+    if(IS_DIRECTORY ${file_glob})
+      get_filename_component(file_absolute ${file_glob} ABSOLUTE)
+      remake_list_replace(file_working_globs ${file_glob}
+        REPLACE ${file_absolute})
+    endif(IS_DIRECTORY ${file_glob})
+  endforeach(file_glob)
+
   if(file_recurse)
     file(GLOB_RECURSE ${file_var} ${file_working_globs})
   else(file_recurse)
