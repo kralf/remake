@@ -186,10 +186,12 @@ endmacro(remake_file_suffix)
 #   \optional[list] RECURSE:dirname An optional list of directories that will
 #     be searched recursively for files or directories matching the given
 #     glob expressions.
+#   \optional[list] EXCLUDE:filename An optional list of file/directory names
+#     that shall be excluded from the result list.
 macro(remake_file_glob file_var)
   remake_arguments(PREFIX file_ VAR WORKING_DIRECTORY OPTION RELATIVE
-    OPTION HIDDEN OPTION FILES OPTION DIRECTORIES LIST RECURSE ARGN globs
-    ${ARGN})
+    OPTION HIDDEN OPTION FILES OPTION DIRECTORIES LIST RECURSE LIST EXCLUDE
+    ARGN globs ${ARGN})
   remake_set(file_working_directory SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
 
   remake_set(file_working_recurse)
@@ -246,12 +248,19 @@ macro(remake_file_glob file_var)
 
   if(NOT file_hidden)
     foreach(file_name ${${file_var}})
-      string(REGEX MATCH "^.*/[.][^/]*$" file_matched ${file_name})
-      if(file_matched)
+      if(${file_name} MATCHES "^.*/[.][^/]*$")
         list(REMOVE_ITEM ${file_var} ${file_name})
-      endif(file_matched)
+      endif(${file_name} MATCHES "^.*/[.][^/]*$")
     endforeach(file_name)
   endif(NOT file_hidden)
+
+  foreach(file_exclude_name ${file_exclude})
+    foreach(file_name ${${file_var}})
+      if(${file_name} MATCHES "^.*/${file_exclude_name}$")
+        list(REMOVE_ITEM ${file_var} ${file_name})
+      endif(${file_name} MATCHES "^.*/${file_exclude_name}$")
+    endforeach(file_name)
+  endforeach(file_exclude_name)
 
   if(file_relative)
     foreach(file_name ${${file_var}})
