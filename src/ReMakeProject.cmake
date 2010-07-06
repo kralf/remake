@@ -263,10 +263,10 @@ macro(remake_project_get project_var)
   remake_set(project_global ${${project_global_var}})
 
   if(project_destination)
-    if(NOT ABSOLUTE ${project_global})
+    if(NOT IS_ABSOLUTE ${project_global})
       get_filename_component(project_global
         ${CMAKE_INSTALL_PREFIX}/${project_global} ABSOLUTE)
-    endif(NOT ABSOLUTE ${project_global})
+    endif(NOT IS_ABSOLUTE ${project_global})
   endif(project_destination)
 
   if(project_output)
