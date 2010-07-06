@@ -42,8 +42,11 @@ include(ReMakePrivate)
 #     for which the Flex code will be generated, defaults to C.
 #   \optional[value] PREFIX:prefix The optional prefix to be appended to
 #     external Flex symbols.
+#   \optional[option] IGNORE_CASE If present, this option causes Flex
+#     to generate a case-insensitive lexical analyzer.
 macro(remake_generate_flex generate_target)
-  remake_arguments(PREFIX generate_ VAR LANG VAR PREFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX generate_ VAR LANG VAR PREFIX OPTION IGNORE_CASE
+    ARGN globs ${ARGN})
   remake_set(generate_lang SELF DEFAULT C)
   remake_set(generate_globs SELF DEFAULT *.l)
 
@@ -54,6 +57,9 @@ macro(remake_generate_flex generate_target)
     if(generate_prefix)
       remake_list_push(generate_flex_args -P ${generate_prefix})
     endif(generate_prefix)
+    if(generate_ignore_case)
+      remake_list_push(generate_flex_args -i)
+    endif(generate_ignore_case)
 
     remake_file_name(generate_extension ${generate_lang})
     remake_file_glob(generate_inputs ${generate_globs})
