@@ -250,16 +250,29 @@ endmacro(remake_project_set)
 #   defines an output variable named ${VAR_NAME} which will be assigned the
 #   value of the queried project variable.
 #   \required[value] variable The name of the project variable to be retrieved.
+#   \optional[option] DESTINATION This option tells the macro to treat the
+#     project variable as install destination. If the destination contains
+#     a relative install path, it will be automatically prefixed by
+#     ${CMAKE_INSTALL_PREFIX}. See the CMake documentation for details.
 #   \optional[value] OUTPUT:variable The optional name of an output variable
 #     that will be assigned the value of the queried project variable.
 macro(remake_project_get project_var)
-  remake_arguments(PREFIX project_ VAR OUTPUT ${ARGN})
+  remake_arguments(PREFIX project_ OPTION DESTINATION VAR OUTPUT ${ARGN})
 
   remake_var_name(project_global_var ${REMAKE_PROJECT_NAME} ${project_var})
+  remake_set(project_global ${${project_global_var}})
+
+  if(project_destination)
+    if(NOT ABSOLUTE ${project_global})
+      get_filename_component(project_global
+        ${CMAKE_INSTALL_PREFIX}/${project_global} ABSOLUTE)
+    endif(NOT ABSOLUTE ${project_global})
+  endif(project_destination)
+
   if(project_output)
-    remake_set(${project_output} ${${project_global_var}})
+    remake_set(${project_output} ${project_global})
   else(project_output)
-    remake_set(${project_var} ${${project_global_var}})
+    remake_set(${project_var} ${project_global})
   endif(project_output)
 endmacro(remake_project_get)
 
