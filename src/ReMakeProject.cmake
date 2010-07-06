@@ -78,11 +78,14 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     be shipped with the project package, defaults to copyright.
 #   \optional[value] TODO:file The name of the TODO file that will
 #     be shipped with the project package, defaults to TODO.
+#   \optional[list] NOTES:glob An optional list of glob expressions that
+#     are resolved in order to find additional notes to be installed
+#     with the project manifest files.
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
     VAR COMPONENT VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR MODULES
-    VAR README VAR COPYRIGHT VAR TODO ${ARGN})
+    VAR README VAR COPYRIGHT VAR TODO LIST NOTES ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   remake_set(project_sources SELF DEFAULT src)
@@ -199,8 +202,11 @@ macro(remake_project project_name)
   if(REMAKE_PROJECT_TODO)
     remake_file_configure(${REMAKE_PROJECT_TODO} OUTPUT project_todo)
   endif(REMAKE_PROJECT_TODO)
+  if(project_notes)
+    remake_file_configure(${project_notes} OUTPUT project_release_notes)
+  endif(project_notes)
   remake_component_install(FILES ${project_readme} ${project_copyright}
-    ${project_todo} ${project_changelog}
+    ${project_todo} ${project_changelog} ${project_release_notes}
     DESTINATION share/doc/${REMAKE_PROJECT_FILENAME})
   remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
 
