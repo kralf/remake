@@ -201,7 +201,7 @@ macro(remake_project project_name)
     remake_file_configure(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
   else(EXISTS ${REMAKE_PROJECT_CHANGELOG})
     remake_svn_log(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG)
-    remake_set(${project_changelog} ${REMAKE_PROJECT_CHANGELOG})
+    remake_set(project_changelog ${REMAKE_PROJECT_CHANGELOG})
   endif(EXISTS ${REMAKE_PROJECT_CHANGELOG})
 
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
