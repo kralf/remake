@@ -18,6 +18,8 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
+include(ReMakeComponent)
+
 include(ReMakePrivate)
 
 ### \brief ReMake Subversion macros
@@ -55,10 +57,13 @@ endmacro(remake_svn_revision)
 #   \optional[value] REVISION:rev The Subversion revision for which to
 #     request the log information, defaults to 0:HEAD. See the Subversion
 #     documentation for details.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that is passed to remake_component_add_command(). See
+#     ReMakeComponent for details.
 #   \optional[var] OUTPUT:variable The optional name of a variable to be
 #     assigned the absolute-path output filename.
 macro(remake_svn_log svn_file)
-  remake_arguments(PREFIX svn_ VAR REVISION VAR OUTPUT ${ARGN})
+  remake_arguments(PREFIX svn_ VAR REVISION VAR COMPONENT VAR OUTPUT ${ARGN})
   remake_set(svn_revision SELF DEFAULT 0:HEAD)
 
   if(SUBVERSION_FOUND)
@@ -71,16 +76,22 @@ macro(remake_svn_log svn_file)
 
       remake_file_mkdir(${REMAKE_SVN_DIR})
       remake_file(svn_head ${REMAKE_SVN_DIR}/head)
-      add_custom_command(OUTPUT ${svn_head}
+      remake_component_add_command(
+        OUTPUT ${svn_head} AS svn_head
         COMMAND ${Subversion_SVN_EXECUTABLE} info | grep ^Revision |
-          grep -o [0-9]\\+ > ${svn_head} VERBATIM
+          grep -o [0-9]* > ${svn_head} VERBATIM
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries)
-      add_custom_command(OUTPUT ${svn_absolute}
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries
+        COMMENT "Retrieving Subversion head revision"
+        ${COMPONENT})
+      remake_component_add_command(
+        OUTPUT ${svn_absolute} AS svn_log
         COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision} >
           ${svn_absolute}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS ${svn_head})
+        DEPENDS ${svn_head}
+        COMMENT "Retrieving Subversion log messages"
+        ${COMPONENT})
 
       if(svn_output)
         remake_set(${svn_output} ${svn_absolute})

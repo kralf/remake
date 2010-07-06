@@ -78,6 +78,12 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     be shipped with the project package, defaults to copyright.
 #   \optional[value] TODO:file The name of the TODO file that will
 #     be shipped with the project package, defaults to TODO.
+#   \optional[value] CHANGELOG:file The optional name of the changelog
+#     file that will be shipped with the project package, defaulting to
+#     changelog. Note that if the changelog file does not exist, the macro
+#     will attempt to define a target that automatically creates the
+#     changelog from the project's Subversion log. See ReMakeSVN for
+#     details.
 #   \optional[list] NOTES:glob An optional list of glob expressions that
 #     are resolved in order to find additional notes to be installed
 #     with the project manifest files.
@@ -85,7 +91,7 @@ macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
     VAR COMPONENT VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR MODULES
-    VAR README VAR COPYRIGHT VAR TODO LIST NOTES ${ARGN})
+    VAR README VAR COPYRIGHT VAR TODO VAR CHANGELOG LIST NOTES ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   remake_set(project_sources SELF DEFAULT src)
@@ -94,6 +100,7 @@ macro(remake_project project_name)
   remake_set(project_readme SELF DEFAULT README)
   remake_set(project_copyright SELF DEFAULT copyright)
   remake_set(project_todo SELF DEFAULT TODO)
+  remake_set(project_changelog SELF DEFAULT changelog)
   if(NOT project_summary)
     message(FATAL_ERROR "The project definition requires a summary!")
   endif(NOT project_summary)
@@ -137,7 +144,7 @@ macro(remake_project project_name)
   get_filename_component(REMAKE_PROJECT_README ${project_readme} ABSOLUTE)
   get_filename_component(REMAKE_PROJECT_COPYRIGHT ${project_copyright} ABSOLUTE)
   get_filename_component(REMAKE_PROJECT_TODO ${project_todo} ABSOLUTE)
-  remake_set(REMAKE_PROJECT_CHANGELOG changelog)
+  get_filename_component(REMAKE_PROJECT_CHANGELOG ${project_changelog} ABSOLUTE)
 
   remake_set(REMAKE_PROJECT_BUILD_SYSTEM ${CMAKE_SYSTEM_NAME})
   remake_set(REMAKE_PROJECT_BUILD_ARCH ${CMAKE_SYSTEM_PROCESSOR})
@@ -190,12 +197,12 @@ macro(remake_project project_name)
   remake_component(${REMAKE_PROJECT_COMPONENT} DEFAULT)
   remake_component_switch(${REMAKE_PROJECT_COMPONENT})
 
-  remake_svn_log(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
-  remake_target(${REMAKE_PROJECT_CHANGELOG_TARGET} ALL
-    DEPENDS ${project_changelog})
-  remake_component_add_dependencies(
-    COMPONENT ${REMAKE_PROJECT_COMPONENT}
-    DEPENDS ${REMAKE_PROJECT_CHANGELOG_TARGET})
+  if(EXISTS ${REMAKE_PROJECT_CHANGELOG})
+    remake_file_configure(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
+  else(EXISTS ${REMAKE_PROJECT_CHANGELOG})
+    remake_svn_log(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG)
+    remake_set(${project_changelog} ${REMAKE_PROJECT_CHANGELOG})
+  endif(EXISTS ${REMAKE_PROJECT_CHANGELOG})
 
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)
@@ -203,10 +210,10 @@ macro(remake_project project_name)
     remake_file_configure(${REMAKE_PROJECT_TODO} OUTPUT project_todo)
   endif(REMAKE_PROJECT_TODO)
   if(project_notes)
-    remake_file_configure(${project_notes} OUTPUT project_release_notes)
+    remake_file_configure(${project_notes} OUTPUT project_notes)
   endif(project_notes)
   remake_component_install(FILES ${project_readme} ${project_copyright}
-    ${project_todo} ${project_changelog} ${project_release_notes}
+      ${project_todo} ${project_changelog} ${project_notes}
     DESTINATION share/doc/${REMAKE_PROJECT_FILENAME})
   remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
 
