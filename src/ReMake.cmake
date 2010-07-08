@@ -309,10 +309,12 @@ endmacro(remake_add_executables)
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the header files, defaulting to *.h, *.hpp,
 #     and *.tpp.
-#   \optional[value] INSTALL:dirname The directory that shall be passed
-#     as the headers' install destination. For each header file, the
-#     install destination defaults to its relative-path location below
-#     ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[option] RECURSE If this option is given, header files will
+#     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}. In
+#     addtion, for each header the install destination will be appended by its
+#     relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[value] INSTALL:dirname The directory that shall be passed as the
+#     headers' install destination, defaults to ${PROJECT_HEADER_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(), defaults to
 #     ${REMAKE_COMPONENT}-dev. See ReMakeComponent and the CMake documentation
@@ -324,22 +326,37 @@ macro(remake_add_headers)
   remake_set(remake_component SELF DEFAULT ${remake_default_component})
 
   remake_project_get(HEADER_DESTINATION DESTINATION)
+  remake_set(remake_install SELF DEFAULT ${HEADER_DESTINATION})
+  if(NOT IS_ABSOLUTE ${remake_install})
+    remake_set(remake_install ${HEADER_DESTINATION}/${remake_install})
+  endif(NOT IS_ABSOLUTE ${remake_install})
 
-  foreach(remake_glob ${remake_globs})
-    remake_file_glob(remake_headers ${remake_glob})
-    get_filename_component(remake_header_dir ${remake_glob} PATH)
-    remake_set(remake_header_install FROM remake_install
-      DEFAULT ${HEADER_DESTINATION}/${remake_header_dir})
-    if(NOT IS_ABSOLUTE ${remake_header_install})
-      remake_set(remake_header_install
-        ${HEADER_DESTINATION}/${remake_header_install})
-    endif(NOT IS_ABSOLUTE ${remake_header_install})
+  if(remake_recurse)
+    remake_file_glob(
+      remake_headers ${remake_globs}
+      RECURSE ${CMAKE_CURRENT_SOURCE_DIR})
+
+    foreach(remake_header ${remake_headers})
+      if(remake_recurse)
+        get_filename_component(remake_header_path ${remake_header} PATH)
+        file(RELATIVE_PATH remake_header_dir ${CMAKE_CURRENT_SOURCE_DIR}
+          ${remake_header_path})
+        remake_set(remake_header_install ${remake_install}/${remake_header_dir})
+      endif(remake_recurse)
+
+      remake_component_install(
+        FILES ${remake_header}
+        DESTINATION ${remake_header_install}
+        COMPONENT ${remake_component})
+    endforeach(remake_header)
+  else(remake_recurse)
+    remake_file_glob(remake_headers ${remake_globs})
 
     remake_component_install(
       FILES ${remake_headers}
-      DESTINATION ${remake_header_install}
+      DESTINATION ${remake_install}
       COMPONENT ${remake_component})
-  endforeach(remake_glob)
+  endif(remake_recurse)
 endmacro(remake_add_headers)
 
 ### \brief Add script install rules.
@@ -437,7 +454,9 @@ endmacro(remake_add_configurations)
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the files.
 #   \optional[option] RECURSE If this option is given, file targets will
-#     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}.
+#     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}. In
+#     addtion, for each file the install destination will be appended by its
+#     relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
 #   \optional[list] EXCLUDE:filename An optional list of file names
 #     that shall be excluded from the list of file targets, defaulting to
 #     CMakeLists.txt.
@@ -474,15 +493,22 @@ macro(remake_add_files)
     remake_file_glob(
       remake_files ${remake_globs}
       EXCLUDE ${remake_exclude})
+    remake_set(remake_file_install ${remake_install})
   endif(remake_recurse)
 
   foreach(remake_file ${remake_files})
-    remake_file_suffix(remake_file_suffixed
-      ${remake_file} ${remake_suffix} STRIP)
+    remake_file_suffix(remake_suffixed ${remake_file} ${remake_suffix} STRIP)
+    if(remake_recurse)
+      get_filename_component(remake_file_path ${remake_file} PATH)
+      file(RELATIVE_PATH remake_file_dir ${CMAKE_CURRENT_SOURCE_DIR}
+        ${remake_file_path})
+      remake_set(remake_file_install ${remake_install}/${remake_file_dir})
+    endif(remake_recurse)
+
     remake_component_install(
       FILES ${remake_file}
-      DESTINATION ${remake_install}
-      RENAME ${remake_file_suffixed}
+      DESTINATION ${remake_file_install}
+      RENAME ${remake_suffixed}
       ${COMPONENT})
   endforeach(remake_file)
 endmacro(remake_add_files)
