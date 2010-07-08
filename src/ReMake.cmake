@@ -66,7 +66,8 @@ endmacro(remake_minimum_required)
 ### \brief Add a list of ReMake modules.
 #   This macro includes a list of custom ReMake modules. It evaluates glob
 #   expressions to locate the module files and calls CMake's include() to
-#   read code from the files.
+#   read code from the files. Note that CMake variables defined within modules
+#   will only be valid in directories below the ${CMAKE_CURRENT_SOURCE_DIR}.
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the modules sources, defaulting to *.cmake.
 macro(remake_add_modules)

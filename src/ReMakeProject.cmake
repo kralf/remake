@@ -220,7 +220,7 @@ macro(remake_project project_name)
   project(${REMAKE_PROJECT_NAME})
 
   if(EXISTS ${REMAKE_PROJECT_MODULE_DIR})
-    remake_add_directories(${REMAKE_PROJECT_MODULE_DIR})
+    remake_add_modules(${REMAKE_PROJECT_MODULE_DIR}/*.cmake)
   endif(EXISTS ${REMAKE_PROJECT_MODULE_DIR})
   if(EXISTS ${REMAKE_PROJECT_SOURCE_DIR})
     remake_add_directories(${REMAKE_PROJECT_SOURCE_DIR})
