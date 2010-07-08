@@ -436,6 +436,11 @@ endmacro(remake_add_configurations)
 #   from a list of glob expressions.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the files.
+#   \optional[option] RECURSE If this option is given, file targets will
+#     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[list] EXCLUDE:filename An optional list of file names
+#     that shall be excluded from the list of file targets, defaulting to
+#     CMakeLists.txt.
 #   \optional[value] INSTALL:dirname The directory that shall be passed as
 #     the files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
@@ -445,8 +450,10 @@ endmacro(remake_add_configurations)
 #     to the file names during installation, forced to ${REMAKE_BRANCH_SUFFIX}
 #     if defined within a ReMake branch.
 macro(remake_add_files)
-  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
+  remake_arguments(PREFIX remake_ OPTION RECURSE LIST EXCLUDE VAR INSTALL
+    VAR COMPONENT VAR SUFFIX
     ARGN globs ${ARGN})
+  remake_set(remake_exclude SELF DEFAULT CMakeLists.txt)
 
   remake_project_get(FILE_DESTINATION DESTINATION)
   remake_set(remake_install SELF DEFAULT ${FILE_DESTINATION})
@@ -458,14 +465,24 @@ macro(remake_add_files)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
   endif(REMAKE_BRANCH_COMPILE)
 
-  remake_file_glob(remake_files ${remake_globs})
+  if(remake_recurse)
+    remake_file_glob(
+      remake_files ${remake_globs}
+      RECURSE ${CMAKE_CURRENT_SOURCE_DIR}
+      EXCLUDE ${remake_exclude})
+  else(remake_recurse)
+    remake_file_glob(
+      remake_files ${remake_globs}
+      EXCLUDE ${remake_exclude})
+  endif(remake_recurse)
+
   foreach(remake_file ${remake_files})
     remake_file_suffix(remake_file_suffixed
       ${remake_file} ${remake_suffix} STRIP)
     remake_component_install(
       FILES ${remake_file}
       DESTINATION ${remake_install}
-      RENAME ${remake_blabla}
+      RENAME ${remake_file_suffixed}
       ${COMPONENT})
   endforeach(remake_file)
 endmacro(remake_add_files)

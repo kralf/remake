@@ -16,6 +16,8 @@ remake_project(
   INSTALL /usr
 )
 
+remake_add_directories(test)
+
 remake_doc(
   man INSTALL share
   ps
