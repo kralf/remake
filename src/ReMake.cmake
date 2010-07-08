@@ -323,17 +323,21 @@ macro(remake_add_headers)
   remake_component_name(remake_default_component ${REMAKE_COMPONENT} dev)
   remake_set(remake_component SELF DEFAULT ${remake_default_component})
 
-  remake_project_get(HEADER_DESTINATION)
+  remake_project_get(HEADER_DESTINATION DESTINATION)
 
   foreach(remake_glob ${remake_globs})
     remake_file_glob(remake_headers ${remake_glob})
     get_filename_component(remake_header_dir ${remake_glob} PATH)
-    remake_set(remake_header_dir FROM remake_install
-      DEFAULT ${remake_header_dir})
+    remake_set(remake_header_install FROM remake_install
+      DEFAULT ${HEADER_DESTINATION}/${remake_header_dir})
+    if(NOT IS_ABSOLUTE ${remake_header_install})
+      remake_set(remake_header_install
+        ${HEADER_DESTINATION}/${remake_header_install})
+    endif(NOT IS_ABSOLUTE ${remake_header_install})
 
     remake_component_install(
       FILES ${remake_headers}
-      DESTINATION ${HEADER_DESTINATION}/${remake_header_dir}
+      DESTINATION ${remake_header_install}
       COMPONENT ${remake_component})
   endforeach(remake_glob)
 endmacro(remake_add_headers)
@@ -402,8 +406,11 @@ macro(remake_add_configurations)
   remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
     ARGN globs ${ARGN})
 
-  remake_project_get(CONFIGURATION_DESTINATION)
+  remake_project_get(CONFIGURATION_DESTINATION DESTINATION)
   remake_set(remake_install SELF DEFAULT ${CONFIGURATION_DESTINATION})
+  if(NOT IS_ABSOLUTE ${remake_install})
+    remake_set(remake_install ${CONFIGURATION_DESTINATION}/${remake_install})
+  endif(NOT IS_ABSOLUTE ${remake_install})
 
   if(REMAKE_BRANCH_COMPILE)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
@@ -441,8 +448,11 @@ macro(remake_add_files)
   remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
     ARGN globs ${ARGN})
 
-  remake_project_get(FILE_DESTINATION)
+  remake_project_get(FILE_DESTINATION DESTINATION)
   remake_set(remake_install SELF DEFAULT ${FILE_DESTINATION})
+  if(NOT IS_ABSOLUTE ${remake_install})
+    remake_set(remake_install ${FILE_DESTINATION}/${remake_install})
+  endif(NOT IS_ABSOLUTE ${remake_install})
 
   if(REMAKE_BRANCH_COMPILE)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
