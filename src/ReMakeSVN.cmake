@@ -19,6 +19,7 @@
 ############################################################################
 
 include(ReMakeComponent)
+include(ReMakeProject)
 
 include(ReMakePrivate)
 
@@ -41,9 +42,18 @@ macro(remake_svn_revision svn_var)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
       execute_process(COMMAND ${Subversion_SVN_EXECUTABLE} info
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        RESULT_VARIABLE svn_result
         OUTPUT_VARIABLE svn_info ERROR_QUIET)
-      string(REGEX REPLACE ".*Revision: ([0-9]*).*" "\\1" ${svn_var}
-        ${svn_info})
+
+      if(${svn_result} EQUAL 0)
+        string(REGEX REPLACE ".*Revision: ([0-9]*).*" "\\1" ${svn_var}
+          ${svn_info})
+      else(${svn_result} EQUAL 0)
+        remake_set(${svn_var} 0)
+      endif(${svn_result} EQUAL 0)
+
+      remake_project_set(SUBVERSION_REVISION ${${svn_var}} CACHE STRING
+        "Subversion revision of project sources." FORCE)
     endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
   endif(SUBVERSION_FOUND)
 endmacro(remake_svn_revision)
@@ -66,7 +76,8 @@ macro(remake_svn_log svn_file)
   remake_arguments(PREFIX svn_ VAR REVISION VAR COMPONENT VAR OUTPUT ${ARGN})
   remake_set(svn_revision SELF DEFAULT 0:HEAD)
 
-  if(SUBVERSION_FOUND)
+  remake_project_get(SUBVERSION_REVISION OUTPUT svn_revision)
+  if(svn_revision)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
       if(NOT IS_ABSOLUTE ${svn_file})
         remake_set(svn_absolute ${CMAKE_CURRENT_BINARY_DIR}/${svn_file})
@@ -97,7 +108,7 @@ macro(remake_svn_log svn_file)
         remake_set(${svn_output} ${svn_absolute})
       endif(svn_output)
     endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
-  endif(SUBVERSION_FOUND)
+  endif(svn_revision)
 endmacro(remake_svn_log)
 
 remake_find_package(Subversion QUIET OPTIONAL)
