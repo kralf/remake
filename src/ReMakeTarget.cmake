@@ -65,15 +65,16 @@ endmacro(remake_target)
 
 ### \brief Output a valid target name from a set of strings.
 #   This macro is a helper macro to generate valid target names from arbitrary
-#   strings. It replaces whitespace characters and CMake list separators by
-#   underscores and performs a lower-case conversion of the result.
+#   strings. It replaces whitespace characters, periods, and CMake list
+#   separators by underscores and performs a lower-case conversion of the
+#   result.
 #   \required[value] variable The name of a variable to be assigned the
 #     generated target name.
 #   \required[list] string A list of strings to be concatenated to the
 #     target name.
 macro(remake_target_name target_var)
   string(TOLOWER "${ARGN}" target_lower)
-  string(REGEX REPLACE "[ ;]" "_" ${target_var} "${target_lower}")
+  string(REGEX REPLACE "[ ;.]" "_" ${target_var} "${target_lower}")
 endmacro(remake_target_name)
 
 ### \brief Add custom build command to a top-level target.
@@ -138,9 +139,10 @@ endmacro(remake_target_add_command)
 #   This macro does not actually add sources to an already defined top-level
 #   target, but appends a list of source files to a variable named 
 #   ${TARGET}_SOURCES. Thus, the macro may be used to circumnavigate CMake's
-#   deficiency on modifying an existing target's SOURCES property.
-#   Note that the list of sources can later be recovered by calling 
-#   remake_target_get_sources().
+#   deficiency on modifying an existing target's SOURCES property. Note that
+#   the list of sources needs to be defined before the actual top-level
+#   target and can later be recovered by calling remake_target_get_sources().
+#   Also, be aware of the scope of the ${TARGET}_SOURCES variable.
 #   \required[value] name The name of the target to add the sources to. 
 #   \required[list] source A list of source filenames to be appended to
 #     the target's sources.

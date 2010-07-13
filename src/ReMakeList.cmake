@@ -169,7 +169,8 @@ endmacro(remake_list_values)
 ### \brief Perform string operations on list elements.
 #   This macro calls CMake's string() iteratively for all the elements
 #   contained in a list. The output of the operation is then used to
-#   construct a result list.
+#   construct a result list. Be aware that the names of the input list and
+#   the result list are required to be different.
 #   \required[value] list The name of the list to perform the string
 #     operations for.
 #   \required[value] variable The name of an output variable to be assigned
@@ -183,13 +184,22 @@ macro(remake_list_string list_name list_var)
 
   remake_set(${list_var})
   foreach(list_value ${${list_name}})
-    remake_list_contains(list_args ANY list_contains REGEX REPLACE)
-
-    if(list_any)
-      string(${list_args} list_ouput ${list_value})
-    else(list_any)
+    list(LENGTH list_args list_length)
+    if("${list_args}" MATCHES "^REGEX;REPLACE;.*")
+      if(${list_length} LESS 4)
+        string(${list_args} "" list_ouput ${list_value})
+      else()
+        string(${list_args} list_ouput ${list_value})
+      endif()
+    elseif("${list_args}" MATCHES "^REPLACE;.*")
+      if(${list_length} LESS 3)
+        string(${list_args} "" list_ouput ${list_value})
+      else()
+        string(${list_args} list_ouput ${list_value})
+      endif()
+    else()
       string(${list_args} ${list_value} list_ouput)
-    endif(list_any)
+    endif()
     remake_list_push(${list_var} ${list_ouput})
-  endforeach(list_value)
+  endforeach()
 endmacro(remake_list_string)

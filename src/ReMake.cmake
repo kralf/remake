@@ -90,6 +90,9 @@ endmacro(remake_add_modules)
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the library sources, defaulting to *.c
 #     and *.cpp.
+#   \optional[value] TYPE:type The type of the library target to be created,
+#     defaulting to SHARED. See the CMake documentation for a list of valid
+#     library types.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -101,8 +104,9 @@ endmacro(remake_add_modules)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
 macro(remake_add_library remake_name)
-  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
-    ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ VAR TYPE VAR COMPONENT VAR PREFIX
+    VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_set(remake_type SELF DEFAULT SHARED)
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
 
   remake_project_get(LIBRARY_PREFIX)
@@ -135,7 +139,7 @@ macro(remake_add_library remake_name)
 
   remake_component_build(
     LIBRARY ${remake_name}${remake_suffix}
-    SHARED ${remake_sources} ${remake_target_sources}
+    ${remake_type} ${remake_sources} ${remake_target_sources}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK} ${COMPONENT})
   remake_component_install(
@@ -195,7 +199,7 @@ macro(remake_add_plugin remake_name)
 
   remake_component_build(
     LIBRARY ${remake_name}${remake_suffix}
-    SHARED ${remake_sources} ${remake_target_sources}
+    MODULE ${remake_sources} ${remake_target_sources}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK} ${COMPONENT})
   remake_component_install(
@@ -321,7 +325,8 @@ endmacro(remake_add_executables)
 #     ${REMAKE_COMPONENT}-dev. See ReMakeComponent and the CMake documentation
 #     for details.
 macro(remake_add_headers)
-  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ OPTION RECURSE VAR INSTALL VAR COMPONENT
+    ARGN globs ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
   remake_component_name(remake_default_component ${REMAKE_COMPONENT} dev)
   remake_set(remake_component SELF DEFAULT ${remake_default_component})
@@ -545,7 +550,10 @@ macro(remake_add_directories)
     foreach(remake_dir ${remake_dirs})
       remake_component_switch(${remake_component}
         CURRENT remake_current_component)
-      add_subdirectory(${remake_dir})
+      remake_component_get(${remake_component} BUILD OUTPUT remake_build)
+      if(remake_build)
+        add_subdirectory(${remake_dir})
+      endif(remake_build)
       remake_component_switch(${remake_current_component})
     endforeach(remake_dir)
   endif(remake_option)

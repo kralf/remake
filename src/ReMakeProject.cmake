@@ -235,9 +235,10 @@ endmacro(remake_project)
 #   conventions. The variable name is automatically prefixed with an
 #   upper-case conversion of the project name. Thus, variables may appear in
 #   the cache as ${PROJECT_NAME}_${VAR_NAME}. Additional arguments are passed
-#   on to CMake's set() macro.
+#   on to remake_set().
 #   \required[value] variable The name of the project variable to be defined.
-#   \optional[list] arg The arguments to be passed on to CMake's set() macro.
+#   \optional[list] arg The arguments to be passed on to remake_set(). See
+#     ReMakePrivate for details.
 macro(remake_project_set project_var)
   remake_var_name(project_global_var ${REMAKE_PROJECT_NAME} ${project_var})
   remake_set(${project_global_var} ${ARGN})
