@@ -566,7 +566,7 @@ macro(remake_file_configure)
         remake_set(file_dst ${file_dst}.${file_ext})
       endif(file_ext)
 
-      remake_file_copy(${file_src} ${file_dst})
+      remake_file_copy(${file_dst} ${file_src})
     endif(file_src MATCHES "[.]remake$")
 
     if(file_output)

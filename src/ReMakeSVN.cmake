@@ -79,8 +79,8 @@ macro(remake_svn_log svn_file)
   if(svn_output)
     remake_set(${svn_output})
   endif(svn_output)
-
   remake_project_get(SUBVERSION_REVISION OUTPUT svn_revision)
+
   if(svn_revision)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
       if(NOT IS_ABSOLUTE ${svn_file})
