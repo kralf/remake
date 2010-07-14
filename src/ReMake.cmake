@@ -93,6 +93,8 @@ endmacro(remake_add_modules)
 #   \optional[value] TYPE:type The type of the library target to be created,
 #     defaulting to SHARED. See the CMake documentation for a list of valid
 #     library types.
+#   \optional[value] INSTALL:dirname The directory that shall be passed as the
+#     library's install destination, defaults to ${PROJECT_LIBRARY_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -104,14 +106,15 @@ endmacro(remake_add_modules)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
 macro(remake_add_library remake_name)
-  remake_arguments(PREFIX remake_ VAR TYPE VAR COMPONENT VAR PREFIX
-    VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ VAR TYPE VAR INSTALL VAR COMPONENT
+    VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
   remake_set(remake_type SELF DEFAULT SHARED)
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
 
   remake_project_get(LIBRARY_PREFIX)
   remake_project_get(LIBRARY_DESTINATION)
   remake_project_get(PLUGIN_DESTINATION)
+  remake_set(remake_install SELF DEFAULT ${LIBRARY_DESTINATION})
   if(NOT DEFINED remake_prefix)
     remake_set(remake_prefix ${LIBRARY_PREFIX})
   endif(NOT DEFINED remake_prefix)
@@ -144,7 +147,7 @@ macro(remake_add_library remake_name)
     ${LINK} ${COMPONENT})
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
-    LIBRARY DESTINATION ${LIBRARY_DESTINATION}
+    LIBRARY DESTINATION ${remake_install}
     ${COMPONENT})
 endmacro(remake_add_library)
 
@@ -221,6 +224,9 @@ endmacro(remake_add_plugin)
 #   \optional[option] TESTING With this option being present, the executable is
 #     assumed to be a testing binary. Consequently, a call to remake_test()
 #     creates a testing target for this executable. See ReMakeTest for details.
+#   \optional[value] INSTALL:dirname The directory that shall be passed
+#     as the executable's install destination, defaults to
+#     ${PROJECT_EXECUTABLE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -232,12 +238,13 @@ endmacro(remake_add_plugin)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     executable target.
 macro(remake_add_executable remake_name)
-  remake_arguments(PREFIX remake_ OPTION TESTING VAR COMPONENT VAR PREFIX
-    VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ OPTION TESTING VAR INSTALL VAR COMPONENT
+    VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
 
   remake_project_get(EXECUTABLE_PREFIX)
   remake_project_get(EXECUTABLE_DESTINATION)
+  remake_set(remake_install SELF DEFAULT ${EXECUTABLE_DESTINATION})
   if(NOT DEFINED remake_prefix)
     remake_set(remake_prefix ${EXECUTABLE_PREFIX})
   endif(NOT DEFINED remake_prefix)
@@ -264,7 +271,7 @@ macro(remake_add_executable remake_name)
     ${LINK} ${COMPONENT})
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
-    RUNTIME DESTINATION ${EXECUTABLE_DESTINATION}
+    RUNTIME DESTINATION ${remake_install}
     ${COMPONENT})
 
   if(remake_testing)
@@ -284,6 +291,9 @@ endmacro(remake_add_executable)
 #     are assumed to be a testing binary. Consequently, a call to remake_test()
 #     creates a testing target for these executables. See ReMakeTest for
 #     details.
+#   \optional[value] INSTALL:dirname The directory that shall be passed
+#     as the executables' install destinations, defaults to
+#     ${PROJECT_EXECUTABLE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -295,15 +305,15 @@ endmacro(remake_add_executable)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     executable targets.
 macro(remake_add_executables)
-  remake_arguments(PREFIX remake_ OPTION TESTING VAR COMPONENT VAR PREFIX
-    VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ OPTION TESTING VAR INSTALL VAR COMPONENT
+    VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
 
   remake_file_glob(remake_sources ${remake_globs})
   foreach(remake_source ${remake_sources})
     get_filename_component(remake_name ${remake_source} NAME_WE)
     remake_add_executable(${remake_name} ${remake_source}
-      ${TESTING} ${COMPONENT} ${PREFIX} ${SUFFIX} ${LINK})
+      ${TESTING} ${INSTALL} ${COMPONENT} ${PREFIX} ${SUFFIX} ${LINK})
   endforeach(remake_source)
 endmacro(remake_add_executables)
 
