@@ -76,6 +76,10 @@ macro(remake_svn_log svn_file)
   remake_arguments(PREFIX svn_ VAR REVISION VAR COMPONENT VAR OUTPUT ${ARGN})
   remake_set(svn_revision SELF DEFAULT 0:HEAD)
 
+  if(svn_output)
+    remake_set(${svn_output})
+  endif(svn_output)
+
   remake_project_get(SUBVERSION_REVISION OUTPUT svn_revision)
   if(svn_revision)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
