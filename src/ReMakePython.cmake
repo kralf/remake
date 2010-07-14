@@ -30,9 +30,11 @@ include(ReMakePrivate)
 
 remake_set(REMAKE_PYTHON_DIR ReMakePython)
 remake_set(REMAKE_PYTHON_PACKAGE_DIR ${REMAKE_PYTHON_DIR}/packages)
+remake_set(REMAKE_PYTHON_EXT_DIR ${REMAKE_PYTHON_DIR}/extensions)
 remake_set(REMAKE_PYTHON_DIST_DIR ${REMAKE_PYTHON_DIR}/distribution)
 remake_set(REMAKE_PYTHON_COMPONENT_SUFFIX python)
-remake_set(REMAKE_PYTHON_TARGET_SUFFIX python_package)
+remake_set(REMAKE_PYTHON_TARGET_SUFFIX python_distribution)
+remake_set(REMAKE_PYTHON_EXT_PACKAGE extensions)
 
 ### \brief Configure Python package distribution.
 #   This macro discovers the Python installation and configures Python
@@ -156,7 +158,10 @@ macro(remake_python_package)
     endif(python_recurse)
     remake_python_get_sources(python_package_sources ${python_name})
     remake_list_push(python_source ${python_package_sources})
+    remake_set(python_depends)
 
+    remake_set(python_directories
+      "'${python_name}': '${CMAKE_CURRENT_SOURCE_DIR}'")
     string(REPLACE "." "/" python_output_dir ${python_name})
     remake_list_string(python_sources python_output_relative
       REGEX REPLACE "^${CMAKE_CURRENT_SOURCE_DIR}" "${python_output_dir}")
@@ -168,6 +173,57 @@ macro(remake_python_package)
     if(python_description)
       remake_set(python_summary "${python_summary} (${python_description})")
     endif(python_description)
+
+    remake_python_package_get(${python_name} EXTENSIONS
+      OUTPUT python_extensions)
+    if(python_extensions)
+      remake_set(python_ext_package
+        "${python_name}.${REMAKE_PYTHON_EXT_PACKAGE}")
+      remake_file(python_ext_dir ${REMAKE_PYTHON_EXT_DIR}/${python_name}
+        TOPLEVEL)
+      remake_list_push(python_directories
+        "'${python_ext_package}': '${python_ext_dir}'")
+      remake_set(python_ext_constructors)
+
+      foreach(python_ext ${python_extensions})
+        remake_python_extension_get(${python_name} ${python_ext} SOURCES
+          OUTPUT python_ext_sources)
+        remake_python_extension_get(${python_name} ${python_ext} MODULES
+          OUTPUT python_ext_modules)
+        remake_python_extension_get(${python_name} ${python_ext} OPTIONS
+          OUTPUT python_ext_options)
+        remake_python_extension_get(${python_name} ${python_ext} DEPENDS
+          OUTPUT python_ext_depends)
+
+        remake_list_push(python_sources ${python_ext_sources})
+        string(REPLACE ";" "', '" python_ext_source_array
+          "'${python_ext_sources}'")
+        remake_set(python_ext_const
+          "'${python_ext_package}.${python_ext}'"
+          "[${python_ext_source_array}]")
+        remake_list_push(python_depends ${python_ext_depends})
+
+        foreach(python_ext_opt ${python_ext_options})
+          remake_python_extension_get(${python_name} ${python_ext}
+            ${python_ext_opt} OUTPUT python_ext_opt_params)
+          string(REPLACE ";" "', '" python_ext_opt_param_array
+            "'${python_ext_opt_params}'")
+          remake_list_push(python_ext_const
+            "${python_ext_opt}=[${python_ext_opt_param_array}]")
+        endforeach(python_ext_opt)
+
+        string(REPLACE ";" ", " python_ext_const_array "${python_ext_const}")
+        remake_list_push(python_ext_constructors
+          "Extension(${python_ext_const_array})")
+        foreach(python_ext_module ${python_ext_modules})
+          remake_list_push(python_modules
+            "${python_ext_package}.${python_ext_module}")
+        endforeach(python_ext_module)
+      endforeach(python_ext)
+    endif(python_extensions)
+
+    string(REPLACE ";" ", " python_dir_array "${python_directories}")
+    string(REPLACE ";" ", " python_ext_array "${python_ext_constructors}")
     string(REPLACE ";" "', '" python_module_array "'${python_modules}'")
 
     remake_file(python_setup ${python_package_dir}/setup.py)
@@ -183,7 +239,8 @@ macro(remake_python_package)
         author_email='${REMAKE_PROJECT_CONTACT}',
         url='${REMAKE_PROJECT_HOME}',
         license='${REMAKE_PROJECT_LICENSE}',
-        package_dir={'${python_name}': '${CMAKE_CURRENT_SOURCE_DIR}'},
+        package_dir={${python_dir_array}},
+        ext_modules=[${python_ext_array}],
         py_modules=[${python_module_array}]
       )\n")
     remake_file(python_dist_dir ${REMAKE_PYTHON_DIST_DIR}/${python_name}
@@ -198,10 +255,11 @@ macro(remake_python_package)
       REGEX REPLACE ".py$" ".pyc")
 
     remake_python_generate(${python_name}
+      COMMAND ${PYTHON_EXECUTABLE} ${python_setup} --quiet build_ext
       COMMAND ${PYTHON_EXECUTABLE} ${python_setup} --quiet install
         --install-lib=${python_dist_dir}
       WORKING_DIRECTORY ${python_package_dir}
-      DEPENDS ${python_sources}
+      DEPENDS ${python_sources} ${python_depends}
       COMMENT "Generating Python package ${python_name}"
       OUTPUT ${python_egg_file} ${python_output} ${python_output_compiled}
       ${COMPONENT})
@@ -258,13 +316,13 @@ endmacro(remake_python_package_set)
 #   this macro. By default, the macro defines an output variable named
 #   ${VAR_NAME} which will be assigned the value of the queried Package
 #   variable.
-#   \required[value] variable The name of the Python package variable to
-#     be retrieved.
 #   \required[value] package The name of the Python package to retrieve the
 #     variable for.
+#   \required[value] variable The name of the Python package variable to
+#     be retrieved.
 #   \optional[value] OUTPUT:variable The optional name of an output variable
 #     that will be assigned the value of the queried Python package variable.
-macro(remake_python_package_get python_var python_package)
+macro(remake_python_package_get python_package python_var)
   remake_arguments(PREFIX python_ VAR OUTPUT ${ARGN})
 
   remake_var_name(python_global_var ${python_package} ${python_var})
@@ -301,7 +359,7 @@ endmacro(remake_python_add_sources)
 #   \required[value] package The name of the Python package to retrieve the
 #     sources for.
 macro(remake_python_get_sources python_var python_package)
-  remake_python_package_get(SOURCES ${python_package} output ${python_var})
+  remake_python_package_get(${python_package} SOURCES OUTPUT ${python_var})
 endmacro(remake_python_get_sources)
 
 ### \brief Add Python extension.
@@ -313,29 +371,50 @@ endmacro(remake_python_get_sources)
 #   ${PACKAGE_NAME}_EXTENSIONS variable.
 #   \required[value] name The name of the Python extension to be added. Note
 #     that some Python extensions follow special naming conventions.
-#   \required[list] glob A list of glob expressions that will be resolved
-#     in order to find and append the source files of the extension to
-#     the Python package extension variable named
+#   \required[list] glob A list of glob expressions resolving to the
+#     source files of the Python package extension. The filenames will be
+#     appended to the Python package extension variable named
 #     ${PACKAGE_NAME}_${EXTENSION_NAME}_SOURCES.
 #   \optional[value] PACKAGE:package The name of the Python package to
 #     which the extension will be assigned, defaults to the package name
 #     conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] MODULES:module An optional list of modules that will
+#     be created for this Python package extension, defaulting to the
+#     name of the extension.
 #   \optional[list] OPTIONS:option An optional list of options for the
 #     extension that will be appended to the Python package extension
 #     variable named ${PACKAGE_NAME}_${EXTENSION_NAME}_OPTIONS.
+#   \optional[list] DEPENDS:depend An optional list of dependencies for
+#     the extension that will be appended to the Python package extension
+#     variable named ${PACKAGE_NAME}_${EXTENSION_NAME}_DEPENDS.
 macro(remake_python_extension python_name)
-  remake_arguments(PREFIX python_ VAR PACKAGE LIST OPTIONS ARGN globs ${ARGN})
+  remake_arguments(PREFIX python_ VAR PACKAGE LIST MODULES LIST OPTIONS
+    LIST DEPENDS ARGN globs ${ARGN})
   remake_component_name(python_component ${REMAKE_COMPONENT}
     ${REMAKE_PYTHON_COMPONENT_SUFFIX})
   remake_python_package_name(python_default_package ${python_component})
   remake_set(python_package SELF DEFAULT ${python_default_package})
+  remake_set(python_modules SELF DEFAULT ${python_name})
 
-  remake_file_glob(python_sources ${python_globs})
+  remake_file(python_ext_dir
+    ${REMAKE_PYTHON_EXT_DIR}/${python_package} TOPLEVEL)
+  if(NOT EXISTS ${python_ext_dir})
+    remake_file_mkdir(${python_ext_dir})
+    remake_file_create(${python_ext_dir}/__init__.py)
+  endif(NOT EXISTS ${python_ext_dir})
+
+  remake_file_link(${REMAKE_PYTHON_EXT_DIR}/${python_package}
+    ${python_globs} OUTPUT python_sources TOPLEVEL)
+
   remake_python_package_set(${python_package} EXTENSIONS ${python_name} APPEND)
   remake_python_extension_set(${python_package} ${python_name} SOURCES
     ${python_sources} APPEND)
+  remake_python_extension_set(${python_package} ${python_name} MODULES
+    ${python_modules} APPEND)
   remake_python_extension_set(${python_package} ${python_name} OPTIONS
     ${python_options} APPEND)
+  remake_python_extension_set(${python_package} ${python_name} DEPENDS
+    ${python_depends} APPEND)
 endmacro(remake_python_extension)
 
 ### \brief Define the value of a Python package extension variable.
@@ -367,24 +446,74 @@ endmacro(remake_python_extension_set)
 #   ${VAR_NAME} to this macro. By default, the macro defines an output
 #   variable named ${VAR_NAME} which will be assigned the value of the
 #   queried Package extension variable.
-#   \required[value] variable The name of the Python package extension
-#     variable to be retrieved.
 #   \required[value] package The name of the Python package to retrieve the
 #     extension variable for.
 #   \required[value] extension The name of the Python package extension to
 #     retrieve the variable for.
+#   \required[value] variable The name of the Python package extension
+#     variable to be retrieved.
 #   \optional[value] OUTPUT:variable The optional name of an output variable
 #     that will be assigned the value of the queried Python package extension
 #     variable.
-macro(remake_python_extension_get python_var python_package python_extension)
+macro(remake_python_extension_get python_package python_extension python_var)
   remake_var_name(python_package_var ${python_extension} ${python_var})
-  remake_python_package_get(${python_var} ${python_package}
-    ${python_package_var} ${ARGN})
+  remake_python_package_get(${python_package} ${python_package_var}
+    ${python_var} ${ARGN})
 endmacro(remake_python_extension_get)
 
+### \brief Add Python SWIG extension.
+#   This macro defines Python extensions using the Simplified Wrapper and
+#   Interface Generator (SWIG). It takes a list of SWIG interface definitions
+#   and calls remake_python_extension() with all parameters necessary to
+#   build the extension modules. Note that SWIG requires all header files
+#   which have been included into the interfaces to be available in the
+#   include search path. Therefore, remake_include() should be invoked prior
+#   to calling this macro.
+#   \required[list] glob A list of glob expressions resolving to the
+#     SWIG interface files, defaulting to *.i. Note that the extensions will
+#     be stripped from the filenames to define the names of the Python
+#     extensions.
+#   \optional[value] PACKAGE:package The name of the Python package to
+#     which the extension will be assigned, defaults to the package name
+#     conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] DEPENDS:depend An optional list of glob expressions
+#     resolving to all header files the SWIG interfaces depend on. Note that
+#     CMake currently does not support dependency scanning on SWIG interfaces.
 macro(remake_python_swig)
-# check for swig
-#   remake_python_extension(${ARGN} *.i)
+  remake_arguments(PREFIX python_ VAR PACKAGE LIST DEPENDS ARGN globs ${ARGN})
+  remake_component_name(python_component ${REMAKE_COMPONENT}
+    ${REMAKE_PYTHON_COMPONENT_SUFFIX})
+  remake_python_package_name(python_default_package ${python_component})
+  remake_set(python_package SELF DEFAULT ${python_default_package})
+  remake_set(python_globs SELF DEFAULT *.i)
+
+  remake_find_executable(swig)
+
+  remake_set(python_include_flags)
+  get_property(python_include_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
+  foreach(python_include_dir ${python_include_dirs})
+    remake_list_push(python_include_flags "-I${python_include_dir}")
+  endforeach(python_include_dir)
+
+  remake_file_glob(python_swig_sources ${python_globs})
+  remake_file_glob(python_swig_depends ${python_depends})
+  foreach(python_src ${python_swig_sources})
+    get_filename_component(python_src_name_we ${python_src} NAME_WE)
+
+    if(python_swig_depends)
+      remake_python_extension(${python_src_name_we} ${python_src} ${PACKAGE}
+        DEPENDS ${python_swig_depends}
+        OPTIONS swig_opts include_dirs)
+    else(python_swig_depends)
+      remake_python_extension(${python_src_name_we} ${python_src} ${PACKAGE}
+        OPTIONS swig_opts include_dirs)
+    endif(python_swig_depends)
+
+    remake_python_extension_set(${python_package} ${python_src_name_we}
+      swig_opts -modern -c++ ${python_include_flags})
+    remake_python_extension_set(${python_package} ${python_src_name_we}
+      include_dirs ${python_include_dirs})
+  endforeach(python_src)
 endmacro(remake_python_swig)
 
 ### \brief Add Python package build rule.

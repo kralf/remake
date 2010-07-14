@@ -428,26 +428,76 @@ endmacro(remake_file_write)
 #   \required[list] glob A list of glob expressions that are matched to find
 #     the source files. Note that if the glob expression resolves to multiple
 #     files, the destination will be required to name a directory.
+#   \optional[var] OUTPUT:variable The optional name of a list variable to
+#     be assigned all destination filenames.
 #   \optional[option] TOPLEVEL If this option is present, the destination
 #     is a top-level ReMake file or directory.
-macro(remake_file_copy file_destination)
-  remake_arguments(PREFIX file_ OPTION TOPLEVEL ARGN globs ${ARGN})
-  remake_file(file_copy ${file_destination} ${TOPLEVEL})
+macro(remake_file_copy file_copy_destination)
+  remake_arguments(PREFIX file_copy_ VAR OUTPUT OPTION TOPLEVEL
+    ARGN globs ${ARGN})
+  remake_file(file_copy_dst ${file_copy_destination} ${TOPLEVEL})
 
-  remake_file_glob(file_sources FILES ${file_globs})
-  foreach(file_src ${file_sources})
-    if(IS_DIRECTORY ${file_copy})
-      get_filename_component(file_src_name ${file_src} NAME)
-      remake_set(file_dst ${file_copy}/${file_src_name})
-    else(IS_DIRECTORY ${file_copy})
-      remake_set(file_dst ${file_copy})
-    endif(IS_DIRECTORY ${file_copy})
+  if(file_copy_output)
+    remake_set(${file_copy_output})
+  endif(file_copy_output)
 
-    remake_file_read(file_content ${file_src})
-    remake_file_create(${file_dst})
-    remake_file_write(${file_dst} FROM file_content)
-  endforeach(file_src)
+  remake_file_glob(file_copy_sources FILES ${file_copy_globs})
+  foreach(file_copy_src ${file_copy_sources})
+    if(IS_DIRECTORY ${file_copy_dst})
+      get_filename_component(file_copy_name ${file_copy_src} NAME)
+      remake_set(file_copy_dst_name ${file_copy_dst}/${file_copy_name})
+    else(IS_DIRECTORY ${file_copy_dst})
+      remake_set(file_copy_dst_name ${file_copy_dst})
+    endif(IS_DIRECTORY ${file_copy_dst})
+
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${file_copy_src}
+      ${file_copy_dst_name})
+
+    if(file_copy_output)
+      remake_list_push(${file_copy_output} ${file_copy_dst_name})
+    endif(file_copy_output)
+  endforeach(file_copy_src)
 endmacro(remake_file_copy)
+
+### \brief Link files.
+#   This macro links one or multiple files. The destination is automatically
+#   converted into a ReMake location by a call to remake_file().
+#   \required[value] destination The name of the destination file or
+#     directory. If a directory name is provided, the files will be
+#     linked into the specified directory whilst the names will be preserved.
+#   \required[list] glob A list of glob expressions that are matched to find
+#     the source files. Note that if the glob expression resolves to multiple
+#     files, the destination will be required to name a directory.
+#   \optional[var] OUTPUT:variable The optional name of a list variable to
+#     be assigned all link filenames.
+#   \optional[option] TOPLEVEL If this option is present, the destination
+#     is a top-level ReMake file or directory.
+macro(remake_file_link file_link_destination)
+  remake_arguments(PREFIX file_link_ VAR OUTPUT OPTION TOPLEVEL
+    ARGN globs ${ARGN})
+  remake_file(file_link_dst ${file_link_destination} ${TOPLEVEL})
+
+  if(file_link_output)
+    remake_set(${file_link_output})
+  endif(file_link_output)
+
+  remake_file_glob(file_link_sources FILES ${file_link_globs})
+  foreach(file_link_src ${file_link_sources})
+    if(IS_DIRECTORY ${file_link_dst})
+      get_filename_component(file_link_name ${file_link_src} NAME)
+      remake_set(file_link_dst_name ${file_link_dst}/${file_link_name})
+    else(IS_DIRECTORY ${file_link_dst})
+      remake_set(file_link_dst_name ${file_link_dst})
+    endif(IS_DIRECTORY ${file_link_dst})
+
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink
+      ${file_link_src} ${file_link_dst_name})
+
+    if(file_link_output)
+      remake_list_push(${file_link_output} ${file_link_dst_name})
+    endif(file_link_output)
+  endforeach(file_link_src)
+endmacro(remake_file_link)
 
 ### \brief Configure files using ReMake variables.
 #   This macro takes a glob expression and, in all matching input files,
@@ -516,8 +566,7 @@ macro(remake_file_configure)
         remake_set(file_dst ${file_dst}.${file_ext})
       endif(file_ext)
 
-      remake_file_create(${file_dst})
-      remake_file_write(${file_dst} FROM file_content)
+      remake_file_copy(${file_src} ${file_dst})
     endif(file_src MATCHES "[.]remake$")
 
     if(file_output)
