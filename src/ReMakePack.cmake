@@ -118,7 +118,10 @@ endmacro(remake_pack)
 #   the current project settings and the arguments passed. In addition to
 #   creating a package build target through remake_pack(), the macro adds
 #   simplified package install and uninstall targets. Project-internal
-#   dependencies between these targets are automatically resolved.
+#   dependencies between these targets are automatically resolved. Also,
+#   the macro provides automated resolution of package dependencies with
+#   hardcoded version information, i.e. packages including the version
+#   string in the package name.
 #   \optional[value] ARCH:architecture The package architecture that is
 #     inscribed into the package manifest, defaults to the local system
 #     architecture as returned by 'dpkg --print-architecture'.
