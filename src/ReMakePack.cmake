@@ -183,6 +183,21 @@ macro(remake_pack_deb)
         remake_list_push(pack_component_deps ${pack_component_dep})
         remake_list_replace(pack_dependencies ${pack_dependency}
           REPLACE "${pack_name_dep} (${pack_version_dep})")
+      else(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+        execute_process(COMMAND dpkg --list "${pack_dependency}[0-9]*"
+          OUTPUT_VARIABLE pack_deb_packages OUTPUT_STRIP_TRAILING_WHITESPACE
+          RESULT_VARIABLE pack_deb_result ERROR_QUIET)
+        if(${pack_deb_result} EQUAL 0)
+          string(REGEX REPLACE "\n" ";" pack_deb_packages ${pack_deb_packages})
+          foreach(pack_deb_pkg ${pack_deb_packages})
+            if(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_dependency}[-0-9.]+ ")
+              string(REGEX REPLACE "^ii[ ]+(${pack_dependency}[-0-9.]+) .*$"
+                "\\1" pack_deb_pkg_name ${pack_deb_pkg})
+              remake_list_replace(pack_dependencies ${pack_dependency}
+                REPLACE ${pack_deb_pkg_name})
+            endif(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_dependency}[-0-9.]+ ")
+          endforeach(pack_deb_pkg)
+        endif(${pack_deb_result} EQUAL 0)
       endif(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
     endforeach(pack_dependency)
 
