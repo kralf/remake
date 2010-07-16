@@ -93,8 +93,9 @@ endmacro(remake_add_modules)
 #   \optional[value] TYPE:type The type of the library target to be created,
 #     defaulting to SHARED. See the CMake documentation for a list of valid
 #     library types.
-#   \optional[value] INSTALL:dirname The directory that shall be passed as the
-#     library's install destination, defaults to ${PROJECT_LIBRARY_DESTINATION}.
+#   \optional[value] INSTALL:dirname The directory that shall be passed
+#     as the library's install destination, defaults to the project's
+#     ${LIBRARY_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -225,8 +226,8 @@ endmacro(remake_add_plugin)
 #     assumed to be a testing binary. Consequently, a call to remake_test()
 #     creates a testing target for this executable. See ReMakeTest for details.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
-#     as the executable's install destination, defaults to
-#     ${PROJECT_EXECUTABLE_DESTINATION}.
+#     as the executable's install destination, defaults to the project's
+#     ${EXECUTABLE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -292,8 +293,8 @@ endmacro(remake_add_executable)
 #     creates a testing target for these executables. See ReMakeTest for
 #     details.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
-#     as the executables' install destinations, defaults to
-#     ${PROJECT_EXECUTABLE_DESTINATION}.
+#     as the executables' install destinations, defaults to the project's
+#     ${EXECUTABLE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -328,8 +329,9 @@ endmacro(remake_add_executables)
 #     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}. In
 #     addtion, for each header the install destination will be appended by its
 #     relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
-#   \optional[value] INSTALL:dirname The directory that shall be passed as the
-#     headers' install destination, defaults to ${PROJECT_HEADER_DESTINATION}.
+#   \optional[value] INSTALL:dirname The directory that shall be passed
+#     as the headers' install destination, defaults to the project's
+#     ${HEADER_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(), defaults to
 #     ${REMAKE_COMPONENT}-dev. See ReMakeComponent and the CMake documentation
@@ -427,8 +429,8 @@ endmacro(remake_add_scripts)
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the configuration file templates.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
-#     as the configuration files' install destination, defaults to
-#     ${PROJECT_CONFIGURATION_DESTINATION}.
+#     as the configuration files' install destination, defaults to the project's
+#     ${CONFIGURATION_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -476,8 +478,9 @@ endmacro(remake_add_configurations)
 #   \optional[list] EXCLUDE:filename An optional list of file names
 #     that shall be excluded from the list of file targets, defaulting to
 #     CMakeLists.txt.
-#   \optional[value] INSTALL:dirname The directory that shall be passed as
-#     the files' install destination, defaults to ${PROJECT_FILE_DESTINATION}.
+#   \optional[value] INSTALL:dirname The directory that shall be passed
+#     as the files' install destination, defaults to the project's
+#     ${FILE_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -541,16 +544,15 @@ endmacro(remake_add_files)
 #     component that is passed to remake_component_switch() before subdirectory
 #     inclusion, defaults to ${REMAKE_COMPONENT}. See ReMakeComponent for
 #     details.
-#   \optional[value] IF:option The name of a project option variable that
-#     conditions directory inclusion. See ReMakeProject for the correct usage
-#     of ReMake project options.
+#   \optional[value] IF:variable The name of a variable that conditions
+#     directory inclusion.
 macro(remake_add_directories)
   remake_arguments(PREFIX remake_ VAR COMPONENT VAR IF ARGN globs ${ARGN})
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
   remake_set(remake_globs SELF DEFAULT *)
   
   if(remake_if)
-    remake_project_get(${remake_if} OUTPUT remake_option)
+    remake_set(remake_option FROM ${remake_if})
   else(remake_if)
     remake_set(remake_option ON)
   endif(remake_if)
@@ -608,6 +610,33 @@ macro(remake_add_documentation remake_generator)
     remake_doc_custom(${ARGN})
   endif(${remake_generator} MATCHES "SOURCE")
 endmacro(remake_add_documentation)
+
+### \brief Add a package build target.
+#   This macro adds a package build target, using the requested generator
+#   for package generation. Additional arguments passed to the macro are
+#   forwarded to the selected generator.
+#   \optional[var] GENERATOR:generator The generator to be used for package
+#     generation, defaults to DEB.
+#   \required[list] arg The arguments to be forwared to the package
+#     generator. See ReMakeOack for details.
+#   \optional[value] IF:variable The name of a variable that conditions
+#     package generation.
+macro(remake_add_package)
+  remake_arguments(PREFIX remake_ VAR GENERATOR VAR IF ARGN args ${ARGN})
+  remake_set(remake_generator SELF DEFAULT DEB)
+
+  if(remake_if)
+    remake_set(remake_option FROM ${remake_if})
+  else(remake_if)
+    remake_set(remake_option ON)
+  endif(remake_if)
+
+  if(remake_option)
+    if(${remake_generator} MATCHES "DEB")
+      remake_pack_deb(${remake_args})
+    endif(${remake_generator} MATCHES "DEB")
+  endif(remake_option)
+endmacro(remake_add_package)
 
 ### \brief Add directories to the include path.
 #   This macro adds a list of directories to the compiler's include path.

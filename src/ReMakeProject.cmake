@@ -182,6 +182,9 @@ macro(remake_project project_name)
     CACHE PATH "Install destination of configuration files.")
   remake_project_set(HEADER_DESTINATION include/${REMAKE_PROJECT_FILENAME}
     CACHE PATH "Install destination of project development headers.")
+  remake_project_set(DOCUMENTATION_DESTINATION
+    share/doc/${REMAKE_PROJECT_FILENAME}
+    CACHE PATH "Install destination of project documentation.")
 
   message(STATUS "Project: ${REMAKE_PROJECT_NAME} "
     "version ${REMAKE_PROJECT_VERSION}, "

@@ -160,7 +160,7 @@ endmacro(remake_find_file)
 #   It gets invoked by the specific find macros defined in this module
 #   and should not be called directly from a CMakeLists.txt file. The macro's
 #   main purpose is to emit a message on the result of the find operation and
-#   to set the ${PACKAGE}_FOUND variable.
+#   to set the ${PACKAGE}_FOUND cache variable.
 #   \required[value] package The name of the package that was to be found.
 #   \optional[option] OPTIONAL If provided, a negative result will
 #     not lead to a fatal error but to a warning message instead.
@@ -171,11 +171,13 @@ macro(remake_find_result find_package)
   remake_var_name(find_result_var ${find_package} FOUND)
 
   if(find_result)
-    remake_set(${find_result_var} TRUE)
+    remake_set(${find_result_var} ON CACHE BOOL
+      "Found ${find_package} package." FORCE)
   else(find_result)
-    remake_set(${find_result_var} FALSE)
+    remake_set(${find_result_var} OFF CACHE BOOL
+      "Found ${find_package} package." FORCE)
     if(find_optional)
-      message(STATUS "Missing ${find_package} support!")
+      message(STATUS "Warning: Missing ${find_package} support!")
     else(find_optional)
       message(FATAL_ERROR "Missing ${find_package} support!")
     endif(find_optional)

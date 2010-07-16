@@ -146,15 +146,19 @@ endmacro(remake_generate_bison)
 #   \optional[list] arg An optional list of command line arguments to be
 #     passed to the generator command.
 #   \required[list] INPUT:glob A list of glob expressions that are resolved
-#     in order to find the input source files for the custom generator.
+#     in order to find the input source files for the custom generator. The
+#     list of input files may be substituted for the command-line placeholder
+#     %INPUT%.
 #   \required[list] SOURCES:filename A list of filenames that identify the
 #     generated source files. If no absolute path is provided with the
 #     filenames, ${CMAKE_CURRENT_BINARY_DIR} will be used as output path
-#     instead.
+#     instead. The list of generated sources may be substituted for the
+#     command-line placeholder %SOURCES%.
 #   \required[list] OTHERS:filename A list of filenames that identify the
 #     generated non-source files. If no absolute path is provided with the
 #     filenames, ${CMAKE_CURRENT_BINARY_DIR} will be used as output path
-#     instead.
+#     instead. The list of generated non-sources may be substituted for the
+#     command-line placeholder %OTHERS%.
 macro(remake_generate_custom generate_generator generate_target
     generate_command)
   remake_arguments(PREFIX generate_ LIST INPUT LIST SOURCES LIST OTHERS
