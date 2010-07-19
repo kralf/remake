@@ -148,8 +148,7 @@ macro(remake_python_package)
 
   remake_file(python_package_dir
     ${REMAKE_PYTHON_PACKAGE_DIR}/${python_name} TOPLEVEL)
-  remake_file(python_dist_dir ${REMAKE_PYTHON_DIST_DIR}/${python_name}
-    TOPLEVEL)
+  remake_file(python_dist_dir ${REMAKE_PYTHON_DIST_DIR} TOPLEVEL)
 
   if(NOT EXISTS ${python_package_dir})
     remake_file_mkdir(${python_package_dir})
@@ -190,6 +189,12 @@ macro(remake_python_package)
       remake_list_push(python_directories
         "'${python_ext_package}': '${python_ext_dir}'")
       remake_set(python_ext_constructors)
+
+      remake_file_create(${python_ext_dir}/__init__.py)
+      remake_list_push(python_extensions_output
+        "${python_extensions_output_dir}/__init__.py")
+      remake_list_push(python_extensions_output
+        "${python_extensions_output_dir}/__init__.pyc")
 
       foreach(python_ext ${python_extensions})
         remake_python_extension_get(${python_name} ${python_ext} SOURCES
@@ -276,12 +281,17 @@ macro(remake_python_package)
       ${COMPONENT})
 
     remake_project_get(PYTHON_MODULE_DESTINATION)
-    string(REGEX REPLACE "/?[^/]+$" "" python_install_dir ${python_output_dir})
-    remake_python_install(
-      DIRECTORY ${python_dist_dir}/${python_output_dir}
-      DESTINATION ${PYTHON_MODULE_DESTINATION}/${python_install_dir}
-      ${COMPONENT})
+    foreach(python_file ${python_output} ${python_output_compiled}
+      ${python_extensions_output})
+      file(RELATIVE_PATH python_rename ${python_dist_dir} ${python_file})
+      remake_python_install(
+        FILES ${python_file}
+        DESTINATION ${PYTHON_MODULE_DESTINATION}
+        RENAME ${python_rename}
+        ${COMPONENT})
+    endforeach(python_file)
     
+    string(REGEX REPLACE "/?[^/]+$" "" python_install_dir ${python_output_dir})
     string(REGEX REPLACE "(.*)[.]([^.]+)$" "\\2" python_egg_install
       ${python_name})
     remake_python_install(
@@ -414,7 +424,6 @@ macro(remake_python_extension python_name)
     ${REMAKE_PYTHON_EXT_DIR}/${python_package} TOPLEVEL)
   if(NOT EXISTS ${python_ext_dir})
     remake_file_mkdir(${python_ext_dir})
-    remake_file_create(${python_ext_dir}/__init__.py)
   endif(NOT EXISTS ${python_ext_dir})
 
   remake_file_link(${REMAKE_PYTHON_EXT_DIR}/${python_package}
