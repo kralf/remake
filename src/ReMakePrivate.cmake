@@ -194,38 +194,65 @@ endmacro(remake_var_regex)
 #     functionality is to assign default values to otherwise undefined or 
 #     empty variables.
 #   \optional[option] INIT If present, this option causes cache variables
-#     to be initialized only during the first run of cmake. This is
+#     to be initialized only during the first run of CMake. This is
 #     particularly useful when attempting to change the default value of
-#     CMake variables, such as compiler flags. Note that both the CACHE
-#     and the FORCE option have to present in order for this initialization
-#     to take effect.
+#     CMake cache variables, such as compiler flags. Note that both the CACHE
+#     and the FORCE option have to present in order for this initialization to
+#     take effect. If the variable type or documentation string required for
+#     defining cache variables are omitted from the list of arguments, it will
+#     be attempted to infer them from the variable properties.
 #   \optional[value] DEFAULT:value An optional default value to be assigned
 #     to an otherwise undefined or empty variable.
-#   \optional[list] value An optional list of values to be passed on to
-#     CMake's set() macro. See the CMake documentation for correct usage.
+#   \optional[list] args An optional list of arguments to be passed on to
+#     CMake's set() macro. These arguments should at least contain the value
+#     of the variable to be defined. See the CMake documentation for correct
+#     usage.
 macro(remake_set private_var)
-  remake_arguments(PREFIX private_ VAR FROM VAR DEFAULT OPTION SELF 
-    OPTION INIT ARGN values ${ARGN})
+  remake_arguments(PREFIX private_ VAR FROM VAR DEFAULT OPTION SELF
+    OPTION FORCE OPTION INIT ARGN set_args ${ARGN})
 
   set(private_initialized OFF)
   if(private_init)
     if (NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-      remake_set(private_initialized ON)
+      set(private_initialized ON)
     endif (NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   endif(private_init)
 
+  list(FIND private_set_args CACHE private_cache)
+  if(NOT ${private_cache} EQUAL -1)
+    if(private_init)
+      list(LENGTH private_set_args private_length)
+      math(EXPR private_expected ${private_cache}+2)
+      if(${private_length} LESS ${private_expected})
+        get_property(private_type CACHE ${private_var}
+          PROPERTY TYPE)
+        list(APPEND private_set_args ${private_type})
+      endif(${private_length} LESS ${private_expected})
+      math(EXPR private_expected ${private_cache}+3)
+      if(${private_length} LESS ${private_expected})
+        get_property(private_description CACHE ${private_var}
+          PROPERTY HELPSTRING)
+        list(APPEND private_set_args ${private_description})
+      endif(${private_length} LESS ${private_expected})
+    endif(private_init)
+
+    if(private_force)
+      list(APPEND private_set_args FORCE)
+    endif(private_force)
+  endif(NOT ${private_cache} EQUAL -1)
+
   if(NOT private_initialized)
     if(private_from)
-      set(${private_var} ${${private_from}} ${private_values})
+      set(${private_var} ${${private_from}} ${private_set_args})
     else(private_from)
       if(NOT private_self)
-        set(${private_var} ${private_values})
+        set(${private_var} ${private_set_args})
       endif(NOT private_self)
     endif(private_from)
 
     if(NOT ${private_var})
       if(DEFINED private_default)
-        set(${private_var} ${private_default} ${private_values})
+        set(${private_var} ${private_default} ${private_set_args})
       endif(DEFINED private_default)
     endif(NOT ${private_var})
   endif(NOT private_initialized)
