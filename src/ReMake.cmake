@@ -123,11 +123,14 @@ macro(remake_add_library remake_name)
     remake_set(remake_prefix)
   endif(NOT remake_prefix)
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
     remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
+    if(remake_link)
+      remake_set(LINK LINK ${remake_link})
+    endif(remake_link)
     remake_branch_add_targets(${remake_name})
-  endif(REMAKE_BRANCH_COMPILE)
+  endif(REMAKE_BRANCH_BUILD)
 
   remake_file_glob(remake_sources ${remake_globs})
   remake_target_get_sources(remake_target_sources ${remake_name})
@@ -192,18 +195,21 @@ macro(remake_add_plugin remake_name)
     remake_project_get(PLUGIN_DESTINATION OUTPUT remake_plugins)
   endif(remake_plugins)
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
     remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
+    if(remake_link)
+      remake_set(LINK LINK ${remake_link})
+    endif(remake_link)
     remake_branch_add_targets(${remake_name})
-  endif(REMAKE_BRANCH_COMPILE)
+  endif(REMAKE_BRANCH_BUILD)
 
   remake_file_glob(remake_sources ${remake_globs})
   remake_target_get_sources(remake_target_sources ${remake_name})
 
   remake_component_build(
     LIBRARY ${remake_name}${remake_suffix}
-    MODULE ${remake_sources} ${remake_target_sources}
+    SHARED ${remake_sources} ${remake_target_sources}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK} ${COMPONENT})
   remake_component_install(
@@ -253,14 +259,17 @@ macro(remake_add_executable remake_name)
     remake_set(remake_prefix)
   endif(NOT remake_prefix)
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  endif(REMAKE_BRANCH_BUILD)
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_branch_add_targets(${remake_name})
     remake_branch_link(remake_link ${remake_link})
-  endif(REMAKE_BRANCH_COMPILE)
+    if(remake_link)
+      remake_set(LINK LINK ${remake_link})
+    endif(remake_link)
+  endif(REMAKE_BRANCH_BUILD)
 
   remake_file_glob(remake_sources ${remake_globs})
   remake_target_get_sources(remake_target_sources ${remake_name})
@@ -405,9 +414,9 @@ macro(remake_add_scripts)
     remake_set(remake_prefix)
   endif(NOT remake_prefix)
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  endif(REMAKE_BRANCH_BUILD)
 
   remake_file_glob(remake_scripts ${remake_globs})
   foreach(remake_script ${remake_scripts})
@@ -447,9 +456,9 @@ macro(remake_add_configurations)
     remake_set(remake_install ${CONFIGURATION_DESTINATION}/${remake_install})
   endif(NOT IS_ABSOLUTE ${remake_install})
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  endif(REMAKE_BRANCH_BUILD)
 
   remake_file_configure(${remake_globs} OUTPUT remake_configs)
 
@@ -499,9 +508,9 @@ macro(remake_add_files)
     remake_set(remake_install ${FILE_DESTINATION}/${remake_install})
   endif(NOT IS_ABSOLUTE ${remake_install})
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-  endif(REMAKE_BRANCH_COMPILE)
+  endif(REMAKE_BRANCH_BUILD)
 
   if(remake_recurse)
     remake_file_glob(
@@ -651,11 +660,11 @@ macro(remake_include)
   remake_arguments(PREFIX remake_ ARGN globs ${ARGN})
   remake_set(remake_globs SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
 
-  if(REMAKE_BRANCH_COMPILE)
+  if(REMAKE_BRANCH_BUILD)
     remake_branch_include(remake_dirs ${remake_globs})
-  else(REMAKE_BRANCH_COMPILE)
+  else(REMAKE_BRANCH_BUILD)
     remake_file_glob(remake_dirs DIRECTORIES ${remake_globs})
-  endif(REMAKE_BRANCH_COMPILE)
+  endif(REMAKE_BRANCH_BUILD)
 
   include_directories(${remake_dirs})
 endmacro(remake_include)
