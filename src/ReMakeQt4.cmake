@@ -30,6 +30,8 @@ macro(remake_qt4)
     remake_find_package(Qt4 QUIET)
     remake_project_set(QT4_MOC ${QT4_FOUND} CACHE BOOL
       "Process Qt4 meta-objects.")
+  else(NOT DEFINED QT4_FOUND)
+    include(FindQt4)
   endif(NOT DEFINED QT4_FOUND)
 endmacro(remake_qt4)
 
