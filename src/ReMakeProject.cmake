@@ -156,8 +156,7 @@ macro(remake_project project_name)
   get_filename_component(REMAKE_PROJECT_MODULE_DIR ${project_modules} ABSOLUTE)
 
   remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local
-    CACHE PATH "Install path prefix, prepended onto install directories."
-    FORCE INIT)
+    CACHE FORCE INIT)
 
   if(NOT DEFINED project_prefix)
     remake_set(project_prefix ${REMAKE_PROJECT_FILENAME}-)
