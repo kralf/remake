@@ -94,6 +94,7 @@ macro(remake_project project_name)
     VAR README VAR COPYRIGHT VAR TODO VAR CHANGELOG LIST NOTES ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
+  remake_set(project_install SELF DEFAULT /usr/local)
   remake_set(project_sources SELF DEFAULT src)
   remake_set(project_configurations SELF DEFAULT conf)
   remake_set(project_modules SELF DEFAULT modules)
@@ -155,8 +156,7 @@ macro(remake_project project_name)
     ${project_configurations} ABSOLUTE)
   get_filename_component(REMAKE_PROJECT_MODULE_DIR ${project_modules} ABSOLUTE)
 
-  remake_set(CMAKE_INSTALL_PREFIX ${project_install} DEFAULT /usr/local
-    CACHE FORCE INIT)
+  remake_set(CMAKE_INSTALL_PREFIX ${project_install} CACHE FORCE INIT)
 
   if(NOT DEFINED project_prefix)
     remake_set(project_prefix ${REMAKE_PROJECT_FILENAME}-)
