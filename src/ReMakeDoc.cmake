@@ -240,7 +240,7 @@ macro(remake_doc_doxygen)
     string(REPLACE ";" " " REMAKE_DOC_PATTERNS "${doc_patterns}")
     remake_file_glob(doc_files ${doc_globs})
 
-    foreach(doc_type ${REMAKE_DOC_TYPES})
+    foreach(doc_type ${REMAKE_DOC_DOXYGEN_TYPES})
       remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
       remake_set(doc_output_dir ${doc_output}/${${doc_output_var}})
 
@@ -266,7 +266,8 @@ macro(remake_doc_doxygen)
       endforeach(doc_file)
     endforeach(doc_type)
 
-    remake_doc_install(TYPES ${REMAKE_DOC_TYPES} ${INSTALL} ${COMPONENT})
+    remake_doc_install(TYPES ${REMAKE_DOC_DOXYGEN_TYPES} ${INSTALL}
+      ${COMPONENT})
   endif(DOXYGEN_FOUND)
 endmacro(remake_doc_doxygen)
 
