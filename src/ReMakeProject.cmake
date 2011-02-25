@@ -166,24 +166,24 @@ macro(remake_project project_name)
     EXECUTABLE ${project_prefix}
     SCRIPT ${project_prefix})
 
-  remake_project_set(LIBRARY_DESTINATION lib CACHE PATH
+  remake_project_set(LIBRARY_DESTINATION lib CACHE STRING
     "Install destination of project libraries.")
-  remake_project_set(EXECUTABLE_DESTINATION bin CACHE PATH
+  remake_project_set(EXECUTABLE_DESTINATION bin CACHE STRING
     "Install destination of project executables.")
   remake_project_set(PLUGIN_DESTINATION
-    lib/${REMAKE_PROJECT_FILENAME} CACHE PATH
+    lib/${REMAKE_PROJECT_FILENAME} CACHE STRING
     "Install destination of project plugins.")
-  remake_project_set(SCRIPT_DESTINATION bin CACHE PATH
+  remake_project_set(SCRIPT_DESTINATION bin CACHE STRING
     "Install destination of project scripts.")
   remake_project_set(FILE_DESTINATION share/${REMAKE_PROJECT_FILENAME}
-    CACHE PATH "Install destination of project files.")
+    CACHE STRING "Install destination of project files.")
   remake_project_set(CONFIGURATION_DESTINATION /etc/${REMAKE_PROJECT_FILENAME}
-    CACHE PATH "Install destination of configuration files.")
+    CACHE STRING "Install destination of configuration files.")
   remake_project_set(HEADER_DESTINATION include/${REMAKE_PROJECT_FILENAME}
-    CACHE PATH "Install destination of project development headers.")
+    CACHE STRING "Install destination of project development headers.")
   remake_project_set(DOCUMENTATION_DESTINATION
     share/doc/${REMAKE_PROJECT_FILENAME}
-    CACHE PATH "Install destination of project documentation.")
+    CACHE STRING "Install destination of project documentation.")
 
   message(STATUS "Project: ${REMAKE_PROJECT_NAME} "
     "version ${REMAKE_PROJECT_VERSION}, "

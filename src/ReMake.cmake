@@ -31,6 +31,7 @@ include(ReMakeQt4)
 include(ReMakeDoc)
 include(ReMakePack)
 include(ReMakePython)
+include(ReMakeRecurse)
 include(ReMakeSVN)
 include(ReMakeTest)
 include(ReMakeVersion OPTIONAL)
@@ -580,6 +581,23 @@ macro(remake_add_directories)
   endif(remake_option)
 endmacro(remake_add_directories)
 
+### \brief Add a project recursion.
+#   This macro adds recursion targets for a project using the specified
+#   build system. Additional arguments passed to the macro are forwarded to
+#   the selected recursion macro.
+#   \required[option] MAKE|CMAKE|QMAKE The build system of the project.
+#   \required[list] arg The arguments to be forwared to the recursion macro.
+#     See ReMakeRecurse for details.
+macro(remake_add_recursion remake_build_system)
+  if(${remake_build_system} STREQUAL "MAKE")
+    remake_recurse_make(${ARGN})
+  elseif(${remake_build_system} STREQUAL "CMAKE")
+    remake_recurse_cmake(${ARGN})
+  elseif(${remake_build_system} STREQUAL "QMAKE")
+    remake_recurse_qmake(${ARGN})
+  endif(${remake_build_system} STREQUAL "MAKE")
+endmacro(remake_add_recursion)
+
 ### \brief Add generated code to an existing target.
 #   This macro adds generated code to an exisitng target, using the requested
 #   generator for source code generation. Additional arguments passed to the
@@ -589,13 +607,13 @@ endmacro(remake_add_directories)
 #   \required[list] arg The arguments to be forwared to the source code
 #     generator. See ReMakeGenerate for details.
 macro(remake_add_generated remake_generator)
-  if(${remake_generator} MATCHES "FLEX")
+  if(${remake_generator} STREQUAL "FLEX")
     remake_generate_flex(${ARGN})
-  elseif(${remake_generator} MATCHES "BISON")
+  elseif(${remake_generator} STREQUAL "BISON")
     remake_generate_bison(${ARGN})
-  elseif(${remake_generator} MATCHES "CUSTOM")
+  elseif(${remake_generator} STREQUAL "CUSTOM")
     remake_generate_custom(${ARGN})
-  endif(${remake_generator} MATCHES "FLEX")
+  endif(${remake_generator} STREQUAL "FLEX")
 endmacro(remake_add_generated)
 
 ### \brief Add a documentation target.
@@ -607,17 +625,17 @@ endmacro(remake_add_generated)
 #   \required[list] arg The arguments to be forwared to the document
 #     generator. See ReMakeDoc for details.
 macro(remake_add_documentation remake_generator)
-  if(${remake_generator} MATCHES "SOURCE")
+  if(${remake_generator} STREQUAL "SOURCE")
     remake_doc_source(${ARGN})
-  elseif(${remake_generator} MATCHES "CONFIGURE")
+  elseif(${remake_generator} STREQUAL "CONFIGURE")
     remake_doc_configure(${ARGN})
-  elseif(${remake_generator} MATCHES "DOXYGEN")
+  elseif(${remake_generator} STREQUAL "DOXYGEN")
     remake_doc_doxygen(${ARGN})
-  elseif(${remake_generator} MATCHES "GROFF")
+  elseif(${remake_generator} STREQUAL "GROFF")
     remake_doc_groff(${ARGN})
-  elseif(${remake_generator} MATCHES "CUSTOM")
+  elseif(${remake_generator} STREQUAL "CUSTOM")
     remake_doc_custom(${ARGN})
-  endif(${remake_generator} MATCHES "SOURCE")
+  endif(${remake_generator} STREQUAL "SOURCE")
 endmacro(remake_add_documentation)
 
 ### \brief Add a package build target.
@@ -627,7 +645,7 @@ endmacro(remake_add_documentation)
 #   \optional[var] GENERATOR:generator The generator to be used for package
 #     generation, defaults to DEB.
 #   \required[list] arg The arguments to be forwared to the package
-#     generator. See ReMakeOack for details.
+#     generator. See ReMakePack for details.
 #   \optional[value] IF:variable The name of a variable that conditions
 #     package generation.
 macro(remake_add_package)
@@ -641,9 +659,9 @@ macro(remake_add_package)
   endif(remake_if)
 
   if(remake_option)
-    if(${remake_generator} MATCHES "DEB")
+    if(${remake_generator} STREQUAL "DEB")
       remake_pack_deb(${remake_args})
-    endif(${remake_generator} MATCHES "DEB")
+    endif(${remake_generator} STREQUAL "DEB")
   endif(remake_option)
 endmacro(remake_add_package)
 
@@ -690,11 +708,11 @@ macro(remake_define remake_var)
     if(remake_quoted)
       add_definitions(-D${remake_var}="${${remake_var}}")
     else(remake_quoted)
-      if(${remake_var} MATCHES "ON")
+      if(${remake_var} STREQUAL "ON")
         add_definitions(-D${remake_var})
-      else(${remake_var} MATCHES "ON")
+      else(${remake_var} STREQUAL "ON")
         add_definitions(-D${remake_var}=${${remake_var}})
-      endif(${remake_var} MATCHES "ON")
+      endif(${remake_var} STREQUAL "ON")
     endif(remake_quoted)
   endif(${remake_var})
 endmacro(remake_define)
