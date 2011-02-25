@@ -73,8 +73,10 @@ endmacro(remake_recurse_make)
 #     defaults to the directory name conversion of the given project name
 #     under ${CMAKE_CURRENT_SOURCE_DIR}.
 #   \optional[list] PASS:var An optional list containing the names of
-#     defined CMake variables. The macro will pass the variable names
+#     defined CMake variables. The macro will pass the given variable names
 #     and values during the configuration stage of the recursed project.
+#     By default, the variables CMAKE_MODULE_PATH, CMAKE_BUILD_TYPE,
+#     and CMAKE_INSTALL_PREFIX are included in the list.
 #   \optional[list] DEFINE:var An optional list of variable names and values
 #     of the form ${VAR}=${VALUE} to be passed during the configuration
 #     stage of the recursed project.
