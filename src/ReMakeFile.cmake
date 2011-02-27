@@ -121,6 +121,39 @@ macro(remake_file_name_substitute file_var)
   endforeach(file_name)
 endmacro(remake_file_name_substitute)
 
+### \brief Prepend a list of prefixes to a filename.
+#   This macro prepends a list of prefixes to a filename. The prefixes are
+#   prepended to the filename itself, not to the filename's path.
+#   \required[value] variable The name of the variable that is assigned the
+#     resulting prefixed filename.
+#   \required[value] filename The input filename to be prefixed.
+#   \optional[option] STRIP If present, this option causes the macro to
+#     only return the prefixed filename whilst any path information will be
+#     stripped from the output.
+#   \required[list] prefix The list of prefixes to be prepended to the
+#     filename. Note that the list can be empty in which case the input
+#     filename is returned.
+macro(remake_file_prefix file_var file_name)
+  remake_arguments(PREFIX file_ OPTION STRIP ARGN prefixes ${ARGN})
+
+  if(file_strip)
+    remake_set(file_path)
+  else(file_strip)
+    get_filename_component(file_path ${file_name} PATH)
+  endif(file_strip)
+  get_filename_component(file_name_ext ${file_name} NAME)
+
+  if(file_path)
+    remake_set(${file_var} "${file_path}/")
+  else(file_path)
+    remake_set(${file_var})
+  endif(file_path)
+  foreach(file_prefix ${file_prefixes})
+    remake_set(${file_var} "${${file_var}}${file_prefix}")
+  endforeach(file_prefix)
+  remake_set(${file_var} "${${file_var}}${file_name_ext}")
+endmacro(remake_file_prefix)
+
 ### \brief Append a list of suffixes to a filename.
 #   This macro appends a list of suffixes to a filename. The suffixes are
 #   appended to the filename itself, not to the filename's extension.

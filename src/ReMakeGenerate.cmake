@@ -125,8 +125,7 @@ macro(remake_generate_bison generate_target)
       remake_generate(Bison ${generate_target} ${BISON_EXECUTABLE}
         ARGS ${generate_bison_args} ${generate_input}
         INPUT ${generate_input}
-        SOURCES ${generate_source}
-        OTHERS ${generate_header})
+        SOURCES ${generate_source} ${generate_header})
     endforeach(generate_input)
   endif(BISON_FOUND)
 endmacro(remake_generate_bison)
@@ -199,9 +198,13 @@ endmacro(remake_generate_custom)
 #   \required[list] SOURCES:filename A list of filenames that identify the
 #     source output files of the generator command, i.e. the generated
 #     sources that will be added as build sources of the specified target.
+#     Note that for consistent dependency resolution between targets and
+#     non-compiling sources, CMake requires generated header files to be
+#     specified here.
 #   \optional[list] OTHERS:filename A list of filenames that identify the
-#     non-source output files of the generator command. Note that header
-#     files or similar output should be specified here.
+#     non-source output files of the generator command. To ensure consistent
+#     dependencies, these output files may later be specified as inputs
+#     to other commands or targets.
 macro(remake_generate generate_generator generate_target generate_command)
   remake_arguments(PREFIX generate_ VAR LANG LIST ARGS LIST INPUT
     LIST SOURCES LIST OTHERS ${ARGN})
