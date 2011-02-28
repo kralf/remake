@@ -76,7 +76,7 @@ endmacro(remake_recurse_make)
 #     defined CMake variables. The macro will pass the given variable names
 #     and values during the configuration stage of the recursed project.
 #     By default, the variables CMAKE_MODULE_PATH, CMAKE_BUILD_TYPE,
-#     and CMAKE_INSTALL_PREFIX are included in the list.
+#     CMAKE_INSTALL_PREFIX, and CMAKE_INSTALL_RPATH are included in the list.
 #   \optional[list] DEFINE:var An optional list of variable names and values
 #     of the form ${VAR}=${VALUE} to be passed during the configuration
 #     stage of the recursed project.
@@ -87,7 +87,8 @@ macro(remake_recurse_cmake recurse_name)
   remake_set(recurse_path SELF
     DEFAULT ${CMAKE_CURRENT_SOURCE_DIR}/${recurse_name})
   remake_set(recurse_pass SELF
-    DEFAULT CMAKE_MODULE_PATH CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX)
+    DEFAULT CMAKE_MODULE_PATH CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX
+      CMAKE_INSTALL_RPATH)
 
   remake_set(recurse_build_path ${CMAKE_CURRENT_BINARY_DIR}/${recurse_name})
   remake_file_mkdir(${recurse_build_path})
