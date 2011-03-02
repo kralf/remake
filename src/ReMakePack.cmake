@@ -241,7 +241,7 @@ macro(remake_pack_deb)
         ${REMAKE_PACK_UNINSTALL_TARGET_SUFFIX})
 
       add_dependencies(${pack_install_target} ${pack_install_target_dep})
-      add_dependencies(${pack_uninstall_target_dep} ${pack_uninstall_target})
+      add_dependencies(${pack_uninstall_target} ${pack_uninstall_target_dep})
     endforeach(pack_component_dep)
   endif(pack_build)
 endmacro(remake_pack_deb)

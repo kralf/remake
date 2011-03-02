@@ -158,7 +158,7 @@ endmacro(remake_arguments)
 #     variable name.
 macro(remake_var_name private_var)
   string(TOUPPER "${ARGN}" private_upper)
-  string(REGEX REPLACE "[ ;-]" "_" ${private_var} "${private_upper}")
+  string(REGEX REPLACE "[\\. ;-]" "_" ${private_var} "${private_upper}")
 endmacro(remake_var_name)
 
 ### \brief Find defined variables matching a regular expression.
@@ -263,6 +263,17 @@ macro(remake_set private_var)
     endif(NOT ${private_var})
   endif(NOT private_initialized)
 endmacro(remake_set)
+
+### \brief Unset the value of a ReMake variable.
+#   This helper macro unsets the value of a ReMake variable by calling
+#   CMake's unset() macro.
+#   \required[list] variable A list containing the names of the variables
+#     to be unset.
+macro(remake_unset)
+  foreach(private_var ${ARGN})
+    unset(${private_var})
+  endforeach(private_var)
+endmacro(remake_unset)
 
 ### \brief Generate debugging output from a list of variables.
 #   This macro is a helper macro to conveniently generate debugging output
