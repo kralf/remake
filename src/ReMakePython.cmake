@@ -292,7 +292,7 @@ endmacro(remake_python_distribute)
 #   \required[value] component The ReMake component name that shall be
 #     converted to a Python package name.
 macro(remake_python_package_name python_var python_component)
-  string(REGEX REPLACE "[-]" "." python_prepended
+  string(REGEX REPLACE "[-_]" "." python_prepended
     "${REMAKE_PROJECT_FILENAME}.${python_component}")
   string(REGEX REPLACE ".${REMAKE_PYTHON_COMPONENT_SUFFIX}$" ""
     python_stripped "${python_prepended}")
