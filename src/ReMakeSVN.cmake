@@ -101,8 +101,7 @@ macro(remake_svn_log svn_file)
         ${COMPONENT})
       remake_component_add_command(
         OUTPUT ${svn_absolute} AS svn_log
-        COMMAND ${Subversion_SVN_EXECUTABLE} log -r ${svn_revision} >
-          ${svn_absolute}
+        COMMAND ${Subversion_SVN_EXECUTABLE} log > ${svn_absolute}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${svn_head}
         COMMENT "Retrieving Subversion log messages"
