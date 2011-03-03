@@ -30,6 +30,8 @@ macro(remake_qt4)
     remake_find_package(Qt4 QUIET)
     remake_project_set(QT4_MOC ${QT4_FOUND} CACHE BOOL
       "Process Qt4 meta-objects.")
+    remake_project_set(QT4_UIC ${QT4_FOUND} CACHE BOOL
+      "Process Qt4 user interface files.")
   else(NOT DEFINED QT4_FOUND)
     include(FindQt4)
   endif(NOT DEFINED QT4_FOUND)
@@ -63,8 +65,34 @@ macro(remake_qt4_moc qt4_target)
   remake_project_get(QT4_MOC)
   if(QT4_MOC)
     remake_file_glob(qt4_headers ${qt4_globs})
-    remake_set(qt4_sources)
+    remake_unset(qt4_sources)
     qt4_wrap_cpp(qt4_sources ${qt4_headers} OPTIONS -nw)
     remake_target_add_sources(${qt4_target} ${qt4_sources})
   endif(QT4_MOC)
 endmacro(remake_qt4_moc)
+
+### \brief Generate headers from Qt4 user interface files.
+#   This macro automatically generates header files from a list of glob
+#   expressions that resolve to Qt user interface files. Furthermore,
+#   the output location of the headers will be added to the compiler's
+#   include path.
+#   \required[value] target The name of the target to add the generated
+#     headers for.
+#   \optional[list] glob An optional list of glob expressions that are
+#     resolved in order to find the Qt4 user interface files, defaulting
+#     to *.ui.
+macro(remake_qt4_ui qt4_target)
+  remake_arguments(PREFIX qt4_ ARGN globs ${ARGN})
+  remake_set(qt4_globs SELF DEFAULT *.ui)
+
+  remake_qt4()
+
+  remake_project_get(QT4_UIC)
+  if(QT4_UIC)
+    remake_file_glob(qt4_uis ${qt4_globs})
+    remake_unset(qt4_headers)
+    qt4_wrap_ui(qt4_headers ${qt4_uis})
+    remake_target_add_sources(${qt4_target} ${qt4_headers})
+    remake_include(${CMAKE_CURRENT_BINARY_DIR})
+  endif(QT4_UIC)
+endmacro(remake_qt4_ui)
