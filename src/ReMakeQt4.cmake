@@ -55,10 +55,10 @@ endmacro(remake_qt4_include)
 #     sources for.
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the header files with Q_OBJECT declarations,
-#     defaulting to *.h, *.hpp, and *.tpp.
+#     defaulting to *.h and *.hpp.
 macro(remake_qt4_moc qt4_target)
   remake_arguments(PREFIX qt4_ ARGN globs ${ARGN})
-  remake_set(qt4_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+  remake_set(qt4_globs SELF DEFAULT *.h DEFAULT *.hpp)
 
   remake_qt4()
 

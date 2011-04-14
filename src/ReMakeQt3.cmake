@@ -61,12 +61,12 @@ endmacro(remake_qt3_include)
 #     sources for.
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the header files with Q_OBJECT declarations,
-#     defaulting to *.h, *.hpp, and *.tpp.
+#     defaulting to *.h and *.hpp.
 #   \optional[option] MT If provided, the macro defines meta-object sources
 #     for the multithreaded version of Qt3.
 macro(remake_qt3_moc qt3_target)
   remake_arguments(PREFIX qt3_ ARGN globs OPTION MT ${ARGN})
-  remake_set(qt3_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+  remake_set(qt3_globs SELF DEFAULT *.h DEFAULT *.hpp)
 
   remake_qt3(${MT})
 
