@@ -84,6 +84,25 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     will attempt to define a target that automatically creates the
 #     changelog from the project's Subversion log. See ReMakeSVN for
 #     details.
+#   \optional[value] LIBRARY_DESTINATION:dir The destination directory of
+#     the project libraries, defaulting to lib.
+#   \optional[value] EXECUTABLE_DESTINATION:dir The destination directory of
+#     the project executables, defaulting to bin.
+#   \optional[value] PLUGIN_DESTINATION:dir The destination directory of
+#     the project plugins, defaulting to lib/${REMAKE_PROJECT_FILENAME}.
+#   \optional[value] SCRIPT_DESTINATION:dir The destination directory of
+#     the project scripts, defaulting to bin.
+#   \optional[value] FILE_DESTINATION:dir The destination directory of
+#     the project files, defaulting to share/${REMAKE_PROJECT_FILENAME}.
+#   \optional[value] CONFIGURATION_DESTINATION:dir The destination
+#     directory of the project configuration files, defaulting to
+#     /etc/${REMAKE_PROJECT_FILENAME}.
+#   \optional[value] HEADER_DESTINATION:dir The destination
+#     directory of the project development headers, defaulting to
+#     include/${REMAKE_PROJECT_FILENAME}.
+#   \optional[value] DOCUMENTATION_DESTINATION:dir The destination
+#     directory of the project documentation, defaulting to
+#     share/doc/${REMAKE_PROJECT_FILENAME}.
 #   \optional[list] NOTES:glob An optional list of glob expressions that
 #     are resolved in order to find additional notes to be installed
 #     with the project manifest files.
@@ -91,7 +110,10 @@ macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
     VAR COMPONENT VAR INSTALL VAR SOURCES VAR CONFIGURATIONS VAR MODULES
-    VAR README VAR COPYRIGHT VAR TODO VAR CHANGELOG LIST NOTES ${ARGN})
+    VAR README VAR COPYRIGHT VAR TODO VAR CHANGELOG VAR LIBRARY_DESTINATION
+    VAR EXECUTABLE_DESTINATION VAR PLUGIN_DESTINATION VAR SCRIPT_DESTINATION
+    VAR FILE_DESTINATION VAR CONFIGURATION_DESTINATION VAR HEADER_DESTINATION
+    VAR DOCUMENTATION_DESTINATION LIST NOTES ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   remake_set(project_install SELF DEFAULT /usr/local)
@@ -102,6 +124,7 @@ macro(remake_project project_name)
   remake_set(project_copyright SELF DEFAULT copyright)
   remake_set(project_todo SELF DEFAULT TODO)
   remake_set(project_changelog SELF DEFAULT changelog)
+
   if(NOT project_summary)
     message(FATAL_ERROR "The project definition requires a summary!")
   endif(NOT project_summary)
@@ -119,6 +142,20 @@ macro(remake_project project_name)
   remake_file_name(project_filename_conversion ${REMAKE_PROJECT_NAME})
   remake_set(project_filename SELF DEFAULT ${project_filename_conversion})
   remake_set(REMAKE_PROJECT_FILENAME ${project_filename})
+
+  remake_set(project_library_destination SELF DEFAULT lib)
+  remake_set(project_executable_destination SELF DEFAULT bin)
+  remake_set(project_plugin_destination SELF
+    DEFAULT lib/${REMAKE_PROJECT_FILENAME})
+  remake_set(project_script_destination SELF DEFAULT bin)
+  remake_set(project_file_destination SELF DEFAULT
+    share/${REMAKE_PROJECT_FILENAME})
+  remake_set(project_configuration_destination SELF DEFAULT
+    /etc/${REMAKE_PROJECT_FILENAME})
+  remake_set(project_header_destination SELF DEFAULT
+    include/${REMAKE_PROJECT_FILENAME})
+  remake_set(project_documentation_destination SELF DEFAULT
+    share/doc/${REMAKE_PROJECT_FILENAME})
 
   remake_set(project_regex "^([0-9]+)[.]?([0-9]*)[.]?([0-9]*)$")
   string(REGEX REPLACE ${project_regex} "\\1" REMAKE_PROJECT_MAJOR
@@ -166,23 +203,23 @@ macro(remake_project project_name)
     EXECUTABLE ${project_prefix}
     SCRIPT ${project_prefix})
 
-  remake_project_set(LIBRARY_DESTINATION lib CACHE STRING
-    "Install destination of project libraries.")
-  remake_project_set(EXECUTABLE_DESTINATION bin CACHE STRING
-    "Install destination of project executables.")
-  remake_project_set(PLUGIN_DESTINATION
-    lib/${REMAKE_PROJECT_FILENAME} CACHE STRING
-    "Install destination of project plugins.")
-  remake_project_set(SCRIPT_DESTINATION bin CACHE STRING
-    "Install destination of project scripts.")
-  remake_project_set(FILE_DESTINATION share/${REMAKE_PROJECT_FILENAME}
+  remake_project_set(LIBRARY_DESTINATION ${project_library_destination}
+    CACHE STRING "Install destination of project libraries.")
+  remake_project_set(EXECUTABLE_DESTINATION ${project_executable_destination}
+    CACHE STRING "Install destination of project executables.")
+  remake_project_set(PLUGIN_DESTINATION ${project_plugin_destination}
+    CACHE STRING "Install destination of project plugins.")
+  remake_project_set(SCRIPT_DESTINATION ${project_script_destination}
+    CACHE STRING "Install destination of project scripts.")
+  remake_project_set(FILE_DESTINATION ${project_file_destination}
     CACHE STRING "Install destination of project files.")
-  remake_project_set(CONFIGURATION_DESTINATION /etc/${REMAKE_PROJECT_FILENAME}
+  remake_project_set(CONFIGURATION_DESTINATION
+    ${project_configuration_destination}
     CACHE STRING "Install destination of configuration files.")
-  remake_project_set(HEADER_DESTINATION include/${REMAKE_PROJECT_FILENAME}
+  remake_project_set(HEADER_DESTINATION ${project_header_destination}
     CACHE STRING "Install destination of project development headers.")
   remake_project_set(DOCUMENTATION_DESTINATION
-    share/doc/${REMAKE_PROJECT_FILENAME}
+    ${project_documentation_destination}
     CACHE STRING "Install destination of project documentation.")
 
   message(STATUS "Project: ${REMAKE_PROJECT_NAME} "

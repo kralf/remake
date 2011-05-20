@@ -27,8 +27,6 @@
 #   macros from a CMakeLists.txt file. However, the macros shall be documented
 #   for the beauty and purpose of completeness.
 
-set(REMAKE_CACHE_INITIALIZED ON CACHE BOOL "Cache variables initialized.")
-
 ### \brief Parse ReMake macro arguments.
 #   This macro generally parses the arguments of ReMake macros, thus enabling
 #   CMake-style macro calls. Three different kinds of arguments exist that
@@ -215,9 +213,9 @@ macro(remake_set private_var)
 
   set(private_initialized OFF)
   if(private_init)
-    if (NOT REMAKE_CACHE_INITIALIZED)
+    if (NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
       set(private_initialized ON)
-    endif (NOT REMAKE_CACHE_INITIALIZED)
+    endif (NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   endif(private_init)
 
   list(FIND private_set_args CACHE private_cache)
