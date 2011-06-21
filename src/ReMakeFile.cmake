@@ -534,9 +534,9 @@ macro(remake_file_link file_link_destination)
 endmacro(remake_file_link)
 
 ### \brief Configure files using ReMake variables.
-#   This macro takes a glob expression and, in all matching input files,
-#   replaces variables referenced as ${VAR} with their values as determined
-#   by CMake.
+#   This macro takes a glob expression and, in all matching input files being
+#   newer than their respective output files, replaces variables referenced
+#   as ${VAR} with their values as determined by CMake.
 #   The macro actually configures files with a .remake extension, but copies
 #   files that do not match this naming convention. By default, the
 #   configured file's output path is the relative source path below
@@ -568,39 +568,49 @@ macro(remake_file_configure)
   foreach(file_src ${file_sources})
     remake_file_read(file_content ${CMAKE_CURRENT_SOURCE_DIR}/${file_src})
     if(file_src MATCHES "[.]remake$")
-      get_cmake_property(file_globals VARIABLES)
-      string(REGEX MATCHALL "\\\${[a-zA-Z_]*}" file_vars ${file_content})
-      list(REMOVE_DUPLICATES file_vars)
-
-      foreach(file_var ${file_vars})
-        string(REGEX REPLACE "\\\${([a-zA-Z_]*)}" "\\1" file_var ${file_var})
-        remake_set(file_value "${${file_var}}")
-        if(file_escape_quotes)
-          string(REGEX REPLACE "\"" "\\\\\"" file_value "${file_value}")
-        endif(file_escape_quotes)
-        if(file_escape_newlines)
-          string(REGEX REPLACE "\n" "\\\\n" file_value "${file_value}")
-        endif(file_escape_newlines)
-        string(REPLACE "\${${file_var}}" "${file_value}" file_content
-          "${file_content}")
-      endforeach(file_var)
-
       string(REGEX REPLACE "[.]remake$" "" file_dst
         ${file_destination}/${file_src})
       if(file_ext)
         remake_set(file_dst ${file_dst}.${file_ext})
       endif(file_ext)
 
-      remake_file_create(${file_dst})
-      remake_file_write(${file_dst} FROM file_content)
-      configure_file(${file_dst} ${file_dst})
+      get_filename_component(file_src_abs ${file_src} ABSOLUTE)
+      get_filename_component(file_dst_abs ${file_dst} ABSOLUTE)
+
+      if(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
+        get_cmake_property(file_globals VARIABLES)
+        string(REGEX MATCHALL "\\\${[a-zA-Z_]*}" file_vars ${file_content})
+        list(REMOVE_DUPLICATES file_vars)
+
+        foreach(file_var ${file_vars})
+          string(REGEX REPLACE "\\\${([a-zA-Z_]*)}" "\\1" file_var ${file_var})
+          remake_set(file_value "${${file_var}}")
+          if(file_escape_quotes)
+            string(REGEX REPLACE "\"" "\\\\\"" file_value "${file_value}")
+          endif(file_escape_quotes)
+          if(file_escape_newlines)
+            string(REGEX REPLACE "\n" "\\\\n" file_value "${file_value}")
+          endif(file_escape_newlines)
+          string(REPLACE "\${${file_var}}" "${file_value}" file_content
+            "${file_content}")
+        endforeach(file_var)
+
+        remake_file_create(${file_dst})
+        remake_file_write(${file_dst} FROM file_content)
+        configure_file(${file_dst} ${file_dst})
+      endif(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
     else(file_src MATCHES "[.]remake$")
       remake_set(file_dst ${file_destination}/${file_src})
       if(file_ext)
         remake_set(file_dst ${file_dst}.${file_ext})
       endif(file_ext)
 
-      remake_file_copy(${file_dst} ${file_src})
+      get_filename_component(file_src_abs ${file_src} ABSOLUTE)
+      get_filename_component(file_dst_abs ${file_dst} ABSOLUTE)
+
+      if(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
+        remake_file_copy(${file_dst} ${file_src})
+      endif(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
     endif(file_src MATCHES "[.]remake$")
 
     if(file_output)
