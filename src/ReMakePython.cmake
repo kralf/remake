@@ -133,7 +133,7 @@ endmacro(remake_python_distribution_name)
 #     will default to ${REMAKE_COMPONENT}-${REMAKE_PYTHON_COMPONENT_SUFFIX}.
 #     See ReMakeComponent for details.
 macro(remake_python_distribute)
-  remake_arguments(PREFIX python_ VAR NAME VAR PACKAGES VAR DESCRIPTION
+  remake_arguments(PREFIX python_ VAR NAME LIST PACKAGES VAR DESCRIPTION
     VAR COMPONENT ${ARGN})
   remake_component_name(python_default_component ${REMAKE_COMPONENT}
     ${REMAKE_PYTHON_COMPONENT_SUFFIX})
@@ -302,8 +302,8 @@ endmacro(remake_python_package_name)
 ### \brief Define a Python package.
 #   This macro defines a Python package that may later be selected for
 #   distribution. It takes a Python-compliant package name and a list of
-#   module sources that will be built into the package. Additional sources
-#   may later be assigned to it by calling remake_python_add_sources().
+#   module sources that will be built into the package. Additional modules
+#   may later be assigned to it by calling remake_python_add_modules().
 #   Analogously, several extensions can be specified through calls to
 #   remake_python_add_extension(). Note that multiple definitions of a
 #   package are not allowed and result in a fatal error.
@@ -426,9 +426,11 @@ macro(remake_python_add_modules)
   else(python_generated)
     if(python_recurse)
       remake_file_glob(python_mod_sources ${python_globs}
+        WORKING_DIRECTORY ${python_pkg_dir}
         RECURSE ${CMAKE_CURRENT_SOURCE_DIR})
     else(python_recurse)
-      remake_file_glob(python_mod_sources ${python_globs})
+      remake_file_glob(python_mod_sources ${python_globs}
+      WORKING_DIRECTORY ${python_pkg_dir})
     endif(python_recurse)
   endif(python_generated)
 
