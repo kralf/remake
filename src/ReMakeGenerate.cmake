@@ -148,6 +148,9 @@ endmacro(remake_generate_bison)
 #     in order to find the input source files for the custom generator. The
 #     list of input files may be substituted for the command-line placeholder
 #     %INPUT%.
+#   \optional[option] GENERATED With this option being present, the macro
+#     assumes that the input source files do not yet exists but will be
+#     generated during the run of CMake or the build process.
 #   \required[list] SOURCES:filename A list of filenames that identify the
 #     generated source files. If no absolute path is provided with the
 #     filenames, ${CMAKE_CURRENT_BINARY_DIR} will be used as output path
@@ -160,10 +163,14 @@ endmacro(remake_generate_bison)
 #     command-line placeholder %OTHERS%.
 macro(remake_generate_custom generate_generator generate_target
     generate_command)
-  remake_arguments(PREFIX generate_ LIST INPUT LIST SOURCES LIST OTHERS
-    ARGN args ${ARGN})
+  remake_arguments(PREFIX generate_ LIST INPUT OPTION GENERATED LIST SOURCES
+    LIST OTHERS ARGN args ${ARGN})
 
-  remake_file_glob(generate_inputs ${generate_input})
+  if(generate_generated)
+    remake_set(generate_inputs ${generate_input})
+  else(generate_generated)
+    remake_file_glob(generate_inputs ${generate_input})
+  endif(generate_generated)
   remake_file_name_substitute(generate_abs_sources ${generate_sources}
     PATH ${CMAKE_CURRENT_BINARY_DIR} TO_ABSOLUTE)
   remake_file_name_substitute(generate_abs_others ${generate_others}
