@@ -267,7 +267,7 @@ macro(remake_python_distribute)
       --install-lib=${CMAKE_CURRENT_BINARY_DIR}
     WORKING_DIRECTORY ${python_dist_conf_dir}
     DEPENDS ${python_depends}
-    COMMENT "Building Python package ${python_name}"
+    COMMENT "Building Python distribution ${python_name}"
     OUTPUT ${python_built} ${python_clean}
     ${COMPONENT})
 
