@@ -317,9 +317,12 @@ endmacro(remake_python_package_name)
 #     defaults to *.py.
 #   \optional[option] RECURSE If this option is given, module sources will
 #     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[option] GENERATED With this option being present, the macro
+#     assumes that the module sources do not yet exists but will be generated
+#     during the run of CMake or the build process.
 macro(remake_python_package)
-  remake_arguments(PREFIX python_ VAR NAME VAR DIRECTORY OPTION RECURSE
-    ARGN globs ${ARGN})
+  remake_arguments(PREFIX python_ VAR NAME VAR DIRECTORY OPTION GENERATED
+    OPTION RECURSE ARGN globs ${ARGN})
   remake_component_name(python_default_component ${REMAKE_COMPONENT}
     ${REMAKE_PYTHON_COMPONENT_SUFFIX})
   remake_python_package_name(python_default_name ${python_default_component})
@@ -335,7 +338,8 @@ macro(remake_python_package)
   remake_file_mkdir(${python_pkg_conf_dir})
   remake_python_package_set(${python_name} directory ${python_directory})
 
-  remake_python_add_modules(PACKAGE ${python_name} ${python_globs} ${RECURSE})
+  remake_python_add_modules(PACKAGE ${python_name} ${python_globs}
+    ${GENERATED} ${RECURSE})
 endmacro(remake_python_package)
 
 ### \brief Define the value of a Python package variable.
@@ -430,7 +434,7 @@ macro(remake_python_add_modules)
         RECURSE ${CMAKE_CURRENT_SOURCE_DIR})
     else(python_recurse)
       remake_file_glob(python_mod_sources ${python_globs}
-      WORKING_DIRECTORY ${python_pkg_dir})
+        WORKING_DIRECTORY ${python_pkg_dir})
     endif(python_recurse)
   endif(python_generated)
 

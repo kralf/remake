@@ -67,8 +67,9 @@ macro(remake_generate_flex generate_target)
       remake_file_name_substitute(generate_source ${generate_input}
         PATH ${CMAKE_CURRENT_BINARY_DIR}
         EXT ${generate_extension})
-      remake_generate(Flex ${generate_target} ${FLEX_EXECUTABLE}
+      remake_generate(Flex ${FLEX_EXECUTABLE}
         ARGS ${generate_flex_args} -o ${generate_source} ${generate_input}
+        TARGET ${generate_target}
         INPUT ${generate_input}
         SOURCES ${generate_source})
     endforeach(generate_input)
@@ -122,8 +123,9 @@ macro(remake_generate_bison generate_target)
           EXT ${generate_header_extension})
       endif(generate_headers)
 
-      remake_generate(Bison ${generate_target} ${BISON_EXECUTABLE}
+      remake_generate(Bison ${BISON_EXECUTABLE}
         ARGS ${generate_bison_args} ${generate_input}
+        TARGET ${generate_target}
         INPUT ${generate_input}
         SOURCES ${generate_source} ${generate_header})
     endforeach(generate_input)
@@ -135,8 +137,6 @@ endmacro(remake_generate_bison)
 #   It attempts to call remake_generate() with the custom generator's
 #   executable in order to define the generator command.
 #   \required[value] generator The name of the custom code generator.
-#   \required[value] target The name of the build target to add the
-#     custom-generated code for.
 #   \required[value] command The command that executes the custom generator.
 #     Assuming that the generator is provided with the sources, the working
 #     directory for this command defaults to ${CMAKE_CURRENT_SOURCE_DIR}.
@@ -144,6 +144,8 @@ endmacro(remake_generate_bison)
 #     instead be interpreted as target name.
 #   \optional[list] arg An optional list of command line arguments to be
 #     passed to the generator command.
+#   \optional[value] TARGET:target The optional name of the build target to
+#     add the custom-generated source code for.
 #   \required[list] INPUT:glob A list of glob expressions that are resolved
 #     in order to find the input source files for the custom generator. The
 #     list of input files may be substituted for the command-line placeholder
@@ -161,10 +163,9 @@ endmacro(remake_generate_bison)
 #     filenames, ${CMAKE_CURRENT_BINARY_DIR} will be used as output path
 #     instead. The list of generated non-sources may be substituted for the
 #     command-line placeholder %OTHERS%.
-macro(remake_generate_custom generate_generator generate_target
-    generate_command)
-  remake_arguments(PREFIX generate_ LIST INPUT OPTION GENERATED LIST SOURCES
-    LIST OTHERS ARGN args ${ARGN})
+macro(remake_generate_custom generate_generator generate_command)
+  remake_arguments(PREFIX generate_ VAR TARGET LIST INPUT OPTION GENERATED
+    LIST SOURCES LIST OTHERS ARGN args ${ARGN})
 
   if(generate_generated)
     remake_set(generate_inputs ${generate_input})
@@ -180,7 +181,7 @@ macro(remake_generate_custom generate_generator generate_target
   remake_list_replace(generate_args %SOURCES% REPLACE ${generate_abs_sources})
   remake_list_replace(generate_args %OTHERS% REPLACE ${generate_abs_others})
 
-  remake_generate(${generate_generator} ${generate_target} ${generate_command}
+  remake_generate(${generate_generator} ${generate_command} ${TARGET}
     ARGS ${generate_args}
     INPUT ${generate_inputs}
     SOURCES ${generate_abs_sources}
@@ -194,12 +195,12 @@ endmacro(remake_generate_custom)
 #   directly from a CMakeLists.txt file.
 #   \required[value] generator The name of the generator to be used for
 #     code generation.
-#   \required[value] target The name of the build target to add the
-#     generated source code for.
 #   \required[value] command The generator command that will be called to
 #     generate the code.
 #   \optional[list] ARGS:arg An optional list of arguments that will be
 #     passed to the generator command.
+#   \optional[value] TARGET:target The optional name of the build target to
+#     add the generated source code for.
 #   \required[list] INPUT:filename A list of filenames that identify the
 #     input files to the generator command.
 #   \required[list] SOURCES:filename A list of filenames that identify the
@@ -212,8 +213,8 @@ endmacro(remake_generate_custom)
 #     non-source output files of the generator command. To ensure consistent
 #     dependencies, these output files may later be specified as inputs
 #     to other commands or targets.
-macro(remake_generate generate_generator generate_target generate_command)
-  remake_arguments(PREFIX generate_ VAR LANG LIST ARGS LIST INPUT
+macro(remake_generate generate_generator generate_command)
+  remake_arguments(PREFIX generate_ LIST ARGS VAR TARGET LIST INPUT
     LIST SOURCES LIST OTHERS ${ARGN})
 
   remake_set(generate_relatives)
@@ -228,5 +229,7 @@ macro(remake_generate generate_generator generate_target generate_command)
     OUTPUT ${generate_sources} ${generate_others}
     COMMENT "Generating ${generate_generator} source(s) ${generate_relatives}")
 
-  remake_target_add_sources(${generate_target} ${generate_sources})
+  if(generate_target)
+    remake_target_add_sources(${generate_target} ${generate_sources})
+  endif(generate_target)
 endmacro(remake_generate)
