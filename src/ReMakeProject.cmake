@@ -254,7 +254,9 @@ macro(remake_project project_name)
   remake_component_install(FILES ${project_readme} ${project_copyright}
       ${project_todo} ${project_changelog} ${project_notes}
     DESTINATION share/doc/${REMAKE_PROJECT_FILENAME})
-  remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
+  if(project_copyright)
+    remake_file_read(REMAKE_PROJECT_LICENSE_TEXT ${project_copyright})
+  endif(project_copyright)
 
   project(${REMAKE_PROJECT_NAME})
 
