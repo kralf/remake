@@ -75,6 +75,8 @@ macro(remake_python)
     get_filename_component(REMAKE_PYTHON_SOURCE_DIR ${python_sources}
       ABSOLUTE)
     if(EXISTS ${REMAKE_PYTHON_SOURCE_DIR})
+      string(REGEX REPLACE "^${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}"
+        REMAKE_PYTHON_BINARY_DIR ${REMAKE_PYTHON_SOURCE_DIR})
       remake_add_directories(${REMAKE_PYTHON_SOURCE_DIR})
     endif(EXISTS ${REMAKE_PYTHON_SOURCE_DIR})
 

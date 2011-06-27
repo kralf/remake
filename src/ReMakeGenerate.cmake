@@ -223,11 +223,12 @@ macro(remake_generate generate_generator generate_command)
     remake_list_push(generate_relatives ${generate_relative})
   endforeach(generate_src)
 
+  string(REPLACE ";" ", " generate_comment "${generate_relatives}")
   add_custom_command(
     COMMAND ${generate_command} ${generate_args}
     DEPENDS ${generate_input}
     OUTPUT ${generate_sources} ${generate_others}
-    COMMENT "Generating ${generate_generator} source(s) ${generate_relatives}")
+    COMMENT "Generating ${generate_generator} source(s) ${generate_comment}")
 
   if(generate_target)
     remake_target_add_sources(${generate_target} ${generate_sources})

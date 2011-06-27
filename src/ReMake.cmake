@@ -135,6 +135,7 @@ macro(remake_add_library remake_name)
 
   remake_file_glob(remake_sources ${remake_globs})
   remake_target_get_sources(remake_target_sources ${remake_name})
+  remake_target_get_dependencies(remake_target_depends ${remake_name})
   remake_include()
 
   remake_set(remake_plugins
@@ -150,6 +151,9 @@ macro(remake_add_library remake_name)
     ${remake_type} ${remake_sources} ${remake_target_sources}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK} ${COMPONENT})
+  if(remake_target_depends)
+    add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
+  endif(remake_target_depends)
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
     LIBRARY DESTINATION ${remake_install}
@@ -207,12 +211,16 @@ macro(remake_add_plugin remake_name)
 
   remake_file_glob(remake_sources ${remake_globs})
   remake_target_get_sources(remake_target_sources ${remake_name})
+  remake_target_get_dependencies(remake_target_depends ${remake_name})
 
   remake_component_build(
     LIBRARY ${remake_name}${remake_suffix}
     SHARED ${remake_sources} ${remake_target_sources}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK} ${COMPONENT})
+  if(remake_target_depends)
+    add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
+  endif(remake_target_depends)
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
     LIBRARY DESTINATION ${remake_plugins}
@@ -274,12 +282,16 @@ macro(remake_add_executable remake_name)
 
   remake_file_glob(remake_sources ${remake_globs})
   remake_target_get_sources(remake_target_sources ${remake_name})
+  remake_target_get_dependencies(remake_target_depends ${remake_name})
 
   remake_component_build(
     EXECUTABLE ${remake_name}${remake_suffix}
     ${remake_sources} ${remake_target_sources}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK} ${COMPONENT})
+  if(remake_target_depends)
+    add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
+  endif(remake_target_depends)
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
     RUNTIME DESTINATION ${remake_install}

@@ -163,4 +163,34 @@ macro(remake_target_get_sources target_var target_name)
   remake_set(${target_var} ${${target_global_var}})
 endmacro(remake_target_get_sources)
 
+### \brief Add target-level dependencies to a target.
+#   This macro does not actually add target-level dependencies to an already
+#   defined top-level target, but appends a list of dependencies to a variable
+#   named ${TARGET}_DEPENDS. Thus, the macro may be used to add dependencies
+#   to a yet undefined top-level target which can later be recovered by calling
+#   remake_target_get_dependencies().
+#   Note to be aware of the scope of the ${TARGET}_DEPENDS variable.
+#   \required[value] name The name of the target to add the target-level
+#     dependency to.
+#   \required[list] DEPENDS:target A list of top-level targets to be appended
+#     to the target's dependencies.
+macro(remake_target_add_dependencies target_name)
+  remake_arguments(PREFIX target_ ARGN depends ${ARGN})
+  remake_var_name(target_global_var ${target_name} DEPENDS)
+  remake_list_push(${target_global_var} ${target_depends})
+endmacro(remake_target_add_dependencies)
+
+### \brief Retrieve target-level dependencies for a target.
+#   This macro retrieves a list of target-level dependencies from
+#   a variable named ${TARGET}_DEPENDS, usually defined by
+#   remake_target_add_dependencies().
+#   \required[value] variable The name of a variable to be assigned the list
+#     of target-level dependencies for the target.
+#   \required[value] name The name of the target to retrieve the target-level
+#     dependencies for.
+macro(remake_target_get_dependencies target_var target_name)
+  remake_var_name(target_global_var ${target_name} DEPENDS)
+  remake_set(${target_var} ${${target_global_var}})
+endmacro(remake_target_get_dependencies)
+
 remake_file_rmdir(${REMAKE_TARGET_DIR} TOPLEVEL)
