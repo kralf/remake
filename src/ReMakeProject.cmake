@@ -383,10 +383,17 @@ endmacro(remake_project_prefix)
 #   configuration.
 #   \required[value] source The source template of the header to be configured
 #     with the ReMake project settings.
+#   \optional[option] INSTALL This option tells the macro to invoke
+#     remake_add_headers() for the generated project configuration header.
 macro(remake_project_header project_source)
+  remake_arguments(PREFIX project_ OPTION INSTALL ${ARGN})
+
   if(NOT REMAKE_PROJECT_HEADER)
     remake_file_configure(${project_source} OUTPUT REMAKE_PROJECT_HEADER
       ESCAPE_QUOTES ESCAPE_NEWLINES)
+    if(project_install)
+      remake_add_headers(${REMAKE_PROJECT_HEADER})
+    endif(project_install)
 
     get_filename_component(project_path ${REMAKE_PROJECT_HEADER} PATH)
     include_directories(${project_path})
