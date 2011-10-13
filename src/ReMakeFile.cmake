@@ -551,13 +551,16 @@ endmacro(remake_file_link)
 #     to all output filenames, without the leading period.
 #   \optional[var] OUTPUT:variable The optional name of a list variable to
 #     be assigned all absolute-path output filenames.
+#   \optional[option] OUTDATED If present, this option prevents files with
+#      a recent modification timestamp from being re-configured.
 #   \optional[option] ESCAPE_QUOTES If specified, any substituted quotes
 #     will be C-style escaped.
 #   \optional[option] ESCAPE_NEWLINES If specified, any substituted line
 #     breaks will be C-style escaped.
 macro(remake_file_configure)
   remake_arguments(PREFIX file_ VAR DESTINATION VAR EXT VAR OUTPUT
-    OPTION ESCAPE_QUOTES OPTION ESCAPE_NEWLINES ARGN globs ${ARGN})
+    OPTION OUTDATED OPTION ESCAPE_QUOTES OPTION ESCAPE_NEWLINES ARGN globs
+    ${ARGN})
   remake_set(file_destination SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(file_output)
@@ -577,7 +580,7 @@ macro(remake_file_configure)
       get_filename_component(file_src_abs ${file_src} ABSOLUTE)
       get_filename_component(file_dst_abs ${file_dst} ABSOLUTE)
 
-      if(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
+      if(NOT file_outdated OR ${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
         get_cmake_property(file_globals VARIABLES)
         string(REGEX MATCHALL "\\\${[a-zA-Z_]*}" file_vars ${file_content})
         list(REMOVE_DUPLICATES file_vars)
@@ -598,7 +601,7 @@ macro(remake_file_configure)
         remake_file_create(${file_dst})
         remake_file_write(${file_dst} FROM file_content)
         configure_file(${file_dst} ${file_dst})
-      endif(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
+      endif(NOT file_outdated OR ${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
     else(file_src MATCHES "[.]remake$")
       remake_set(file_dst ${file_destination}/${file_src})
       if(file_ext)
@@ -608,9 +611,9 @@ macro(remake_file_configure)
       get_filename_component(file_src_abs ${file_src} ABSOLUTE)
       get_filename_component(file_dst_abs ${file_dst} ABSOLUTE)
 
-      if(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
+      if(NOT file_outdated OR ${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
         remake_file_copy(${file_dst} ${file_src})
-      endif(${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
+      endif(NOT file_outdated OR ${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
     endif(file_src MATCHES "[.]remake$")
 
     if(file_output)
