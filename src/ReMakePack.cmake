@@ -94,6 +94,7 @@ macro(remake_pack pack_generator)
         "using component ${pack_component} (${pack_generator})")
     endif(${pack_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
 
+    remake_unset(CPack_CMake_INCLUDED)
     include(CPack)
 
     remake_target_name(pack_target ${pack_prefix} ${REMAKE_PACK_TARGET_SUFFIX})
@@ -207,7 +208,7 @@ macro(remake_pack_deb)
     string(REPLACE ";" ", " pack_replace "${pack_dependencies}")
     remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_replace})
     remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
-    remake_set(CPACK_PACKAGE_FILE_NAME deb/${pack_file})
+    remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
 
     remake_pack(DEB COMPONENT ${pack_component} NAME ${pack_name})
 
@@ -215,7 +216,7 @@ macro(remake_pack_deb)
     remake_target_name(pack_install_target ${pack_prefix}
       ${REMAKE_PACK_INSTALL_TARGET_SUFFIX})
     remake_target(${pack_install_target}
-      COMMAND sudo dpkg --install deb/${pack_file}.deb
+      COMMAND sudo dpkg --install ${pack_file}.deb
       COMMENT "Installing ${pack_name} package")
     add_dependencies(${pack_install_target} ${pack_target})
     add_dependencies(${REMAKE_PACK_INSTALL_ALL_TARGET} ${pack_install_target})
