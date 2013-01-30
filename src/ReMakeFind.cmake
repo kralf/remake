@@ -136,7 +136,7 @@ endmacro(remake_find_executable)
 #   This macro calls CMake's find_path() to discover the full path to a file
 #   installed on the system. If the file was found, the variable name
 #   conversion of ${PACKAGE}_FOUND is set to TRUE. Furthermore,
-#   ${PACKAGE}_FILE is initialized with the full path to the file.
+#   ${PACKAGE}_PATH is initialized with the full path to the file.
 #   Arguments given in addition to the file name are forwarded to
 #   find_path().
 #   \required[value] file The name of the file to be discovered.
@@ -148,11 +148,11 @@ endmacro(remake_find_executable)
 #     remake_find_result().
 macro(remake_find_file find_file)
   remake_arguments(PREFIX find_ VAR PACKAGE ARGN args OPTION OPTIONAL ${ARGN})
-  remake_var_name(find_file_var ${find_package} FILE)
+  remake_var_name(find_path_var ${find_package} PATH)
 
-  find_path(${find_file_var} NAMES ${find_file} ${find_args})
+  find_path(${find_path_var} NAMES ${find_file} ${find_args})
 
-  remake_find_result(${find_package} ${${find_file_var}} ${OPTIONAL})
+  remake_find_result(${find_package} ${${find_path_var}} ${OPTIONAL})
 endmacro(remake_find_file)
 
 ### \brief Evaluate the result of a find operation.
