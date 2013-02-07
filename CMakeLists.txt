@@ -16,8 +16,6 @@ remake_project(
   INSTALL /usr
 )
 
-remake_add_directories(test)
-
 remake_doc(
   man INSTALL share
   ps
@@ -33,3 +31,5 @@ remake_pack_deb(
   COMPONENT doc
   DESCRIPTION "documentation"
 )
+
+remake_pack_source_archive()
