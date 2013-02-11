@@ -62,8 +62,8 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #     meaning that the dependency is of the form ${PACKAGE} [(>= ${VERSION})].
 macro(remake_distribute_deb)
   remake_arguments(PREFIX distribute_ VAR SECTION VAR PRIORITY
-    VAR DISTRIBUTION VAR URGENCY VAR COMPATIBILITY LIST COMPONENT
-    ARGN dependencies ${ARGN})
+    VAR DISTRIBUTION VAR URGENCY VAR COMPATIBILITY VAR UPLOAD
+    LIST COMPONENT ARGN dependencies ${ARGN})
   remake_set(distribute_section SELF DEFAULT main)
   remake_set(distribute_priority SELF DEFAULT extra)
   remake_set(distribute_distribution SELF DEFAULT stable)
@@ -180,6 +180,19 @@ macro(remake_distribute_deb)
       COMMAND dpkg-buildpackage -S
       WORKING_DIRECTORY ${distribute_archive}
       COMMENT "Building ${REMAKE_PROJECT_NAME} distribution")
+
+    if(distribute_upload)
+      remake_set(distribute_prompt
+        "Upload distribution to ${distribute_upload} (y/n)?")
+      remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
+        COMMAND read -s -n 1 -p "${distribute_prompt}" &&
+          echo && eval test \$REPLY = y VERBATIM)
+      remake_file_name(distribute_file ${REMAKE_PROJECT_FILENAME}
+        ${REMAKE_PROJECT_VERSION} source.changes)
+      remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
+        COMMAND dput ${distribute_upload} ${distribute_file}
+        COMMENT "Uploading ${REMAKE_PROJECT_NAME} distribution")
+    endif(distribute_upload)
   endif(distribute_packages)
 endmacro(remake_distribute_deb)
 

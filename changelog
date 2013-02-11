@@ -1,3 +1,9 @@
+remake (0.5-133) unstable; urgency=low
+
+  * remake_distribute() has new parameter UPLOAD
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 11 Feb 2013 07:59:00 +0100
+
 remake (0.5-132) unstable; urgency=low
 
   * Increased project version to 0.5
