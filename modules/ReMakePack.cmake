@@ -228,11 +228,11 @@ macro(remake_pack_deb)
     if(pack_suffix)
       remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME}-${pack_suffix})
       remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}-${pack_suffix}
-        ${REMAKE_PROJECT_VERSION} ${pack_arch})
+        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
     else(pack_suffix)
       remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME})
       remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}
-        ${REMAKE_PROJECT_VERSION} ${pack_arch})
+        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
     endif(pack_suffix)
 
     remake_set(pack_component_deps)
@@ -345,10 +345,10 @@ macro(remake_pack_archive)
 
     if(pack_suffix)
       remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}-${pack_suffix}
-        ${REMAKE_PROJECT_VERSION} ${pack_arch})
+        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
     else(pack_suffix)
       remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}
-        ${REMAKE_PROJECT_VERSION} ${pack_arch})
+        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
     endif(pack_suffix)
 
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
@@ -368,7 +368,7 @@ macro(remake_pack_source_archive)
   remake_set(pack_generator SELF DEFAULT TGZ)
 
   remake_file_name(pack_file
-    ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_VERSION})
+    ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_FILENAME_VERSION})
 
   remake_set(CPACK_SOURCE_PACKAGE_FILE_NAME ${pack_file})
   remake_pack_source(${pack_generator})

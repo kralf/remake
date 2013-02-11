@@ -201,7 +201,7 @@ macro(remake_distribute_deb)
       ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
     remake_file_name(distribute_archive
-      ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_VERSION})
+      ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_FILENAME_VERSION})
     remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
       COMMAND tar -xzf ${distribute_archive}.tar.gz
       COMMENT "Extracting ${REMAKE_PROJECT_NAME} source package")
@@ -223,7 +223,7 @@ macro(remake_distribute_deb)
         COMMAND read -s -n 1 -p "${distribute_prompt}" &&
           echo && eval test \$REPLY = y VERBATIM)
       remake_file_name(distribute_file ${REMAKE_PROJECT_FILENAME}
-        ${REMAKE_PROJECT_VERSION} source.changes)
+        ${REMAKE_PROJECT_FILENAME_VERSION} source.changes)
       remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
         COMMAND dput ${distribute_upload} ${distribute_file}
         COMMENT "Uploading ${REMAKE_PROJECT_NAME} distribution")

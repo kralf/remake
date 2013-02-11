@@ -40,8 +40,9 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[value] VERSION:version The version of the project, defaults to
 #     0.1. Here, the macro expects a string value that reflects standard
 #     versioning conventions, i.e. the version string is of the form
-#     ${MAJOR}.${MINOR}.${PATCH}-${REVISION}. If the revision is omitted
-#     from the string, the project's Subversion revision is used instead.
+#     ${EPOCH}:${MAJOR}.${MINOR}.${PATCH}-${REVISION}. If the revision is
+#     omitted from the string, the project's Subversion revision is used
+#     instead.
 #   \optional[value] RELEASE:release The release of the project, defaults to
 #     alpha. This value may contain a string describing the release status,
 #     such as alpha, beta, unstable, or stable.
@@ -157,15 +158,19 @@ macro(remake_project project_name)
   remake_set(project_documentation_destination SELF DEFAULT
     share/doc/${REMAKE_PROJECT_FILENAME})
 
-  remake_set(project_regex "^([0-9]+)[.]?([0-9]*)[.]?([0-9]*)[-]?([0-9]*)$")
-  string(REGEX REPLACE ${project_regex} "\\1" REMAKE_PROJECT_MAJOR
+  remake_set(project_regex
+    "^([0-9]+)[:]?([0-9]+)[.]?([0-9]*)[.]?([0-9]*)[-]?([0-9]*)$")
+  string(REGEX REPLACE ${project_regex} "\\1" REMAKE_PROJECT_EPOCH
     ${project_version})
-  string(REGEX REPLACE ${project_regex} "\\2" REMAKE_PROJECT_MINOR
+  string(REGEX REPLACE ${project_regex} "\\2" REMAKE_PROJECT_MAJOR
     ${project_version})
-  string(REGEX REPLACE ${project_regex} "\\3" REMAKE_PROJECT_PATCH
+  string(REGEX REPLACE ${project_regex} "\\3" REMAKE_PROJECT_MINOR
     ${project_version})
-  string(REGEX REPLACE ${project_regex} "\\4" REMAKE_PROJECT_REVISION
+  string(REGEX REPLACE ${project_regex} "\\4" REMAKE_PROJECT_PATCH
     ${project_version})
+  string(REGEX REPLACE ${project_regex} "\\5" REMAKE_PROJECT_REVISION
+    ${project_version})
+  remake_set(REMAKE_PROJECT_EPOCH SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_MAJOR SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_MINOR SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_PATCH SELF DEFAULT 0)
@@ -181,6 +186,11 @@ macro(remake_project project_name)
     remake_set(REMAKE_PROJECT_VERSION
       ${REMAKE_PROJECT_VERSION}-${REMAKE_PROJECT_REVISION})
   endif(REMAKE_PROJECT_REVISION)
+  remake_file_name(REMAKE_PROJECT_FILENAME_VERSION ${REMAKE_PROJECT_VERSION})
+  if(REMAKE_PROJECT_EPOCH)
+    remake_set(REMAKE_PROJECT_VERSION
+      ${REMAKE_PROJECT_EPOCH}:${REMAKE_PROJECT_VERSION})
+  endif(REMAKE_PROJECT_EPOCH)
   remake_set(REMAKE_PROJECT_RELEASE ${project_release})
 
   remake_set(REMAKE_PROJECT_SUMMARY ${project_summary})
