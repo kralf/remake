@@ -159,7 +159,7 @@ macro(remake_project project_name)
     share/doc/${REMAKE_PROJECT_FILENAME})
 
   remake_set(project_regex
-    "^([0-9]+)[:]?([0-9]+)[.]?([0-9]*)[.]?([0-9]*)[-]?([0-9]*)$")
+    "^([0-9]*)[:]?([0-9]+)[.]?([0-9]*)[.]?([0-9]*)[-]?([0-9]*)$")
   string(REGEX REPLACE ${project_regex} "\\1" REMAKE_PROJECT_EPOCH
     ${project_version})
   string(REGEX REPLACE ${project_regex} "\\2" REMAKE_PROJECT_MAJOR
