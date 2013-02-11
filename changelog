@@ -1,3 +1,9 @@
+remake (1:0.5-140) lucid; urgency=low
+
+  * Removed ATP version pin
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 11 Feb 2013 19:40:00 +0100
+
 remake (1:0.5-139) lucid; urgency=low
 
   * Added epoch to version in order to override exisiting remake package
