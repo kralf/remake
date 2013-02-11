@@ -1,3 +1,11 @@
+remake (0.5-134) lucid; urgency=low
+
+  * Changelog distribution changed from "stable" to "lucid"
+  * remake_distribute() validates project settings against changelog
+    header, inconsistency causes a fatal error
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 11 Feb 2013 12:55:00 +0100
+
 remake (0.5-133) unstable; urgency=low
 
   * remake_distribute() has new parameter UPLOAD

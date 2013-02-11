@@ -45,12 +45,25 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #   \optional[value] PRIORITY:priority The priority of the distributed
 #     project, defaults to extra. See the Debian policies for valid priority
 #     levels.
+#   \optional[value] CHANGELOG:file The name of the changelog file to be
+#     distributed with the sources, defaults to ${REMAKE_PROJECT_CHANGELOG}.
+#     Note that the provided changelog file must follow the Debian standards
+#     and should provide correct version information, the distribution name,
+#     and the urgency level. The macro validates the information provided
+#     in the changelog file against the current project settings and the
+#     parameters provided, giving a fatal error in case of a mismatch. For
+#     details about the standards and valid changelog properties, read the
+#     Debian policy manual.
 #   \optional[value] DISTRIBUTION:distribution The name of the distribution
-#     for which the packages should be built, defaults to unstable. Consult
-#     the archive maintainers for valid distribution names.
+#     for which the packages should be built, defaults to unstable. This
+#     parameter is only used for validating the information contained in
+#     the changelog prior to configuring the source package. Consult the
+#     archive maintainers for valid distribution names.
 #   \optional[value] URGENCY:urgency The urgency of upgrading the distributed
-#     packages from previous versions, defaults to low. See the Debian
-#     policies for valid urgency values.
+#     packages from previous versions, defaults to low.  This parameter is
+#     only used for validating the information contained in the changelog
+#     prior to configuring the source package. See the Debian policies for
+#     valid urgency values.
 #   \optional[value] COMPATIBILITY:compatibility The debhelper compatibility
 #     level, defaults to 7. See the debhelper documentation for valid
 #     compatibility levels. Changing the compatibility to levels other than
@@ -62,13 +75,27 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #     meaning that the dependency is of the form ${PACKAGE} [(>= ${VERSION})].
 macro(remake_distribute_deb)
   remake_arguments(PREFIX distribute_ VAR SECTION VAR PRIORITY
-    VAR DISTRIBUTION VAR URGENCY VAR COMPATIBILITY VAR UPLOAD
-    LIST COMPONENT ARGN dependencies ${ARGN})
+    VAR CHANGELOG VAR DISTRIBUTION VAR URGENCY VAR COMPATIBILITY
+    VAR UPLOAD LIST COMPONENT ARGN dependencies ${ARGN})
   remake_set(distribute_section SELF DEFAULT main)
   remake_set(distribute_priority SELF DEFAULT extra)
+  remake_set(distribute_changelog SELF DEFAULT ${REMAKE_PROJECT_CHANGELOG})
   remake_set(distribute_distribution SELF DEFAULT stable)
   remake_set(distribute_urgency SELF DEFAULT low)
   remake_set(distribute_compatibility SELF DEFAULT 7)
+
+  remake_file_read(distribute_val_changelog ${distribute_changelog})
+  string(REGEX REPLACE "([^\\\n]+).*" "\\1" distribute_val_header
+    "${distribute_val_changelog}")
+  string(REGEX REPLACE "[ ;]+" ";" distribute_val_parameters
+    ${distribute_val_header})
+  remake_set(distribute_parameters ${REMAKE_PROJECT_FILENAME}
+    "(${REMAKE_PROJECT_VERSION})" ${distribute_distribution}
+    "urgency=${distribute_urgency}")
+
+  if(NOT "${distribute_val_parameters}" STREQUAL "${distribute_parameters}")
+    message(FATAL_ERROR "Changelog is inconsistent with the project settings!")
+  endif(NOT "${distribute_val_parameters}" STREQUAL "${distribute_parameters}")
 
   remake_file(distribute_package_dir ${REMAKE_PACK_DIR}/DEB)
   remake_file_glob(distribute_packages *.cpack
@@ -97,23 +124,6 @@ macro(remake_distribute_deb)
       "Homepage: ${REMAKE_PROJECT_HOME}"
       "Standards-Version: ${distribute_version}"
       "Build-Depends: ${distribute_dependencies}")
-
-    execute_process(COMMAND date -R
-      OUTPUT_VARIABLE distribute_date OUTPUT_STRIP_TRAILING_WHITESPACE)
-    remake_set(distribute_changelog
-      "${REMAKE_PROJECT_FILENAME} (${REMAKE_PROJECT_VERSION})")
-    remake_set(distribute_changelog
-      "${distribute_changelog} ${distribute_distribution}")
-    remake_set(distribute_changelog
-      "${distribute_changelog}; urgency=${distribute_urgency}\n\n")
-    remake_set(distribute_changelog
-      "${distribute_changelog}  *\n\n")
-    remake_set(distribute_changelog
-      "${distribute_changelog} -- ${REMAKE_PROJECT_ADMIN}")
-    remake_set(distribute_changelog
-      "${distribute_changelog} <${REMAKE_PROJECT_CONTACT}>")
-    remake_set(distribute_changelog
-      "${distribute_changelog}  ${distribute_date}")
 
     remake_set(distribute_rules
       "#! /usr/bin/make -f"
@@ -161,7 +171,6 @@ macro(remake_distribute_deb)
     remake_file_permissions(${distribute_dir}/rules
       OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)
     remake_file_write(${distribute_dir}/compat ${distribute_compatibility})
-    remake_file_write(${distribute_dir}/changelog ${distribute_changelog})
 
     remake_pack_source_archive(GENERATOR TGZ)
     add_dependencies(${REMAKE_DISTRIBUTE_TARGET}
@@ -175,6 +184,8 @@ macro(remake_distribute_deb)
 
     remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
       COMMAND cp -a ${distribute_dir} ${distribute_archive})
+    remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
+      COMMAND cp -a ${distribute_changelog} ${distribute_archive}/debian)
 
     remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
       COMMAND dpkg-buildpackage -S
