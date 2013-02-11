@@ -1,9 +1,28 @@
 #! /usr/bin/perl
 
+############################################################################
+#    Copyright (C) 2009 by Ralf 'Decan' Kaestner                           #
+#    ralf.kaestner@gmail.com                                               #
+#                                                                          #
+#    This program is free software; you can redistribute it and#or modify  #
+#    it under the terms of the GNU General Public License as published by  #
+#    the Free Software Foundation; either version 2 of the License, or     #
+#    (at your option) any later version.                                   #
+#                                                                          #
+#    This program is distributed in the hope that it will be useful,       #
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of        #
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+#    GNU General Public License for more details.                          #
+#                                                                          #
+#    You should have received a copy of the GNU General Public License     #
+#    along with this program; if not, write to the                         #
+#    Free Software Foundation, Inc.,                                       #
+#    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
+############################################################################
+
 use Getopt::Std;
 
-getopts("qc:t:o:");
-require $opt_c;
+getopts("hqc:t:o:");
 
 use File::Find;
 use File::Glob;
@@ -12,16 +31,44 @@ use File::Path;
 
 use IO::Compress::Gzip;
 
-my $generator = "CDoc";
+my $generator = "remake-gendocs";
 
+my $doc_conf = $opt_c;
 my $doc_type = $opt_t;
 my $doc_output = $opt_o;
+my $doc_help = $opt_h;
 my $doc_quiet = $opt_q;
 
 sub print_stdout {
+  print STDOUT @_;
+}
+
+sub print_stderr {
   if (!$doc_quiet) {
-    print STDOUT @ARGN;
+    print STDERR @_;
   }
+}
+
+sub print_stdopt {
+  my $option = shift;
+  my $description = shift;
+
+  my $length = length($option);
+  my $indent = 30-$length;
+
+  print_stdout "  $option".' 'x$indent."$description\n";
+}
+
+sub print_help {
+  print_stdout "usage: $generator [OPT1 [OPT2 [...]]] [FILE1 [FILE2 [...]]]\n";
+  print_stdout "\033[1mGenerate CMake module documentation\033[0m\n";
+  print_stdopt "FILE1 FILE2 ...", "list of input CMake modules [*.cmake]";
+  print_stdopt "OPT1 OPT2 ...", "list of options as given below [default]";
+  print_stdopt "-h", "display usage and exit [false]";
+  print_stdopt "-q", "do not generate any output [false]";
+  print_stdopt "-o PATH", "documentation output path [.]";
+  print_stdopt "-c FILE", "mandatory configuration file";
+  print_stdopt "-t TYPE", "type of documentation [man]";
 }
 
 sub read_source {
@@ -360,11 +407,11 @@ sub find_source {
   my $source_name = $File::Find::name;
   
   return unless -f $source_name;
-  return unless basename($source_name)  =~ /$find_pattern/;
+  return unless basename($source_name) =~ /$find_pattern/;
 
-  print_stdout "$generator: Parsing ".basename($source_name)."\n";
+  print_stderr "$generator: Parsing ".basename($source_name)."\n";
   read_source($source_name, \%module, \@variables, \@macros, \%references);
-  print_stdout "$generator: - $module{name}: ".@macros." macro(s), ".
+  print_stderr "$generator: - $module{name}: ".@macros." macro(s), ".
     keys(%references)." reference(s)\n";
 
   my $man_name = lc($project_name);
@@ -380,13 +427,13 @@ sub find_source {
   }
   
   my $man;
-  print_stdout "$generator: - $module{name}: Generating ".
+  print_stderr "$generator: - $module{name}: Generating ".
     "$man_name($man_extension)\n";
   generate_man($man_name, \%module, \@variables, \@macros, \%references, \$man);
 
   if ($doc_type =~ /man/) {
     my $doc_name = "man${man_extension}/$man_name.$man_extension.gz";
-    print_stdout "Writing $doc_name\n";
+    print_stderr "Writing $doc_name\n";
     mkpath("${doc_output}/man${man_extension}");
     my $z = new IO::Compress::Gzip "$doc_output/$doc_name" or 
       die("Error: Failed to compress $doc_name!\n");
@@ -395,15 +442,39 @@ sub find_source {
   }
   else {
     my $doc_name = "$man_name.".lc($doc_type);
-    print_stdout "Writing $doc_name\n";
+    print_stderr "Writing $doc_name\n";
     mkpath(${doc_output});
     my $pid = open(file, "| $groff_executable -t -e -man -T${doc_type} - >".
-      "$doc_output/$doc_name") or 
+      "$doc_output/$doc_name 2> /dev/null") or
       die("Error: Failed to execute groff!\n");
     print file $man;
   }
 }
 
-foreach $glob (@ARGV) {
+my @doc_input = @ARGV;
+
+if ($doc_help) {
+  print_help();
+  exit 0;
+}
+
+if (!$doc_conf) {
+  die "Error: Missing configuration file\n";
+}
+require $doc_conf;
+
+if (!$doc_type) {
+  $doc_type = "man";
+}
+
+if (!@doc_input) {
+  @doc_input = ("*.cmake");
+}
+
+if (!$doc_output) {
+  $doc_output = ".";
+}
+
+foreach $glob (@doc_input) {
   find(\&find_source, $glob);
 }

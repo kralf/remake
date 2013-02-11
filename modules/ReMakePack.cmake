@@ -19,6 +19,7 @@
 ############################################################################
 
 include(ReMakePrivate)
+include(ReMakeComponent)
 
 ### \brief ReMake packaging macros
 #   The ReMake packaging macros have been designed to provide simple and
@@ -46,7 +47,7 @@ remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 #     binary component package. See the CPack documentation for valid
 #     generators.
 #   \optional[value] NAME:name The name of the binary package to be
-#     generated, defaults to the ReMake project name.
+#     generated, defaults to the ${REMAKE_PROJECT_FILENAME}.
 #   \optional[value] COMPONENT:component The name of the install
 #     component to generate the binary package from, defaults to
 #     ${REMAKE_DEFAULT_COMPONENT}.
@@ -60,7 +61,7 @@ macro(remake_pack_binary pack_generator)
       remake_target(${REMAKE_PACK_ALL_BINARY_TARGET})
     endif(NOT TARGET ${REMAKE_PACK_ALL_BINARY_TARGET})
 
-    remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_NAME})
+    remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_FILENAME})
     remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
     if(pack_component STREQUAL REMAKE_DEFAULT_COMPONENT)
@@ -71,6 +72,9 @@ macro(remake_pack_binary pack_generator)
     remake_file(pack_config
       ${REMAKE_PACK_DIR}/${pack_generator}/${pack_component}.cpack)
     remake_set(CPACK_OUTPUT_CONFIG_FILE ${pack_config})
+    remake_file(pack_src_config
+      ${REMAKE_PACK_SOURCE_DIR}/${pack_generator}/${pack_component}.cpack)
+    remake_set(CPACK_SOURCE_OUTPUT_CONFIG_FILE ${pack_src_config})
 
     remake_set(CPACK_GENERATOR ${pack_generator})
     remake_set(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR}
@@ -103,6 +107,8 @@ macro(remake_pack_binary pack_generator)
       ${REMAKE_PACK_BINARY_TARGET_SUFFIX})
     if(NOT TARGET ${pack_target})
       remake_target(${pack_target})
+    else(NOT TARGET ${pack_target})
+      remake_debug(pack_target)
     endif(NOT TARGET ${pack_target})
     remake_target_add_command(${pack_target}
       COMMAND cpack --config ${pack_config}
@@ -114,7 +120,7 @@ macro(remake_pack_binary pack_generator)
 
     remake_var_regex(pack_variables "^CPACK_")
     foreach(pack_var ${pack_variables})
-      remake_set(${pack_var})
+      remake_unset(${pack_var})
     endforeach(pack_var)
   endif(pack_build)
 endmacro(remake_pack_binary)
@@ -130,7 +136,7 @@ endmacro(remake_pack_binary)
 #   \required[value] generator The generator to be used for creating the
 #     source package. See the CPack documentation for valid generators.
 #   \optional[value] NAME:name The name of the source package to be
-#     generated, defaults to the ReMake project name.
+#     generated, defaults to ${REMAKE_PROJECT_FILENAME}.
 macro(remake_pack_source pack_generator)
   remake_arguments(PREFIX pack_ VAR NAME ${ARGN})
 
@@ -138,10 +144,13 @@ macro(remake_pack_source pack_generator)
     remake_target(${REMAKE_PACK_ALL_SOURCE_TARGET})
   endif(NOT TARGET ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
-  remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_NAME})
+  remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_FILENAME})
 
+  remake_file(pack_config
+    ${REMAKE_PACK_DIR}/${pack_generator}/all.cpack)
+  remake_set(CPACK_OUTPUT_CONFIG_FILE ${pack_config})
   remake_file(pack_src_config
-    ${REMAKE_PACK_SOURCE_DIR}/${pack_generator}/source.cpack)
+    ${REMAKE_PACK_SOURCE_DIR}/${pack_generator}/all.cpack)
   remake_set(CPACK_SOURCE_OUTPUT_CONFIG_FILE ${pack_src_config})
   remake_set(CPACK_SOURCE_GENERATOR ${pack_generator})
   remake_set(CPACK_PACKAGE_NAME ${pack_name})
@@ -162,7 +171,7 @@ macro(remake_pack_source pack_generator)
 
   remake_var_regex(pack_variables "^CPACK_")
   foreach(pack_var ${pack_variables})
-    remake_set(${pack_var})
+    remake_unset(${pack_var})
   endforeach(pack_var)
 endmacro(remake_pack_source)
 
@@ -308,8 +317,6 @@ endmacro(remake_pack_deb)
 #   \optional[value] GENERATOR:generator The generator to be used for creating
 #     the binary archive, defaults to TGZ. See the CPack documentation for valid
 #     archive generators.
-#   \optional[value] NAME:name The name of the binary package to be generated,
-#     defaults to the ReMake project name.
 #   \optional[value] ARCH:architecture The architecture that is appended to
 #     the archive name, defaults to the local system architecture as returned
 #     by 'uname -m'.
@@ -337,18 +344,15 @@ macro(remake_pack_archive)
     remake_set(pack_suffix ${pack_prefix})
 
     if(pack_suffix)
-      remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME}-${pack_suffix})
       remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}-${pack_suffix}
         ${REMAKE_PROJECT_VERSION} ${pack_arch})
     else(pack_suffix)
-      remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME})
       remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}
         ${REMAKE_PROJECT_VERSION} ${pack_arch})
     endif(pack_suffix)
 
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
-    remake_pack_binary(${pack_generator} COMPONENT ${pack_component}
-      NAME ${pack_name})
+    remake_pack_binary(${pack_generator} COMPONENT ${pack_component})
   endif(pack_build)
 endmacro(remake_pack_archive)
 
@@ -359,16 +363,18 @@ endmacro(remake_pack_archive)
 #   \optional[value] GENERATOR:generator The generator to be used for creating
 #     the source archive, defaults to TGZ. See the CPack documentation for valid
 #     archive generators.
-#   \optional[value] NAME:name The name of the source package to be generated,
-#     defaults to the ReMake project name.
 macro(remake_pack_source_archive)
   remake_arguments(PREFIX pack_ VAR GENERATOR ${ARGN})
   remake_set(pack_generator SELF DEFAULT TGZ)
 
-  remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME})
-  remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}
-    ${REMAKE_PROJECT_VERSION})
+  remake_file_name(pack_file
+    ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_VERSION})
 
   remake_set(CPACK_SOURCE_PACKAGE_FILE_NAME ${pack_file})
-  remake_pack_source(${pack_generator} NAME ${pack_name})
+  remake_pack_source(${pack_generator})
 endmacro(remake_pack_source_archive)
+
+remake_file_rmdir(${REMAKE_PACK_DIR})
+remake_file_rmdir(${REMAKE_PACK_SOURCE_DIR})
+remake_file_mkdir(${REMAKE_PACK_DIR})
+remake_file_mkdir(${REMAKE_PACK_SOURCE_DIR})

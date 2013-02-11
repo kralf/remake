@@ -426,6 +426,8 @@ endmacro(remake_file_read)
 #   \required[value] filename The name of the file to be written to.
 #   \optional[option] TOPLEVEL If this option is present, the file
 #     to be written is a top-level ReMake file.
+#   \optional[option] LINES If provided, this options causes each element
+#     in the list of strings to be appended as an individual line.
 #   \optional[value] FROM:variable The name of a variable holding the content
 #     to be written. Passing file content by reference makes the macro
 #     ignore all additional string values and is particularly useful in the
@@ -434,13 +436,18 @@ endmacro(remake_file_read)
 #     from such modifications.
 #   \optional[list] string The list of strings to be appended to the file.
 macro(remake_file_write file_name)
-  remake_arguments(PREFIX file_ OPTION TOPLEVEL VAR FROM ARGN strings ${ARGN})
+  remake_arguments(PREFIX file_ OPTION TOPLEVEL OPTION LINES VAR FROM
+    ARGN strings ${ARGN})
   remake_file(file_write ${file_name} ${TOPLEVEL})
 
   if(EXISTS ${file_write})
     file(READ ${file_write} file_not_empty)
     if(file_not_empty)
-      file(APPEND ${file_write} ";")
+      if(file_lines)
+        file(APPEND ${file_write} "\n")
+      else(file_lines)
+        file(APPEND ${file_write} ";")
+      endif(file_lines)
     endif(file_not_empty)
   else(EXISTS ${file_write})
     file(WRITE ${file_write})
@@ -449,6 +456,9 @@ macro(remake_file_write file_name)
   if(file_from)
     file(APPEND ${file_write} "${${file_from}}")
   else(file_from)
+    if(file_lines)
+      string(REGEX REPLACE ";" "\n" file_strings "${file_strings}")
+    endif(file_lines)
     file(APPEND ${file_write} "${file_strings}")
   endif(file_from)
 endmacro(remake_file_write)
@@ -492,6 +502,23 @@ macro(remake_file_copy file_copy_destination)
     endif(file_copy_output)
   endforeach(file_copy_src)
 endmacro(remake_file_copy)
+
+### \brief Set file permissions.
+#   This macro sets the permissions on a file. Therefore, a temporary copy
+#   of the file is first created to establish the permissions. Then, the
+#   temporary copy is renamed to replace the original file.
+#   \required[value] filename The name of the file to set the permissions for.
+#   \required[list] perm A list of permission flags as supported by CMake's
+#     install() macro. See the CMake documentation for details.
+macro(remake_file_permissions file_name)
+  remake_arguments(PREFIX file_perm_ ARGN permissions ${ARGN})
+
+  file(COPY ${file_name} DESTINATION ${CMAKE_BINARY_DIR}/${REMAKE_FILE_DIR}
+    FILE_PERMISSIONS ${file_perm_permissions})
+  get_filename_component(file_perm_name ${file_name} NAME)
+  file(RENAME ${CMAKE_BINARY_DIR}/${REMAKE_FILE_DIR}/${file_perm_name}
+    ${file_name})
+endmacro(remake_file_permissions)
 
 ### \brief Link files.
 #   This macro links one or multiple files. The destination is automatically

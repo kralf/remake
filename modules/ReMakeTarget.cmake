@@ -52,7 +52,7 @@ macro(remake_target target_name)
 
     while(target_cmds)
       remake_list_pop(target_cmds target_command SPLIT \n)
-      remake_target_add_command(TARGET ${target_name} ${target_command})
+      remake_target_add_command(${target_name} ${target_command})
     endwhile(target_cmds)
   else(target_cmds)
     if(NOT target_non_empty)
@@ -131,7 +131,7 @@ macro(remake_target_add_command target_name)
       ${REMAKE_TARGET_DIR}/${target_name}.commands TOPLEVEL
       ${OUTPUT} ${AS}
       WORKING_DIRECTORY ${target_working_directory}
-      ${target_args}\n)
+      ${target_args} \n)
   endif(TARGET ${target_name})
 endmacro(remake_target_add_command)
 

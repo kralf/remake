@@ -1,0 +1,287 @@
+#! /usr/bin/perl
+
+############################################################################
+#    Copyright (C) 2013 by Ralf 'Decan' Kaestner                           #
+#    ralf.kaestner@gmail.com                                               #
+#                                                                          #
+#    This program is free software; you can redistribute it and#or modify  #
+#    it under the terms of the GNU General Public License as published by  #
+#    the Free Software Foundation; either version 2 of the License, or     #
+#    (at your option) any later version.                                   #
+#                                                                          #
+#    This program is distributed in the hope that it will be useful,       #
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of        #
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         #
+#    GNU General Public License for more details.                          #
+#                                                                          #
+#    You should have received a copy of the GNU General Public License     #
+#    along with this program; if not, write to the                         #
+#    Free Software Foundation, Inc.,                                       #
+#    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
+############################################################################
+
+use Getopt::Std;
+
+getopts("hqo:r:p:v:d:u:a:w:");
+
+use Cwd;
+use File::Find;
+use File::Glob;
+use File::Basename;
+use File::Path;
+use Date::Parse;
+use Date::Format;
+
+my $generator = "remake-svn2debcl";
+
+my $cl_path = $ARGV[0];
+my $cl_output = $opt_o;
+my $cl_revisions = $opt_r;
+my $cl_project = $opt_p;
+my $cl_version = $opt_v;
+my $cl_distribution = $opt_d;
+my $cl_urgency = $opt_u;
+my $cl_authors = $opt_a;
+my $cl_width = $opt_w;
+my $cl_help = $opt_h;
+my $cl_quiet = $opt_q;
+
+sub print_stdout {
+  print STDOUT @_;
+}
+
+sub print_stderr {
+  if (!$cl_quiet) {
+    print STDERR @_;
+  }
+}
+
+sub print_stdopt {
+  my $option = shift;
+  my $description = shift;
+
+  my $length = length($option);
+  my $indent = 30-$length;
+
+  print_stdout "  $option".' 'x$indent."$description\n";
+}
+
+sub print_help {
+  print_stdout "usage: $generator [OPT1 [OPT2 [...]]] [PATH]\n";
+  print_stdout "\033[1mConvert Subversion log to Debian changelog\033[0m\n";
+  print_stdopt "PATH", "path to working copy [.]";
+  print_stdopt "OPT1 OPT2 ...", "list of options as given below [default]";
+  print_stdopt "-h", "display usage and exit [false]";
+  print_stdopt "-q", "do not generate any output [false]";
+  print_stdopt "-o FILE|-", "optional output file or STDOUT [changelog]";
+  print_stdopt "-r [REV1:]REV2", "first and last revision [0:HEAD]";
+  print_stdopt "-p NAME", "project name [guess from repository]";
+  print_stdopt "-v VERSION", "project version [guess from repository]";
+  print_stdopt "-d DISTRIBUTION", "project distribution [unstable]";
+  print_stdopt "-u URGENCY", "project urgency [low]";
+  print_stdopt "-a USER1:AUTHOR1[;...]", "optional list of project authors";
+  print_stdopt "-w WIDTH", "message format output width [70]";
+}
+
+sub parse_svn {
+  my $repository = shift;
+  my $project = shift;
+  my $revisions = shift;
+  my $authors = shift;
+
+  $info = `svn info $$repository{path} 2> /dev/null` or
+    die "Error: $$repository{path} is not a working copy\n";
+
+  $$repository{root} = $info;
+  $$repository{root} =~ s/.*Repository Root:\s*([^\s]+)\n.*/\1/s;
+  print_stderr "$generator: Repository root is $$repository{root}\n";
+
+  my $head = $info;
+  $head =~ s/.*Revision:\s*([0-9]+).*/\1/s;
+  if ((!$$repository{head}) or ($$repository{head} > $head)) {
+    $$repository{head} = $head;
+  }
+  print_stderr "$generator: Repository head revision is $head\n";
+
+  if (!$$project{name}) {
+    $$project{name} = $$repository{root};
+    $$project{name} =~ s/^.*?([a-zA-Z\-_]+)$/\1/;
+  }
+  print_stderr "$generator: Project name is $$project{name}\n";
+
+  my $version = $$project{version};
+  for ($rev = $$repository{tail}; $rev <= $$repository{head}; $rev++) {
+    my $lists = `svn cat -r $rev CMakeLists.txt 2> /dev/null`;
+    if (($? == 0) and ($lists =~ /.*remake_project\(.*?\).*/s)) {
+      $lists =~ s/.*remake_project\((.*?)\).*/\1/s;
+      $version = $lists;
+
+      $version =~ s/.*?([0-9\.]+).*/\1/s;
+      $version =~ s/^(.*?)[0\.]+$/\1/s;
+      $version .= "-$rev";
+    }
+  
+    my %revision;
+    $revision{number} = $rev;
+    $revision{version} = $version;
+
+    $log = `svn log -r $rev $$repository{path} 2> /dev/null`;
+    my $line = $log;
+    $line =~ s/.*(r$rev.*?)\n.*/\1/s;
+    my @header = split(/\s*\|\s*/, $line);
+    my $author = @header[1];
+    if ($$authors{$author}) {
+      $revision{author} = $$authors{$author};
+    }
+    else {
+      $revision{author} = "$author <kralf\@unknown>";
+    }
+    $revision{time} = str2time(@header[2]);
+    my @lines = split(/\n/, $log);
+    my @message = @lines[2..(@lines-2)];
+    my $stripped = join("\n", @message);
+    $stripped =~ s/^[\s\n]*//s;
+    $stripped =~ s/[\s\n]*$//s;
+    @{$revision{message}} = split(/\n/, $stripped);
+
+    print_stderr "$generator: Revision $revision{number}: ".
+      "$$project{name} ($revision{version}) $$project{distribution}; ".
+      "urgency=$$project{urgency}\n";
+
+    %{$$revisions{$rev}} = %revision;
+  }
+}
+
+sub generate_debcl {
+  my $changelog = shift;
+  my $repository = shift;
+  my $project = shift;
+  my $revisions = shift;
+  my $width = shift;
+
+  $$changelog = "";
+  for ($rev = $$repository{head}; $rev >= $$repository{tail}; $rev--) {
+    if ($$changelog) {
+      $$changelog .= "\n";
+    }
+
+    $$changelog .= "$$project{name} ($$revisions{$rev}{version}) ".
+      "$$project{distribution}; urgency=$$project{urgency}\n";
+    $$changelog .= "\n";
+
+    foreach $line (@{$$revisions{$rev}{message}}) {
+      if ($line =~ /^[a-zA-Z0-9]/) {
+        $line = "  * $line";
+      }
+      else {
+        $line = "    $line";
+      }
+
+      my $min = $width-10;
+      $format = '(.{'.$min.','.$width.'}\s+[^\s]*)\s+';
+      $line =~ s/$format/$1\n/;
+      $line =~ /[a-zA-Z0-9]/;
+      my $indent = ' 'x$-[0];
+      $line =~ s/\n/\n$indent/mg;
+      $$changelog .= "$line\n";
+    }
+
+    $$changelog .= "\n";
+    $time = time2str("%a, %d %b %Y %H:%M:%S %z", $$revisions{$rev}{time});
+    $$changelog .= " -- $$revisions{$rev}{author}  $time\n";
+  }
+}
+
+my %repository;
+my %project;
+my %authors;
+my %revisions;
+my $changelog;
+
+if ($cl_help) {
+  print_help();
+  exit 0;
+}
+
+if ($cl_path) {
+  $repository{path} = Cwd::abs_path($cl_path);
+}
+else {
+  $repository{path} = Cwd::abs_path(".");
+}
+
+if ($cl_revisions) {
+  if ($cl_revisions =~ /^[0-9]+:[0-9]+$/) {
+    $repository{tail} = $cl_revisions;
+    $repository{head} = $cl_revisions;
+
+    $repository{tail} =~ s/^([0-9]+):([0-9]+)$/\1/;
+    $repository{head} =~ s/^([0-9]+):([0-9]+)$/\2/;
+  }
+  elsif ($cl_revisions =~ /^[0-9]+$/) {
+    $repository{tail} = 1;
+    $repository{head} = $cl_revisions;
+  }
+  else {
+    $repository{tail} = 1;
+  }
+}
+else {
+  $repository{tail} = 1;
+}
+
+if ($cl_project) {
+  $project{name} = $cl_project;
+}
+
+if ($cl_version) {
+  $project{version} = $cl_version;
+}
+else {
+  $project{version} = "0.1";
+}
+
+if ($cl_distribution) {
+  $project{distribution} = $cl_distribution;
+}
+else {
+  $project{distribution} = "unstable";
+}
+
+if ($cl_urgency) {
+  $project{urgency} = $cl_urgency;
+}
+else {
+  $project{urgency} = "low";
+}
+
+if ($cl_authors) {
+  foreach my $auth (split(/;/, $cl_authors)) {
+    my $key = $auth;
+    $key =~ s/(.*?):(.*)/\1/;
+
+    $authors{$key} = $auth;
+    $authors{$key} =~ s/(.*?):(.*)/\2/;
+  }
+}
+
+if (!$cl_width) {
+  $cl_width = 70;
+}
+
+if (!$cl_output) {
+  $cl_output = "changelog";
+}
+
+parse_svn(\%repository, \%project, \%revisions, \%authors);
+generate_debcl(\$changelog, \%repository, \%project, \%revisions, $cl_width);
+
+if ($cl_output =~ /\-/) {
+  print_stdout $changelog;
+}
+else {
+  open(file, "> $cl_output") or
+    die("Error: $!\n");
+  print file $changelog;
+  close(file);
+}

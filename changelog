@@ -1,0 +1,893 @@
+remake (0.5-132) unstable; urgency=low
+
+  * Increased project version to 0.5
+  * Restructured source tree
+    + CMake modules now reside under module directory
+    + Script distribution under src/bin
+  * New features:
+    + Changed version format in remake_project() to MAJOR.MINOR.PATH-REV
+    + Added ReMakeDistribute modules for automated project distribution
+      (currently supports the Debian distribution standards)
+    + Added remake_file_permissions() macro
+    + Added ReMakePack archive macros for source and binary packaging
+    + Added svn2debcl script for converting Subversion logs into the
+      Debian changelog format
+  * Bugfixes:
+    + Fixed minor issue in remake_target_add_command()
+  * Other changes:
+    + remake_svn_log() has new parameter TARGET
+    + remake_project() issues TARGET ${REMAKE_PROJECT_CHANGELOG_TARGET}
+      to remake_svn_log()
+    + remake_file_write() has new option LINES
+    + CMake documentation generator gendocs now distributed with remake
+      package and displaying command line help
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 11 Feb 2013 07:59:00 +0100
+
+remake (0.4-131) unstable; urgency=low
+
+  * New features:
+    + remake_ros_find_package() delivers library directories
+    + remake_pack_archive() is a new macros to create binary archives
+    + remake_pack_source() and remake_pack_source_archive() are new macros
+      for creating source archives
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 07 Feb 2013 10:48:42 +0100
+
+remake (0.4-130) unstable; urgency=low
+
+  * Added RemakeROS module:
+    + remake_ros() distribution discovery macro
+    + remake_ros_find_package() package discovery macro
+  * Modifications in RemakeFind module:
+    + remake_find_file() sets ${PACKAGE}_PATH instead of ${PACKAGE}_FILE
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 30 Jan 2013 17:37:30 +0100
+
+remake (0.4-129) unstable; urgency=low
+
+  * Fixes for CMake version 2.8.7:
+    + Added module build directory to CMAKE_MODULE_PATH
+    + Packages are now created and expected in build directory, due to a
+      bug in CPack which ignores the package target directory
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 19 Oct 2012 07:37:21 +0200
+
+remake (0.4-128) unstable; urgency=low
+
+  * Added OUTDATED option to remake_file_configure()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Oct 2011 15:27:12 +0200
+
+remake (0.4-127) unstable; urgency=low
+
+  * Added INSTALL option to remake_project_header()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 28 Jun 2011 15:16:03 +0200
+
+remake (0.4-126) unstable; urgency=low
+
+  * Added remake_target_add_dependencies() and remake_target_get_dependencies()
+  * Changed comment output of remake_generate()
+  * Added REMAKE_PROJECT_BINARY_DIR and REMAKE_PYTHON_BINARY_DIR auxiliary
+    variables
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 27 Jun 2011 07:56:50 +0200
+
+remake (0.4-125) unstable; urgency=low
+
+  * Revised remake_project() to not fail for a missing copyright file
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 23 Jun 2011 15:47:05 +0200
+
+remake (0.4-124) unstable; urgency=low
+
+  * Revised TARGET property of remake_generate() and remake_generate_custom() to
+    be optional
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 23 Jun 2011 10:39:00 +0200
+
+remake (0.4-123) unstable; urgency=low
+
+  * Changed build message for building Python distributions
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 22 Jun 2011 14:13:59 +0200
+
+remake (0.4-122) unstable; urgency=low
+
+  * Added GENERATED option to remake_generate_custom()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 22 Jun 2011 11:58:54 +0200
+
+remake (0.4-121) unstable; urgency=low
+
+  * Added timestamp comparison between input and output files of
+    remake_file_configure()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 21 Jun 2011 12:33:41 +0200
+
+remake (0.4-120) unstable; urgency=low
+
+  * Fixed bug in remake_python_distribute() that would prevent the specification
+    of multiple packages
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 21 Jun 2011 11:01:22 +0200
+
+remake (0.4-119) unstable; urgency=low
+
+  * Reverted CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT fix
+  * Added DESTINATION options to remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 20 May 2011 20:13:20 +0200
+
+remake (0.4-118) unstable; urgency=low
+
+  * Added REMAKE_CACHE_INITIALIZED cache variable to circumnavigate the
+    use of CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 20 May 2011 19:27:17 +0200
+
+remake (0.4-117) unstable; urgency=low
+
+  * Removed *.tpp from the default glob parameters of remake_qt3_moc() and
+    remake_qt4_moc()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 14 Apr 2011 13:59:14 +0200
+
+remake (0.4-116) unstable; urgency=low
+
+  * Added TYPES parameter to remake_doc_doxygen()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 06 Mar 2011 18:07:19 +0100
+
+remake (0.4-115) unstable; urgency=low
+
+  * Added remake_qt4_ui() macro for processing Qt4 user interface files
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 03 Mar 2011 16:13:11 +0100
+
+remake (0.4-114) unstable; urgency=low
+
+  * Added underscore replacement to remake_python_package_name()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 03 Mar 2011 14:54:20 +0100
+
+remake (0.4-113) unstable; urgency=low
+
+  * Removed revision number from svn log command to facilitate full
+    changelogs
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 03 Mar 2011 14:12:38 +0100
+
+remake (0.4-112) unstable; urgency=low
+
+  * Majorly revised the ReMakePython module
+  * Added remake_unset() to ReMakePrivate module
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 02 Mar 2011 18:53:35 +0100
+
+remake (0.3-111) unstable; urgency=low
+
+  * Added CMAKE_INSTALL_RPATH to the list of variables passed by
+    remake_recurse_cmake()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 28 Feb 2011 10:33:47 +0100
+
+remake (0.3-110) unstable; urgency=low
+
+  * Fixed documentation in ReMakeGenerate
+  * Added new remake_file_prefix() macro
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 27 Feb 2011 07:55:13 +0100
+
+remake (0.3-109) unstable; urgency=low
+
+  * Fixed documentation bug in ReMakeRecurse
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 25 Feb 2011 18:26:38 +0100
+
+remake (0.3-108) unstable; urgency=low
+
+  * Added new ReMakeRecurse module with support for Make, CMake, and QMake
+    projects
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 25 Feb 2011 17:55:24 +0100
+
+remake (0.3-107) unstable; urgency=low
+
+  * Fixed bug in remake_doc_doxygen() that would cause all document types
+    to be processed
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 10 Nov 2010 08:05:03 +0100
+
+remake (0.3-106) unstable; urgency=low
+
+  * Fixed bug in remake_project() that failed to initialize CMAKE_INSTALL_PREFIX
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 22 Sep 2010 07:12:37 +0200
+
+remake (0.3-105) unstable; urgency=low
+
+  * Polished ReMakeBranch
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 10 Sep 2010 13:13:19 +0200
+
+remake (0.3-104) unstable; urgency=low
+
+  * Fixed issue in remake_qt4_moc() that would cause macro qt4_wrap_cpp() to
+    be unknown
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 10 Sep 2010 10:12:08 +0200
+
+remake (0.3-103) unstable; urgency=low
+
+  * Adapted remake_project() to recent changes in remake_set()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 10 Sep 2010 09:54:16 +0200
+
+remake (0.3-102) unstable; urgency=low
+
+  * Modified remake_set() to infer type and description of force-initialized cache
+    variables
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 09 Sep 2010 15:12:55 +0200
+
+remake (0.3-101) unstable; urgency=low
+
+  * Modified remake_python_package() to install into and from single distribution
+    directory
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 19 Jul 2010 11:25:16 +0200
+
+remake (0.3-100) unstable; urgency=low
+
+  * Fixed bug in remake_doc_doxygen() and remake_doc_groff() that would
+    not define document type-sepcific variables with cached state
+  * Added DOCUMENTATION_DESTINATION as project variable to remake_project()
+  * Fixed documentation of remake_generate_custom() to mention command-line
+    placeholders
+  * Added INSTALL parameter to all documentation generators
+  * Added install destination placeholder to remake_doc_install()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 16 Jul 2010 14:32:15 +0200
+
+remake (0.3-99) unstable; urgency=low
+
+  * Added dependencies and output to remake_python_extension()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 15 Jul 2010 18:07:02 +0200
+
+remake (0.3-98) unstable; urgency=low
+
+  * Added documentation to remake_pack_deb()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 15 Jul 2010 10:33:25 +0200
+
+remake (0.3-97) unstable; urgency=low
+
+  * Added automated package dependency resolution for package names with
+    hardcoded version to remake_pack_deb()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 15 Jul 2010 10:30:22 +0200
+
+remake (0.3-96) unstable; urgency=low
+
+  * Added INSTALL parameter to remake_add_library(), remake_add_executable(), and
+    remake_add_executables()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 14 Jul 2010 17:08:51 +0200
+
+remake (0.3-95) unstable; urgency=low
+
+  * Fixed bug in remake_file_configure() that would cause files not to
+    copy
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 14 Jul 2010 17:01:53 +0200
+
+remake (0.3-94) unstable; urgency=low
+
+  * Now resetting OUTPUT variable in remake_svn_log()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 14 Jul 2010 16:54:11 +0200
+
+remake (0.3-93) unstable; urgency=low
+
+  * Widely finished modification of remake_python_extension()
+  * Added and tested remake_python_swig()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 14 Jul 2010 15:33:32 +0200
+
+remake (0.3-92) unstable; urgency=low
+
+  * Now evaluating result variable in remake_svn_revision() to determine
+    whether Subversion works
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 13 Jul 2010 14:38:22 +0200
+
+remake (0.3-91) unstable; urgency=low
+
+  * Bugfixes in ReMakeProject
+  * Added TYPE parameter to remake_add_library()
+  * Further changes towards a proper integration of ReMakePython
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 13 Jul 2010 14:09:54 +0200
+
+remake (0.3-90) unstable; urgency=low
+
+  * Module inclusion now happens in remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 08 Jul 2010 13:18:43 +0200
+
+remake (0.3-89) unstable; urgency=low
+
+  * Added RECURSE option to remake_add_headers(), replacing the former behavior
+    of relative-path install destinations
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 08 Jul 2010 11:14:22 +0200
+
+remake (0.3-88) unstable; urgency=low
+
+  * Fixed a variable naming bug in remake_add_files()
+  * Modified remake_file_glob() to correctly handle hidden directories and
+    excludes in recursive search
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 08 Jul 2010 10:00:52 +0200
+
+remake (0.3-87) unstable; urgency=low
+
+  * Modified the INSTALL parameter of remake_add_...() to resolve to absolute
+    path expressions
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 08 Jul 2010 07:53:46 +0200
+
+remake (0.3-86) unstable; urgency=low
+
+  * Added IGNORE_CASE option to remake_generate_flex()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 06 Jul 2010 22:34:54 +0200
+
+remake (0.3-85) unstable; urgency=low
+
+  * Sorry for the bug in remake_project_get()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 06 Jul 2010 13:48:21 +0200
+
+remake (0.3-84) unstable; urgency=low
+
+  * Added DESTINATION option to remake_project_get()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 06 Jul 2010 13:37:30 +0200
+
+remake (0.3-83) unstable; urgency=low
+
+  * Fixed bug in remake_project() that would cause the changelog installation
+    to fail
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 06 Jul 2010 09:41:53 +0200
+
+remake (0.3-82) unstable; urgency=low
+
+  * Extended remake_svn_log() to use remake_component_add_command()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 06 Jul 2010 09:39:34 +0200
+
+remake (0.3-81) unstable; urgency=low
+
+  * Added NOTES parameter to remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 06 Jul 2010 08:43:01 +0200
+
+remake (0.3-80) unstable; urgency=low
+
+  * Fixed bug in remake_generate_flex()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 05 Jul 2010 18:55:21 +0200
+
+remake (0.3-79) unstable; urgency=low
+
+  * Fixed directory glob bug in remake_file_glob()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 05 Jul 2010 18:34:10 +0200
+
+remake (0.3-78) unstable; urgency=low
+
+  * Added EXCLUDE parameter to remake_file_glob()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 05 Jul 2010 14:49:15 +0200
+
+remake (0.3-77) unstable; urgency=low
+
+  * Added remake_add_module() convenience macro
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 05 Jul 2010 08:44:55 +0200
+
+remake (0.3-76) unstable; urgency=low
+
+  * Fixed bug in remake_file_suffix()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 04 Jul 2010 19:40:03 +0200
+
+remake (0.3-75) unstable; urgency=low
+
+  * Fixed component bug in remake_doc_source()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 04 Jul 2010 19:18:59 +0200
+
+remake (0.3-74) unstable; urgency=low
+
+  * Fixed documentation of remake_file_glob()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 04 Jul 2010 18:56:51 +0200
+
+remake (0.3-73) unstable; urgency=low
+
+  * Revised concepts in ReMakeDoc, documentation output is now target-based
+  * Added -q flag to cdoc.pl
+  * Added remake_component_target_name()
+  * ReMake project variables now contain absolute paths
+  * Added ReMakeVersion module and remake_minimum_required() macro
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 04 Jul 2010 18:55:02 +0200
+
+remake (0.2-72) unstable; urgency=low
+
+  * Added remake_generate_custom() and tested Flex/Bison generator
+  * Added remake_file_name_substitute()
+  * Fixed bug in remake_list_string()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 02 Jul 2010 10:08:17 +0200
+
+remake (0.2-71) unstable; urgency=low
+
+  * First draft of ReMakeGenerate module
+  * First draft of ReMakePython module
+  * Cleaned out remake_component() calls from ReMake.cmake
+  * Provided new remake_component_build(), remake_component_add_commands(), and
+    remake_component_add_dependencies() for a clean integration of component-specific rules
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 29 Jun 2010 13:40:22 +0200
+
+remake (0.2-70) unstable; urgency=low
+
+  * Fixed working directory of changelog target
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 15 Jun 2010 10:21:49 +0200
+
+remake (0.2-69) unstable; urgency=low
+
+  * Added remake_doc_source(), a source generator for documentation
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Jun 2010 12:40:48 +0200
+
+remake (0.2-68) unstable; urgency=low
+
+  * Added INIT option to remake_set
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Jun 2010 09:33:22 +0200
+
+remake (0.2-67) unstable; urgency=low
+
+  * Fixed bug in remake_list_replace()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 03 Jun 2010 16:25:54 +0200
+
+remake (0.2-66) unstable; urgency=low
+
+  * Added module ReMakeComponent for component-structure management
+  * Revised ReMakeProject, ReMakePack, ReMakeDoc, and ReMake to integrate
+    with ReMakeComponent
+  * Removed REMA
+  * Added remake_file_rmdir() macro
+  * Added remake_list_replace() macro
+  * Added NON_EMPTY option to remake_target() macro
+  * Minor version increased to 2
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 03 Jun 2010 16:11:01 +0200
+
+remake (0.1-65) unstable; urgency=low
+
+  * Added TODO file parameter to remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 02 Jun 2010 10:32:46 +0200
+
+remake (0.1-64) unstable; urgency=low
+
+  * Added remake_add_executable() that produces a single executable target
+    from a list of sources
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 12 May 2010 14:27:50 +0200
+
+remake (0.1-63) unstable; urgency=low
+
+  * Fixed cmake policy CMP0012 bug in ReMakeList
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 30 Apr 2010 23:42:43 +0200
+
+remake (0.1-62) unstable; urgency=low
+
+  * Fixed bug in remake_qt3_include()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 20 Mar 2010 13:38:30 +0100
+
+remake (0.1-61) unstable; urgency=low
+
+  * Added Qt3 support
+  * Modified remake_find_package() to take a package alias
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 20 Mar 2010 13:33:09 +0100
+
+remake (0.1-60) unstable; urgency=low
+
+  * Fixed recursion bug in remake_branch_include()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 11 Feb 2010 09:24:06 +0100
+
+remake (0.1-59) unstable; urgency=low
+
+  * Added dependency resolution to install/uninstall targets generated
+    remake_pack_deb()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 01 Dec 2009 16:56:13 +0100
+
+remake (0.1-58) unstable; urgency=low
+
+  * Fixed bug in remake_find_package()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 30 Nov 2009 16:52:22 +0100
+
+remake (0.1-57) unstable; urgency=low
+
+  * Added script prefix support to ReMakeProject and remake_add_scripts()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 30 Nov 2009 11:35:59 +0100
+
+remake (0.1-56) unstable; urgency=low
+
+  * Another fix in remake_find_library()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 30 Nov 2009 10:09:32 +0100
+
+remake (0.1-55) unstable; urgency=low
+
+  * Fixed small issue in remake_find_library()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 30 Nov 2009 09:48:07 +0100
+
+remake (0.1-54) unstable; urgency=low
+
+  * Fixed bug in remake_branch_include()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 26 Nov 2009 10:28:27 +0100
+
+remake (0.1-53) unstable; urgency=low
+
+  * Modified remake_find_package() to pass the provided package name as
+    module name to pkg_check_modules()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 26 Nov 2009 09:10:29 +0100
+
+remake (0.1-52) unstable; urgency=low
+
+  * Fixed bug in remake_add_configurations()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 18:56:13 +0100
+
+remake (0.1-51) unstable; urgency=low
+
+  * Fixed another prefix bug in ReMake convenience macros
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 18:20:27 +0100
+
+remake (0.1-50) unstable; urgency=low
+
+  * Added ReMakeTest module with an initial revision of unit testing
+    support
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 16:28:49 +0100
+
+remake (0.1-49) unstable; urgency=low
+
+  * Fixed regular expression bug in remake_branch_include()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 12:34:42 +0100
+
+remake (0.1-48) unstable; urgency=low
+
+  * Fixed PREFIX OFF bug in remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 11:52:03 +0100
+
+remake (0.1-47) unstable; urgency=low
+
+  * Added pinning support, needs to be revised in future versions of
+    apt
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 11:39:09 +0100
+
+remake (0.1-46) unstable; urgency=low
+
+  * Added find_file() macro to ReMakeFind
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 11:02:58 +0100
+
+remake (0.1-45) unstable; urgency=low
+
+  * Added package uninstall targets to ReMakePack
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 25 Nov 2009 10:30:25 +0100
+
+remake (0.1-44) unstable; urgency=low
+
+  * Added optional FILENAME argument to remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 01 Nov 2009 10:47:46 +0100
+
+remake (0.1-43) unstable; urgency=low
+
+  * ReMake indeed works with CMake version >= 2.6.2, only
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 12 Oct 2009 11:29:09 +0200
+
+remake (0.1-42) unstable; urgency=low
+
+  * Added option OPTIONAL to ReMakeFind macros
+  * Fixed variable casing issues in remake_find_package()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 18 Sep 2009 22:44:03 +0200
+
+remake (0.1-41) unstable; urgency=low
+
+  * Extended remake_find_package() by the CONFIG option
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 18 Sep 2009 09:20:37 +0200
+
+remake (0.1-40) unstable; urgency=low
+
+  * Updated documentation of remake_find_executable()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 18 Sep 2009 08:48:17 +0200
+
+remake (0.1-39) unstable; urgency=low
+
+  * Fixed STREQUAL bug in remake_arguments()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 17 Sep 2009 11:08:10 +0200
+
+remake (0.1-38) unstable; urgency=low
+
+  * Fixed bug in remake_set() that would not update variables if FROM was
+    an empty variable
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 09 Sep 2009 17:08:28 +0200
+
+remake (0.1-37) unstable; urgency=low
+
+  * Fixed bug in remake_doc_custom() that was introduced by changes in
+    remake_file_glob()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 08 Sep 2009 13:48:32 +0200
+
+remake (0.1-36) unstable; urgency=low
+
+  * Fixed bug in remake_arguments()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 08 Sep 2009 13:29:03 +0200
+
+remake (0.1-35) unstable; urgency=low
+
+  * remake_include() takes glob expressions, remake_file_glob() filters
+    files and directories
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 08 Sep 2009 13:06:00 +0200
+
+remake (0.1-34) unstable; urgency=low
+
+  * Added explicit default component  to ReMakeProject, ReMake convenience
+    rules take COMPONENT argument
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 08 Sep 2009 08:45:32 +0200
+
+remake (0.1-33) unstable; urgency=low
+
+  * Fixed default glob bug in remake_add_plugin()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 07 Sep 2009 15:17:26 +0200
+
+remake (0.1-32) unstable; urgency=low
+
+  * Added COMPONENT argument to remake_add_file()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 05 Sep 2009 13:22:58 +0200
+
+remake (0.1-31) unstable; urgency=low
+
+  * remake_var_name() documentation updated
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 05 Sep 2009 11:23:41 +0200
+
+remake (0.1-30) unstable; urgency=low
+
+  * remake_find_library() output based on the library name instead of the
+    package name
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 05 Sep 2009 11:22:05 +0200
+
+remake (0.1-29) unstable; urgency=low
+
+  * Removed ReMake's orphaned Doxyfile
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 05 Sep 2009 10:03:23 +0200
+
+remake (0.1-28) unstable; urgency=low
+
+  * remake_find_library() uses PACKAGE argument as PATH_SUFFIXES for the
+    header search
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 05 Sep 2009 09:22:13 +0200
+
+remake (0.1-27) unstable; urgency=low
+
+  * Fixed some issues in remake_find_library()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Sep 2009 22:55:36 +0200
+
+remake (0.1-26) unstable; urgency=low
+
+  * Cleaned remake_project_prefix(), added PREFIX argument to remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Sep 2009 22:05:07 +0200
+
+remake (0.1-25) unstable; urgency=low
+
+  * Fixed bug in remake_project_get()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Sep 2009 21:33:33 +0200
+
+remake (0.1-24) unstable; urgency=low
+
+  * Added argument keys to remake_project(), Dizan joining the list of
+    authors
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Sep 2009 20:49:53 +0200
+
+remake (0.1-23) unstable; urgency=low
+
+  * Added author name to Debian package maintainer field
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Sep 2009 20:13:25 +0200
+
+remake (0.1-22) unstable; urgency=low
+
+  * Introduced optional PREFIX for compile targets, added remake_define()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 04 Sep 2009 19:44:59 +0200
+
+remake (0.1-21) unstable; urgency=low
+
+  * Revised part of the ReMake prefix handling
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 02 Sep 2009 15:53:10 +0200
+
+remake (0.1-20) unstable; urgency=low
+
+  * ReMake Qt4 support module revised, documentation for ReMake's private
+    module
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 25 Aug 2009 16:22:56 +0200
+
+remake (0.1-19) unstable; urgency=low
+
+  * Bugfixes in remake_branch_link(), plugin targets revised and
+    tested
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 24 Aug 2009 22:09:49 +0200
+
+remake (0.1-18) unstable; urgency=low
+
+  * ReMake's file configuration revised, now supports newline escapes
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 24 Aug 2009 17:51:59 +0200
+
+remake (0.1-17) unstable; urgency=low
+
+  * ReMake branching revised and tested
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 19 Aug 2009 17:19:52 +0200
+
+remake (0.1-16) unstable; urgency=low
+
+  * ReMakeFile bug fix in remake_file_write()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Aug 2009 15:38:01 +0200
+
+remake (0.1-15) unstable; urgency=low
+
+  * ReMakeProject fixed to install changelog
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Aug 2009 14:41:17 +0200
+
+remake (0.1-14) unstable; urgency=low
+
+  * ReMakeSVN fixed for complete log output
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Aug 2009 14:38:02 +0200
+
+remake (0.1-13) unstable; urgency=low
+
+  * Bugfixes in ReMakePack
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Aug 2009 14:32:21 +0200
+
+remake (0.1-12) unstable; urgency=low
+
+  * ReMakeProject defines project changelog target
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Aug 2009 14:26:51 +0200
+
+remake (0.1-11) unstable; urgency=low
+
+  * ReMakeSVN log build rule depends on changed SVN revision
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Aug 2009 14:14:53 +0200
+
+remake (0.1-10) unstable; urgency=low
+
+  * ReMake projects use Subversion head revision as patch version by
+    default
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 12 Aug 2009 13:04:24 +0200
+
+remake (0.1-9) unstable; urgency=low
+
+  * ReMakeSVN module added
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Aug 2009 15:49:22 +0200
+
+remake (0.1-8) unstable; urgency=low
+
+  * ReMake documentation generates man pages and groff output
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Aug 2009 10:19:23 +0200
+
+remake (0.1-7) unstable; urgency=low
+
+  * Further documentation of the ReMake modules
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Aug 2009 14:02:54 +0200
+
+remake (0.1-6) unstable; urgency=low
+
+  * First draft of ReMake documentation parser
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 05 Aug 2009 19:32:07 +0200
+
+remake (0.1-5) unstable; urgency=low
+
+  * Major ReMake variable renaming to lower the risk of global conflicts,
+    first version of Groff documentation target
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 03 Aug 2009 18:09:06 +0200
+
+remake (0.1-4) unstable; urgency=low
+
+  * ReMake builds individual packages from project components
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 01 Aug 2009 19:31:22 +0200
+
+remake (0.1-3) unstable; urgency=low
+
+  * Restructuring ReMake
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 31 Jul 2009 21:26:24 +0200
+
+remake (0.1-2) unstable; urgency=low
+
+  * ReMake Debian packaging works
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 29 Jul 2009 18:48:36 +0200
+
+remake (0.1-1) unstable; urgency=low
+
+  * Initial revision of ReMake
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 29 Jul 2009 16:49:15 +0200

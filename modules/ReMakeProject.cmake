@@ -40,8 +40,8 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[value] VERSION:version The version of the project, defaults to
 #     0.1. Here, the macro expects a string value that reflects standard
 #     versioning conventions, i.e. the version string is of the form
-#     ${MAJOR}.${MINOR}.${PATCH}. If the patch version is omitted from the
-#     string, the project's Subversion revision is used instead.
+#     ${MAJOR}.${MINOR}.${PATCH}-${REVISION}. If the revision is omitted
+#     from the string, the project's Subversion revision is used instead.
 #   \optional[value] RELEASE:release The release of the project, defaults to
 #     alpha. This value may contain a string describing the release status,
 #     such as alpha, beta, unstable, or stable.
@@ -157,19 +157,30 @@ macro(remake_project project_name)
   remake_set(project_documentation_destination SELF DEFAULT
     share/doc/${REMAKE_PROJECT_FILENAME})
 
-  remake_set(project_regex "^([0-9]+)[.]?([0-9]*)[.]?([0-9]*)$")
+  remake_set(project_regex "^([0-9]+)[.]?([0-9]*)[.]?([0-9]*)[-]?([0-9]*)$")
   string(REGEX REPLACE ${project_regex} "\\1" REMAKE_PROJECT_MAJOR
     ${project_version})
   string(REGEX REPLACE ${project_regex} "\\2" REMAKE_PROJECT_MINOR
     ${project_version})
   string(REGEX REPLACE ${project_regex} "\\3" REMAKE_PROJECT_PATCH
     ${project_version})
+  string(REGEX REPLACE ${project_regex} "\\4" REMAKE_PROJECT_REVISION
+    ${project_version})
   remake_set(REMAKE_PROJECT_MAJOR SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_MINOR SELF DEFAULT 0)
+  remake_set(REMAKE_PROJECT_PATCH SELF DEFAULT 0)
   remake_svn_revision(project_revision)
-  remake_set(REMAKE_PROJECT_PATCH SELF DEFAULT ${project_revision})
+  remake_set(REMAKE_PROJECT_REVISION SELF DEFAULT ${project_revision})
   remake_set(REMAKE_PROJECT_VERSION
-    ${REMAKE_PROJECT_MAJOR}.${REMAKE_PROJECT_MINOR}.${REMAKE_PROJECT_PATCH})
+    ${REMAKE_PROJECT_MAJOR}.${REMAKE_PROJECT_MINOR})
+  if(REMAKE_PROJECT_PATCH)
+    remake_set(REMAKE_PROJECT_VERSION
+      ${REMAKE_PROJECT_VERSION}.${REMAKE_PROJECT_PATCH})
+  endif(REMAKE_PROJECT_PATCH)
+  if(REMAKE_PROJECT_REVISION)
+    remake_set(REMAKE_PROJECT_VERSION
+      ${REMAKE_PROJECT_VERSION}-${REMAKE_PROJECT_REVISION})
+  endif(REMAKE_PROJECT_REVISION)
   remake_set(REMAKE_PROJECT_RELEASE ${project_release})
 
   remake_set(REMAKE_PROJECT_SUMMARY ${project_summary})
@@ -237,11 +248,12 @@ macro(remake_project project_name)
   remake_component_switch(${REMAKE_PROJECT_COMPONENT})
 
   if(EXISTS ${REMAKE_PROJECT_CHANGELOG})
-    remake_file_configure(${REMAKE_PROJECT_CHANGELOG} OUTPUT project_changelog)
+    remake_file_configure(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG)
   else(EXISTS ${REMAKE_PROJECT_CHANGELOG})
-    remake_svn_log(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG)
-    remake_set(project_changelog ${REMAKE_PROJECT_CHANGELOG})
+    remake_svn_log(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG
+      TARGET ${REMAKE_PROJECT_CHANGELOG_TARGET})
   endif(EXISTS ${REMAKE_PROJECT_CHANGELOG})
+  remake_set(project_changelog ${REMAKE_PROJECT_CHANGELOG})
 
   remake_file_configure(${REMAKE_PROJECT_README} OUTPUT project_readme)
   remake_file_configure(${REMAKE_PROJECT_COPYRIGHT} OUTPUT project_copyright)

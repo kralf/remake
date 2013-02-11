@@ -70,11 +70,15 @@ endmacro(remake_svn_revision)
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_add_command(). See
 #     ReMakeComponent for details.
+#   \optional[var] TARGET:target The optional name of a top-level target
+#     to add the build commands to, defaults to svn_log.
 #   \optional[var] OUTPUT:variable The optional name of a variable to be
 #     assigned the absolute-path output filename.
 macro(remake_svn_log svn_file)
-  remake_arguments(PREFIX svn_ VAR REVISION VAR COMPONENT VAR OUTPUT ${ARGN})
+  remake_arguments(PREFIX svn_ VAR REVISION VAR COMPONENT VAR TARGET
+    VAR OUTPUT ${ARGN})
   remake_set(svn_revision SELF DEFAULT 0:HEAD)
+  remake_set(svn_target SELF DEFAULT svn_log)
 
   if(svn_output)
     remake_set(${svn_output})
@@ -91,16 +95,15 @@ macro(remake_svn_log svn_file)
 
       remake_file_mkdir(${REMAKE_SVN_DIR})
       remake_file(svn_head ${REMAKE_SVN_DIR}/head)
-      remake_component_add_command(
-        OUTPUT ${svn_head} AS svn_head
+      add_custom_command(
+        OUTPUT ${svn_head}
         COMMAND ${Subversion_SVN_EXECUTABLE} info | grep ^Revision |
           grep -o [0-9]* > ${svn_head} VERBATIM
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/.svn/entries
-        COMMENT "Retrieving Subversion head revision"
-        ${COMPONENT})
+        COMMENT "Retrieving Subversion head revision")
       remake_component_add_command(
-        OUTPUT ${svn_absolute} AS svn_log
+        OUTPUT ${svn_absolute} AS ${svn_target}
         COMMAND ${Subversion_SVN_EXECUTABLE} log > ${svn_absolute}
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         DEPENDS ${svn_head}

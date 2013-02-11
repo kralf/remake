@@ -1,1 +1,1 @@
-remake_add_configurations(preferences.remake INSTALL /etc/apt)
+remake_add_directories()

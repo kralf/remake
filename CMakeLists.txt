@@ -1,11 +1,16 @@
 cmake_minimum_required(VERSION 2.6.2)
 
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_BINARY_DIR}/src)
+set(
+  CMAKE_MODULE_PATH
+  ${CMAKE_CURRENT_SOURCE_DIR}/modules
+  ${CMAKE_BINARY_DIR}/modules
+)
+
 include(ReMake)
 
 remake_project(
   ReMake
-  VERSION 0.4
+  VERSION 0.5
   RELEASE beta
   SUMMARY "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
   AUTHOR "Ralf Kaestner"
@@ -16,6 +21,9 @@ remake_project(
   INSTALL /usr
 )
 
+remake_add_directories(
+  modules
+)
 remake_doc(
   man INSTALL share
   ps
@@ -32,4 +40,6 @@ remake_pack_deb(
   DESCRIPTION "documentation"
 )
 
-remake_pack_source_archive()
+remake_distribute_deb(
+  groff libio-compress-perl
+)
