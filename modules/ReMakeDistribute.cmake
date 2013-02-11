@@ -40,8 +40,9 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #   that the distribution may define multiple binaries, one for each Debian
 #   package defined by remake_pack_deb().
 #   \optional[value] SECTION:section The archive area and section of the
-#     distributed project, defaults to main. See the Debian policies for
-#     naming conventions.
+#     distributed project, defaults to miscellaneous. See the Debian policies
+#     for naming conventions, and consult the archive maintainer for a list
+#     of valid areas and sections.
 #   \optional[value] PRIORITY:priority The priority of the distributed
 #     project, defaults to extra. See the Debian policies for valid priority
 #     levels.
