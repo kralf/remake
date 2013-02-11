@@ -36,7 +36,14 @@ remake_set(REMAKE_SVN_DIR ReMakeSVN)
 #   \required[value] variable The name of a variable to be assigned the
 #     revision number.
 macro(remake_svn_revision svn_var)
-  remake_set(${svn_var} 0)
+  if(DEFINED SUBVERSION_REVISION)
+    remake_set(svn_revision ${SUBVERSION_REVISION})
+  else(DEFINED SUBVERSION_REVISION)
+    remake_set(svn_revision 0)
+  endif(DEFINED SUBVERSION_REVISION)
+
+  remake_project_set(SUBVERSION_REVISION ${svn_revision} CACHE STRING
+    "Subversion revision of project sources.")
 
   if(SUBVERSION_FOUND)
     if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
@@ -46,16 +53,15 @@ macro(remake_svn_revision svn_var)
         OUTPUT_VARIABLE svn_info ERROR_QUIET)
 
       if(${svn_result} EQUAL 0)
-        string(REGEX REPLACE ".*Revision: ([0-9]*).*" "\\1" ${svn_var}
-          ${svn_info})
-      else(${svn_result} EQUAL 0)
-        remake_set(${svn_var} 0)
+        string(REGEX REPLACE ".*Revision: ([0-9]*).*" "\\1"
+          svn_revision ${svn_info})
+        remake_project_set(SUBVERSION_REVISION ${svn_revision}
+          CACHE STRING "Subversion revision of project sources." FORCE)
       endif(${svn_result} EQUAL 0)
-
-      remake_project_set(SUBVERSION_REVISION ${${svn_var}} CACHE STRING
-        "Subversion revision of project sources." FORCE)
     endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
   endif(SUBVERSION_FOUND)
+
+  remake_project_get(SUBVERSION_REVISION OUTPUT ${svn_var})
 endmacro(remake_svn_revision)
 
 ### \brief Define Subversion log build rules.

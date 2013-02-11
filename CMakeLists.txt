@@ -44,5 +44,6 @@ remake_distribute_deb(
   DISTRIBUTION lucid
   SECTION devel
   UPLOAD ppa:kralf/asl
-  groff
+  DEPENDS groff
+  PASS CMAKE_BUILD_TYPE REMAKE_SUBVERSION_REVISION
 )
