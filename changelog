@@ -1,3 +1,9 @@
+remake (0.5-136) lucid; urgency=low
+
+  * Changed project section to "devel"
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 11 Feb 2013 14:01:00 +0100
+
 remake (0.5-135) lucid; urgency=low
 
   * Changed project section to "development"
