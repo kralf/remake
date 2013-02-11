@@ -1,3 +1,10 @@
+remake (0.5-137) lucid; urgency=low
+
+  * Removed libio-compress-perl build dependency, gendocs now piping
+    output to gzip executable
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 11 Feb 2013 14:40:00 +0100
+
 remake (0.5-136) lucid; urgency=low
 
   * Changed project section to "devel"

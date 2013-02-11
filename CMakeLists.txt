@@ -44,5 +44,5 @@ remake_distribute_deb(
   DISTRIBUTION lucid
   SECTION devel
   UPLOAD ppa:kralf/asl
-  groff libio-compress-perl
+  groff
 )

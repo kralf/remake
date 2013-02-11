@@ -29,8 +29,6 @@ use File::Glob;
 use File::Basename;
 use File::Path;
 
-use IO::Compress::Gzip;
-
 my $generator = "remake-gendocs";
 
 my $doc_conf = $opt_c;
@@ -435,10 +433,10 @@ sub find_source {
     my $doc_name = "man${man_extension}/$man_name.$man_extension.gz";
     print_stderr "Writing $doc_name\n";
     mkpath("${doc_output}/man${man_extension}");
-    my $z = new IO::Compress::Gzip "$doc_output/$doc_name" or 
+    my $pid = open(file, "| $gzip_executable -f > $doc_output/$doc_name") or
       die("Error: Failed to compress $doc_name!\n");
-    print $z $man;
-    close $z;
+    print file $man;
+    close(file);
   }
   else {
     my $doc_name = "$man_name.".lc($doc_type);
@@ -448,6 +446,7 @@ sub find_source {
       "$doc_output/$doc_name 2> /dev/null") or
       die("Error: Failed to execute groff!\n");
     print file $man;
+    close(file);
   }
 }
 
