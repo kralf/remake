@@ -35,6 +35,7 @@ include(ReMakeDistribute)
 include(ReMakePython)
 include(ReMakeRecurse)
 include(ReMakeSVN)
+include(ReMakeGit)
 include(ReMakeTest)
 include(ReMakeVersion OPTIONAL)
 

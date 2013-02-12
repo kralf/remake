@@ -66,13 +66,10 @@ endmacro(remake_svn_revision)
 
 ### \brief Define Subversion log build rules.
 #   This macro defines build rules for storing Subversion log messages of
-#   the working directory into files. Called in the top-level source
+#   the working directory into a file. Called in the top-level source
 #   directory, it may be used to dump a project's changelog during build.
 #   \required[value] filename The name of the file to write the Subversion
 #     log messages to, relative to ${CMAKE_CURRENT_BINARY_DIR}.
-#   \optional[value] REVISION:rev The Subversion revision for which to
-#     request the log information, defaults to 0:HEAD. See the Subversion
-#     documentation for details.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_add_command(). See
 #     ReMakeComponent for details.
@@ -81,9 +78,7 @@ endmacro(remake_svn_revision)
 #   \optional[var] OUTPUT:variable The optional name of a variable to be
 #     assigned the absolute-path output filename.
 macro(remake_svn_log svn_file)
-  remake_arguments(PREFIX svn_ VAR REVISION VAR COMPONENT VAR TARGET
-    VAR OUTPUT ${ARGN})
-  remake_set(svn_revision SELF DEFAULT 0:HEAD)
+  remake_arguments(PREFIX svn_ VAR COMPONENT VAR TARGET VAR OUTPUT ${ARGN})
   remake_set(svn_target SELF DEFAULT svn_log)
 
   if(svn_output)

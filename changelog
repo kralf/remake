@@ -1,3 +1,12 @@
+remake (1:0.5-146) lucid; urgency=low
+
+  * New features:
+    + Added ReMakeGit module
+    + remake_project() now considers Subversion and Git repositories
+      for retrieving revision number and changelog
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 12 Feb 2013 16:00:00 +0100
+
 remake (1:0.5-145) lucid; urgency=low
 
   * Fixed another bug in svn2debcl which caused top-level CMakeLists.txt

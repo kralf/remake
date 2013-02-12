@@ -41,8 +41,8 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     0.1. Here, the macro expects a string value that reflects standard
 #     versioning conventions, i.e. the version string is of the form
 #     ${EPOCH}:${MAJOR}.${MINOR}.${PATCH}-${REVISION}. If the revision is
-#     omitted from the string, the project's Subversion revision is used
-#     instead.
+#     omitted from the string, the project's Subversion or Git revision is
+#     used instead.
 #   \optional[value] RELEASE:release The release of the project, defaults to
 #     alpha. This value may contain a string describing the release status,
 #     such as alpha, beta, unstable, or stable.
@@ -83,8 +83,8 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     file that will be shipped with the project package, defaulting to
 #     changelog. Note that if the changelog file does not exist, the macro
 #     will attempt to define a target that automatically creates the
-#     changelog from the project's Subversion log. See ReMakeSVN for
-#     details.
+#     changelog from the project's Subversion or Git log. See ReMakeSVN
+#     and ReMakeGit for details.
 #   \optional[value] LIBRARY_DESTINATION:dir The destination directory of
 #     the project libraries, defaulting to lib.
 #   \optional[value] EXECUTABLE_DESTINATION:dir The destination directory of
@@ -174,8 +174,14 @@ macro(remake_project project_name)
   remake_set(REMAKE_PROJECT_MAJOR SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_MINOR SELF DEFAULT 0)
   remake_set(REMAKE_PROJECT_PATCH SELF DEFAULT 0)
-  remake_svn_revision(project_revision)
-  remake_set(REMAKE_PROJECT_REVISION SELF DEFAULT ${project_revision})
+  remake_svn_revision(project_svn_revision)
+  remake_git_revision(project_git_revision)
+  if(project_svn_revision)
+    remake_set(REMAKE_PROJECT_REVISION SELF DEFAULT ${project_svn_revision})
+  endif(project_svn_revision)
+  if(project_git_revision)
+    remake_set(REMAKE_PROJECT_REVISION SELF DEFAULT ${project_git_revision})
+  endif(project_git_revision)
   remake_set(REMAKE_PROJECT_VERSION
     ${REMAKE_PROJECT_MAJOR}.${REMAKE_PROJECT_MINOR})
   if(REMAKE_PROJECT_PATCH)
@@ -260,8 +266,14 @@ macro(remake_project project_name)
   if(EXISTS ${REMAKE_PROJECT_CHANGELOG})
     remake_file_configure(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG)
   else(EXISTS ${REMAKE_PROJECT_CHANGELOG})
-    remake_svn_log(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG
-      TARGET ${REMAKE_PROJECT_CHANGELOG_TARGET})
+    if(project_svn_revision)
+      remake_svn_log(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG
+        TARGET ${REMAKE_PROJECT_CHANGELOG_TARGET})
+    endif(project_svn_revision)
+    if(project_git_revision)
+      remake_git_log(${project_changelog} OUTPUT REMAKE_PROJECT_CHANGELOG
+        TARGET ${REMAKE_PROJECT_CHANGELOG_TARGET})
+    endif(project_git_revision)
   endif(EXISTS ${REMAKE_PROJECT_CHANGELOG})
   remake_set(project_changelog ${REMAKE_PROJECT_CHANGELOG})
 
