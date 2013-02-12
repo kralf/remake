@@ -105,7 +105,7 @@ sub parse_svn {
 
   if (!$$project{name}) {
     $$project{name} = $$repository{root};
-    $$project{name} =~ s/^.*?([a-zA-Z\-_]+)$/\1/;
+    $$project{name} =~ s/^.*?([^\/]+)$/\1/;
   }
   print_stderr "$generator: Project name is $$project{name}\n";
 
@@ -116,8 +116,10 @@ sub parse_svn {
       $lists =~ s/.*remake_project\((.*?)\).*/\1/s;
       $version = $lists;
 
-      $version =~ s/.*?([0-9\.]+).*/\1/s;
-      $version =~ s/^(.*?)[0\.]+$/\1/s;
+      $version =~
+        /[\n\s]*[0-9a-zA-Z\-_]+[\n\s]*(VERSION)?[\n\s]*([0-9\.]+).*/s;
+      $version = $2;
+      $version =~ s/^(.*?)[0\.]+$/\1/;
       $version .= "-$rev";
     }
   
