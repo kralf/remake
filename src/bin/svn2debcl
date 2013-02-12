@@ -111,7 +111,8 @@ sub parse_svn {
 
   my $version = $$project{version};
   for ($rev = $$repository{tail}; $rev <= $$repository{head}; $rev++) {
-    my $lists = `svn cat -r $rev CMakeLists.txt 2> /dev/null`;
+    my $lists =
+      `svn cat -r $rev $$repository{path}/CMakeLists.txt 2> /dev/null`;
     if (($? == 0) and ($lists =~ /.*remake_project\(.*?\).*/s)) {
       $lists =~ s/.*remake_project\((.*?)\).*/\1/s;
       $version = $lists;
