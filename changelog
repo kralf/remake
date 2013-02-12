@@ -1,3 +1,9 @@
+remake (1:0.5-143) lucid; urgency=low
+
+  * Reverted accidental change in top-level CMakeLists.txt
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 12 Feb 2013 09:33:00 +0100
+
 remake (1:0.5-142) lucid; urgency=low
 
   * Changed default section in remake_distribute() to misc
