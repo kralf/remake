@@ -1,3 +1,11 @@
+remake (1:0.5-147) lucid; urgency=low
+
+  * Bug fixes:
+    + Fixed egg-info output filename in remake_python_distribute() that
+      caused install command to fail
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 13 Feb 2013 12:42:00 +0100
+
 remake (1:0.5-146) lucid; urgency=low
 
   * New features:

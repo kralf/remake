@@ -237,8 +237,8 @@ macro(remake_python_distribute)
   endforeach(python_package)
   string(REPLACE "-" "_" python_egg ${python_name})
 
-  remake_list_push(python_built
-    "${python_egg}-${REMAKE_PROJECT_VERSION}.egg-info")
+  string(REGEX REPLACE "[^0-9.]" "_" python_version ${REMAKE_PROJECT_VERSION})
+  remake_list_push(python_built "${python_egg}-${python_version}.egg-info")
   remake_list_push(python_clean "${python_dist_conf_dir}/build")
 
   string(REPLACE ";" ", " python_package_dir "${python_directories}")
