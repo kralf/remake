@@ -78,7 +78,9 @@ endmacro(remake_find_package)
 #   ${LIBRARY}_FOUND is set to TRUE. Furthermore, ${LIBRARY}_LIBRARY and
 #   ${LIBRARY}_HEADERS are initialized for linkage and header inclusion.
 #   Arguments given in addition to the library and header name are forwarded
-#   to find_library() and find_path().
+#   to find_library() and find_path(). If the library could not be found
+#   in a standard location, the macro searches the ldconfig cache in addition
+#   and passes hints to CMake's find_library().
 #   \required[value] library The name of the library to be discovered.
 #   \required[value] header The name of the header to be discovered.
 #   \optional[value] PACKAGE:package The name of the package containing the
@@ -96,6 +98,20 @@ macro(remake_find_library find_lib find_header)
   remake_var_name(find_headers_var ${find_lib} HEADERS)
 
   find_library(${find_lib_var} NAMES ${find_lib} ${find_args})
+
+  if(NOT ${find_lib_var})
+    execute_process(COMMAND ldconfig -p
+      OUTPUT_VARIABLE find_lib_ld ERROR_QUIET)
+    if(find_lib_ld MATCHES "[ ]*lib${find_lib}[.]")
+      string(REGEX MATCH "[ ]*lib${find_lib}[.][^\\\n]*"
+        find_lib_ld "${find_lib_ld}")
+      string(REGEX MATCH "[^ ]+$" find_lib_ld "${find_lib_ld}")
+      get_filename_component(find_lib_hint "${find_lib_ld}" PATH)
+
+      find_library(${find_lib_var} NAMES ${find_lib} HINTS ${find_lib_hint})
+    endif(find_lib_ld MATCHES "[ ]*lib${find_lib}[.]")
+  endif(NOT ${find_lib_var})
+
   if(${find_lib_var})
     remake_file_name(find_path_suffix ${find_package})
     find_path(${find_headers_var} NAMES ${find_header}

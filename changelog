@@ -1,3 +1,11 @@
+remake (1:0.5-148) lucid; urgency=low
+
+  * New features:
+    + remake_find_library() now searches the ldconfig caches if no library
+      could be found in a standard location
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 13 Feb 2013 16:18:00 +0100
+
 remake (1:0.5-147) lucid; urgency=low
 
   * Bug fixes:
