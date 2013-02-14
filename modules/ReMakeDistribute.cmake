@@ -39,6 +39,11 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #   then build from the sources by calling 'dpkg-buildpackage -S'. Note
 #   that the distribution may define multiple binaries, one for each Debian
 #   package defined by remake_pack_deb().
+#   \optional[value] DISTRIBUTION:distribution The name of the distribution
+#     for which the packages should be built, defaults to unstable. This
+#     parameter is only used for validating the information contained in
+#     the changelog prior to configuring the source package. Consult the
+#     archive maintainers for valid distribution names.
 #   \optional[value] SECTION:section The archive area and section of the
 #     distributed project, defaults to misc. See the Debian policies for
 #     naming conventions, and consult the archive maintainer for a list
@@ -55,11 +60,6 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #     parameters provided, giving a fatal error in case of a mismatch. For
 #     details about the standards and valid changelog properties, read the
 #     Debian policy manual.
-#   \optional[value] DISTRIBUTION:distribution The name of the distribution
-#     for which the packages should be built, defaults to unstable. This
-#     parameter is only used for validating the information contained in
-#     the changelog prior to configuring the source package. Consult the
-#     archive maintainers for valid distribution names.
 #   \optional[value] URGENCY:urgency The urgency of upgrading the distributed
 #     packages from previous versions, defaults to low.  This parameter is
 #     only used for validating the information contained in the changelog
@@ -82,10 +82,13 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #   \optional[list] DEFINE:var An optional list of variable names and values
 #     of the form ${VAR}=${VALUE} to be passed during the configuration
 #     stage of the distribution.
+#   \optional[var] UPLOAD:host An optional host for uploading the generated
+#     source package via the dput Debian tool. See the dput documentation
+#     for valid host formats.
 macro(remake_distribute_deb)
-  remake_arguments(PREFIX distribute_ VAR SECTION VAR PRIORITY
-    VAR CHANGELOG VAR DISTRIBUTION VAR URGENCY VAR COMPATIBILITY
-    VAR UPLOAD LIST COMPONENT LIST DEPENDS LIST PASS LIST DEFINE ${ARGN})
+  remake_arguments(PREFIX distribute_ VAR DISTRIBUTION VAR SECTION
+    VAR PRIORITY VAR CHANGELOG VAR URGENCY VAR COMPATIBILITY
+    LIST DEPENDS LIST PASS LIST DEFINE VAR UPLOAD ${ARGN})
   remake_set(distribute_section SELF DEFAULT misc)
   remake_set(distribute_priority SELF DEFAULT extra)
   remake_set(distribute_changelog SELF DEFAULT ${REMAKE_PROJECT_CHANGELOG})
@@ -220,8 +223,8 @@ macro(remake_distribute_deb)
       remake_set(distribute_prompt
         "Upload distribution to ${distribute_upload} (y/n)?")
       remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
-        COMMAND read -s -n 1 -p "${distribute_prompt}" &&
-          echo && eval test \$REPLY = y VERBATIM)
+        COMMAND echo -n "${distribute_prompt} " && read REPLY &&
+          eval test \$REPLY = y VERBATIM)
       remake_file_name(distribute_file ${REMAKE_PROJECT_FILENAME}
         ${REMAKE_PROJECT_FILENAME_VERSION} source.changes)
       remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}

@@ -1,3 +1,12 @@
+remake (1:0.5-149) lucid; urgency=low
+
+  * Bug fixes:
+    + Fixed upload prompt in remake_distribute() to use compliant read
+  * Documentation:
+    + Added documentation for UPLOAD option of remake_distribute()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 14 Feb 2013 10:57:00 +0100
+
 remake (1:0.5-148) lucid; urgency=low
 
   * New features:
