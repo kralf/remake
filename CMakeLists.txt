@@ -32,7 +32,7 @@ remake_doc(
 
 remake_pack_deb(
   ARCH all
-  "cmake (>= 2.6.2)"
+  "cmake (>= 2.6.2)" pkg-config groff
 )
 remake_pack_deb(
   ARCH all

@@ -1,3 +1,9 @@
+remake (1:0.5-150) lucid; urgency=low
+
+  * Added pkg-config and groff as binary dependencies
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 14 Feb 2013 14:08:00 +0100
+
 remake (1:0.5-149) lucid; urgency=low
 
   * Bug fixes:
