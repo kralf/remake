@@ -161,8 +161,7 @@ macro(remake_pack_source pack_generator)
   remake_set(CPACK_PACKAGE_VERSION ${REMAKE_PROJECT_VERSION})
 
   file(RELATIVE_PATH pack_binary_dir ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-  remake_set(CPACK_SOURCE_IGNORE_FILES
-    "/\\\\\\\\\\\\\\\\..*/;/${pack_binary_dir}/")
+  remake_set(CPACK_SOURCE_IGNORE_FILES "/[.].*/;/${pack_binary_dir}/")
   if(pack_exclude)
     remake_list_push(CPACK_SOURCE_IGNORE_FILES ${pack_exclude})
   endif(pack_exclude)

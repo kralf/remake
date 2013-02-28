@@ -1,3 +1,9 @@
+remake (1:0.5-152) lucid; urgency=low
+
+  * Internal macro simplification in remake_pack_source()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 28 Feb 2013 15:42:00 +0100
+
 remake (1:0.5-151) lucid; urgency=low
 
   * Added EXCLUDE parameters to remake_pack_source(),
