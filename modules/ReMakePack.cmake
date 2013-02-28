@@ -107,8 +107,6 @@ macro(remake_pack_binary pack_generator)
       ${REMAKE_PACK_BINARY_TARGET_SUFFIX})
     if(NOT TARGET ${pack_target})
       remake_target(${pack_target})
-    else(NOT TARGET ${pack_target})
-      remake_debug(pack_target)
     endif(NOT TARGET ${pack_target})
     remake_target_add_command(${pack_target}
       COMMAND cpack --config ${pack_config}
@@ -137,8 +135,14 @@ endmacro(remake_pack_binary)
 #     source package. See the CPack documentation for valid generators.
 #   \optional[value] NAME:name The name of the source package to be
 #     generated, defaults to ${REMAKE_PROJECT_FILENAME}.
+#   \optional[list] EXCLUDE:pattern An optional list of patterns matching
+#     additional files or directories in the source tree which shall not be
+#     packaged. Note that ${CMAKE_BINARY_DIR} and any hidden files or
+#     directories are automatically excluded and thus need not be considered
+#     in this list. See the CPack documentation for regular expression
+#     patterns and their proper escaping.
 macro(remake_pack_source pack_generator)
-  remake_arguments(PREFIX pack_ VAR NAME ${ARGN})
+  remake_arguments(PREFIX pack_ VAR NAME LIST EXCLUDE ${ARGN})
 
   if(NOT TARGET ${REMAKE_PACK_ALL_SOURCE_TARGET})
     remake_target(${REMAKE_PACK_ALL_SOURCE_TARGET})
@@ -159,6 +163,9 @@ macro(remake_pack_source pack_generator)
   file(RELATIVE_PATH pack_binary_dir ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
   remake_set(CPACK_SOURCE_IGNORE_FILES
     "/\\\\\\\\\\\\\\\\..*/;/${pack_binary_dir}/")
+  if(pack_exclude)
+    remake_list_push(CPACK_SOURCE_IGNORE_FILES ${pack_exclude})
+  endif(pack_exclude)
 
   message(STATUS "Source package: ${pack_name} (${pack_generator})")
 
@@ -361,17 +368,20 @@ endmacro(remake_pack_archive)
 #   archive generators. It acquires all the information necessary from the
 #   current project settings and the arguments passed.
 #   \optional[value] GENERATOR:generator The generator to be used for creating
-#     the source archive, defaults to TGZ. See the CPack documentation for valid
-#     archive generators.
+#     the source archive, defaults to TGZ. See the CPack documentation for
+#     valid archive generators.
+#   \optional[list] EXCLUDE:pattern An optional list of patterns passed to
+#     remake_pack_source(), matching additional files or directories in the
+#     source tree which shall not be packaged.
 macro(remake_pack_source_archive)
-  remake_arguments(PREFIX pack_ VAR GENERATOR ${ARGN})
+  remake_arguments(PREFIX pack_ VAR GENERATOR LIST EXCLUDE ${ARGN})
   remake_set(pack_generator SELF DEFAULT TGZ)
 
   remake_file_name(pack_file
     ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_FILENAME_VERSION})
 
   remake_set(CPACK_SOURCE_PACKAGE_FILE_NAME ${pack_file})
-  remake_pack_source(${pack_generator})
+  remake_pack_source(${pack_generator} ${EXCLUDE})
 endmacro(remake_pack_source_archive)
 
 remake_file_rmdir(${REMAKE_PACK_DIR})

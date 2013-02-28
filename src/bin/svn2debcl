@@ -120,7 +120,6 @@ sub parse_svn {
       $version =~
         /[\n\s]*[0-9a-zA-Z\-_]+[\n\s]*(VERSION)?[\n\s]*([0-9\.]+).*/s;
       $version = $2;
-      $version =~ s/^(.*?)[0\.]+$/\1/;
       $version .= "-$rev";
     }
   
@@ -137,7 +136,7 @@ sub parse_svn {
       $revision{author} = $$authors{$author};
     }
     else {
-      $revision{author} = "$author <kralf\@unknown>";
+      $revision{author} = "$author <$author\@unknown>";
     }
     $revision{time} = str2time(@header[2]);
     my @lines = split(/\n/, $log);

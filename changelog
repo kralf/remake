@@ -1,3 +1,14 @@
+remake (1:0.5-151) lucid; urgency=low
+
+  * Added EXCLUDE parameters to remake_pack_source(),
+    remake_pack_source_archive(), and remake_distribute() to allow for
+    additional exclusion patterns in CPack configurations
+  * Bug fixes:
+    + Fixed version string discovery in svn2debcl (now keeping minor
+      version if zero)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 28 Feb 2013 15:23:00 +0100
+
 remake (1:0.5-150) lucid; urgency=low
 
   * Added pkg-config and groff as binary dependencies

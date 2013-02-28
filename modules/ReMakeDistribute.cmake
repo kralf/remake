@@ -85,10 +85,13 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #   \optional[var] UPLOAD:host An optional host for uploading the generated
 #     source package via the dput Debian tool. See the dput documentation
 #     for valid host formats.
+#   \optional[list] EXCLUDE:pattern An optional list of patterns passed to
+#     remake_pack_source_archive(), matching additional files or directories
+#     in the source tree which shall not be distributed.
 macro(remake_distribute_deb)
   remake_arguments(PREFIX distribute_ VAR DISTRIBUTION VAR SECTION
     VAR PRIORITY VAR CHANGELOG VAR URGENCY VAR COMPATIBILITY
-    LIST DEPENDS LIST PASS LIST DEFINE VAR UPLOAD ${ARGN})
+    LIST DEPENDS LIST PASS LIST DEFINE VAR UPLOAD LIST EXCLUDE ${ARGN})
   remake_set(distribute_section SELF DEFAULT misc)
   remake_set(distribute_priority SELF DEFAULT extra)
   remake_set(distribute_changelog SELF DEFAULT ${REMAKE_PROJECT_CHANGELOG})
@@ -97,6 +100,7 @@ macro(remake_distribute_deb)
   remake_set(distribute_compatibility SELF DEFAULT 7)
   remake_set(distribute_pass SELF
     DEFAULT CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH)
+  remake_set(distribute_exclude ${EXCLUDE})
 
   remake_file_read(distribute_changelog_content ${distribute_changelog})
   string(REGEX REPLACE "([^\\\n]+).*" "\\1" distribute_changelog_header
@@ -199,7 +203,7 @@ macro(remake_distribute_deb)
       OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)
     remake_file_write(${distribute_dir}/compat ${distribute_compatibility})
 
-    remake_pack_source_archive(GENERATOR TGZ)
+    remake_pack_source_archive(GENERATOR TGZ ${distribute_exclude})
     add_dependencies(${REMAKE_DISTRIBUTE_TARGET}
       ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
