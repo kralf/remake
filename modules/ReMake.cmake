@@ -97,6 +97,8 @@ endmacro(remake_add_modules)
 #   \optional[value] TYPE:type The type of the library target to be created,
 #     defaulting to SHARED. See the CMake documentation for a list of valid
 #     library types.
+#   \optional[option] RECURSE If this option is given, source files will
+#     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
 #     as the library's install destination, defaults to the project's
 #     ${LIBRARY_DESTINATION}.
@@ -111,8 +113,8 @@ endmacro(remake_add_modules)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     shared library target.
 macro(remake_add_library remake_name)
-  remake_arguments(PREFIX remake_ VAR TYPE VAR INSTALL VAR COMPONENT
-    VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ VAR TYPE OPTION RECURSE VAR INSTALL
+    VAR COMPONENT VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
   remake_set(remake_type SELF DEFAULT SHARED)
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
 
@@ -136,7 +138,12 @@ macro(remake_add_library remake_name)
     remake_branch_add_targets(${remake_name})
   endif(REMAKE_BRANCH_BUILD)
 
-  remake_file_glob(remake_sources ${remake_globs})
+  if(remake_recurse)
+    remake_file_glob(remake_sources ${remake_globs}
+      RECURSE ${CMAKE_CURRENT_SOURCE_DIR})
+  else(remake_recurse)
+    remake_file_glob(remake_sources ${remake_globs})
+  endif(remake_recurse)
   remake_target_get_sources(remake_target_sources ${remake_name})
   remake_target_get_dependencies(remake_target_depends ${remake_name})
   remake_include()

@@ -1,3 +1,9 @@
+remake (1:0.5-153) lucid; urgency=low
+
+  * Added RECURSE option to remake_add_library()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 18 Mar 2013 12:19:00 +0100
+
 remake (1:0.5-152) lucid; urgency=low
 
   * Internal macro simplification in remake_pack_source()
