@@ -1,3 +1,9 @@
+remake (1:0.5.1-155) lucid; urgency=low
+
+  * Fixed upload command bug in remake_distribute_deb()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 21 Mar 2013 14:21:00 +0100
+
 remake (1:0.5.1-154) lucid; urgency=low
 
   * Extensions to remake_distribute_deb()
