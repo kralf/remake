@@ -26,7 +26,8 @@ include(ReMakePack)
 #   The ReMake distribution macros facilitate automated distribution of
 #   a ReMake project.
 
-remake_set(REMAKE_DISTRIBUTE_TARGET distribution)
+remake_set(REMAKE_DISTRIBUTE_TARGET_SUFFIX distribution)
+remake_set(REMAKE_DISTRIBUTE_ALL_TARGET distributions)
 
 remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 
@@ -107,9 +108,9 @@ macro(remake_distribute_deb)
     "${distribute_changelog_content}")
   string(REGEX REPLACE "[ ;]+" ";" distribute_changelog_parameters
     ${distribute_changelog_header})
+  list(REMOVE_AT distribute_changelog_parameters 2)
   remake_set(distribute_parameters ${REMAKE_PROJECT_FILENAME}
-    "(${REMAKE_PROJECT_VERSION})" ${distribute_distribution}
-    "urgency=${distribute_urgency}")
+    "(${REMAKE_PROJECT_VERSION})" "urgency=${distribute_urgency}")
 
   if(NOT "${distribute_changelog_parameters}" STREQUAL
       "${distribute_parameters}")
@@ -117,20 +118,38 @@ macro(remake_distribute_deb)
   endif(NOT "${distribute_changelog_parameters}" STREQUAL
     "${distribute_parameters}")
 
+  remake_set(distribute_version
+    "${REMAKE_PROJECT_VERSION}~${distribute_distribution}")
+  remake_set(distribute_changelog_parameters ${REMAKE_PROJECT_FILENAME}
+    "(${distribute_version})" "${distribute_distribution},"
+    "urgency=${distribute_urgency}")
+  string(REGEX REPLACE ";" " " distribute_changelog_header
+    "${distribute_changelog_parameters}")
+  string(REGEX REPLACE "," ";" distribute_changelog_header
+    "${distribute_changelog_header}")
+  string(REGEX REPLACE "([^\\\n]+)(.*)" "${distribute_changelog_header}\\2"
+    distribute_changelog_content "${distribute_changelog_content}")
+
   remake_file(distribute_package_dir ${REMAKE_PACK_DIR}/DEB)
   remake_file_glob(distribute_packages *.cpack
     WORKING_DIRECTORY ${distribute_package_dir} FILES)
 
   if(distribute_packages)
-    if(NOT TARGET ${REMAKE_DISTRIBUTE_TARGET})
-      remake_target(${REMAKE_DISTRIBUTE_TARGET})
-    endif(NOT TARGET ${REMAKE_DISTRIBUTE_TARGET})
+    remake_target_name(distribute_target ${distribute_distribution}
+      ${REMAKE_DISTRIBUTE_TARGET_SUFFIX})
+    if(NOT TARGET ${distribute_target})
+      remake_target(${distribute_target})
+    endif(NOT TARGET ${distribute_target})
+    if(NOT TARGET ${REMAKE_DISTRIBUTE_ALL_TARGET})
+      remake_target(${REMAKE_DISTRIBUTE_ALL_TARGET})
+    endif(NOT TARGET ${REMAKE_DISTRIBUTE_ALL_TARGET})
+    add_dependencies(${REMAKE_DISTRIBUTE_ALL_TARGET} ${distribute_target})
 
     execute_process(COMMAND apt-cache show debian-policy
       OUTPUT_VARIABLE distribute_policy OUTPUT_STRIP_TRAILING_WHITESPACE)
     string(REGEX REPLACE
       ".*Version: ([0-9]+).([0-9]+).([0-9]+).*" "\\1.\\2.\\3"
-      distribute_version ${distribute_policy})
+      distribute_standards_version ${distribute_policy})
     remake_list_push(distribute_depends
       "debhelper (>= ${distribute_compatibility})" cmake)
     string(REGEX REPLACE ";" ", " distribute_depends "${distribute_depends}")
@@ -151,7 +170,7 @@ macro(remake_distribute_deb)
       "Priority: ${distribute_priority}"
       "Maintainer: ${REMAKE_PROJECT_ADMIN} <${REMAKE_PROJECT_CONTACT}>"
       "Homepage: ${REMAKE_PROJECT_HOME}"
-      "Standards-Version: ${distribute_version}"
+      "Standards-Version: ${distribute_standards_version}"
       "Build-Depends: ${distribute_depends}")
 
     remake_set(distribute_rules
@@ -195,44 +214,53 @@ macro(remake_distribute_deb)
       endforeach(pack_var)
     endforeach(distribute_package ${distribute_packages})
 
-    remake_file(distribute_dir ${REMAKE_DISTRIBUTE_DIR}/debian)
+    remake_file(distribute_dir
+      ${REMAKE_DISTRIBUTE_DIR}/debian/${distribute_distribution})
     remake_file_mkdir(${distribute_dir})
     remake_file_write(${distribute_dir}/control LINES ${distribute_control})
     remake_file_write(${distribute_dir}/rules LINES ${distribute_rules})
     remake_file_permissions(${distribute_dir}/rules
       OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)
     remake_file_write(${distribute_dir}/compat ${distribute_compatibility})
+    remake_file_write(${distribute_dir}/changelog
+      ${distribute_changelog_content})
+    remake_file_name(distribute_build_dir ${distribute_distribution})
+    remake_set(distribute_build_path
+      ${CMAKE_BINARY_DIR}/debian/${distribute_build_dir})
+    remake_file_mkdir(${distribute_build_path})
 
     remake_pack_source_archive(GENERATOR TGZ ${distribute_exclude})
-    add_dependencies(${REMAKE_DISTRIBUTE_TARGET}
-      ${REMAKE_PACK_ALL_SOURCE_TARGET})
+    add_dependencies(${distribute_target} ${REMAKE_PACK_ALL_SOURCE_TARGET})
+
+    message(STATUS "Distribution: ${distribute_distribution} (Debian)")
 
     remake_file_name(distribute_archive
       ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_FILENAME_VERSION})
-    remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
-      COMMAND tar -xzf ${distribute_archive}.tar.gz
+    remake_target_add_command(${distribute_target}
+      COMMAND tar -xzf ${distribute_archive}.tar.gz -C ${distribute_build_path}
       COMMENT "Extracting ${REMAKE_PROJECT_NAME} source package")
 
-    remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
-      COMMAND cp -a ${distribute_dir} ${distribute_archive})
-    remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
-      COMMAND cp -a ${distribute_changelog} ${distribute_archive}/debian)
+    remake_set(distribute_archive_path
+      ${distribute_build_path}/${distribute_archive})
+    remake_target_add_command(${distribute_target}
+      COMMAND cp -aT ${distribute_dir} ${distribute_archive_path}/debian)
 
-    remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
+    remake_target_add_command(${distribute_target}
       COMMAND dpkg-buildpackage -S
-      WORKING_DIRECTORY ${distribute_archive}
+      WORKING_DIRECTORY ${distribute_archive_path}
       COMMENT "Building ${REMAKE_PROJECT_NAME} distribution")
 
     if(distribute_upload)
       remake_set(distribute_prompt
         "Upload distribution to ${distribute_upload} (y/n)?")
-      remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
+      remake_target_add_command(${distribute_target}
         COMMAND echo -n "${distribute_prompt} " && read REPLY &&
           eval test \$REPLY = y VERBATIM)
       remake_file_name(distribute_file ${REMAKE_PROJECT_FILENAME}
         ${REMAKE_PROJECT_FILENAME_VERSION} source.changes)
-      remake_target_add_command(${REMAKE_DISTRIBUTE_TARGET}
-        COMMAND dput ${distribute_upload} ${distribute_file}
+      remake_target_add_command(${distribute_target}
+        COMMAND dput ${distribute_upload}
+          ${distribute_build_path}/${distribute_file}
         COMMENT "Uploading ${REMAKE_PROJECT_NAME} distribution")
     endif(distribute_upload)
   endif(distribute_packages)

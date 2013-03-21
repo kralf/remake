@@ -149,36 +149,38 @@ macro(remake_pack_source pack_generator)
   endif(NOT TARGET ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
   remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_FILENAME})
-
   remake_file(pack_config
     ${REMAKE_PACK_DIR}/${pack_generator}/all.cpack)
-  remake_set(CPACK_OUTPUT_CONFIG_FILE ${pack_config})
   remake_file(pack_src_config
     ${REMAKE_PACK_SOURCE_DIR}/${pack_generator}/all.cpack)
-  remake_set(CPACK_SOURCE_OUTPUT_CONFIG_FILE ${pack_src_config})
-  remake_set(CPACK_SOURCE_GENERATOR ${pack_generator})
-  remake_set(CPACK_PACKAGE_NAME ${pack_name})
-  remake_set(CPACK_PACKAGE_VERSION ${REMAKE_PROJECT_VERSION})
 
-  file(RELATIVE_PATH pack_binary_dir ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-  remake_set(CPACK_SOURCE_IGNORE_FILES "/[.].*/;/${pack_binary_dir}/")
-  if(pack_exclude)
-    remake_list_push(CPACK_SOURCE_IGNORE_FILES ${pack_exclude})
-  endif(pack_exclude)
+  if(NOT EXISTS ${pack_src_config})
+    remake_set(CPACK_OUTPUT_CONFIG_FILE ${pack_config})
+    remake_set(CPACK_SOURCE_OUTPUT_CONFIG_FILE ${pack_src_config})
+    remake_set(CPACK_SOURCE_GENERATOR ${pack_generator})
+    remake_set(CPACK_PACKAGE_NAME ${pack_name})
+    remake_set(CPACK_PACKAGE_VERSION ${REMAKE_PROJECT_VERSION})
 
-  message(STATUS "Source package: ${pack_name} (${pack_generator})")
+    file(RELATIVE_PATH pack_binary_dir ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+    remake_set(CPACK_SOURCE_IGNORE_FILES "/[.].*/;/${pack_binary_dir}/")
+    if(pack_exclude)
+      remake_list_push(CPACK_SOURCE_IGNORE_FILES ${pack_exclude})
+    endif(pack_exclude)
 
-  remake_unset(CPack_CMake_INCLUDED)
-  include(CPack)
+    message(STATUS "Source package: ${pack_name} (${pack_generator})")
 
-  remake_target_add_command(${REMAKE_PACK_ALL_SOURCE_TARGET}
-    COMMAND cpack --config ${pack_src_config}
-    COMMENT "Building ${pack_name} source package")
+    remake_unset(CPack_CMake_INCLUDED)
+    include(CPack)
 
-  remake_var_regex(pack_variables "^CPACK_")
-  foreach(pack_var ${pack_variables})
-    remake_unset(${pack_var})
-  endforeach(pack_var)
+    remake_target_add_command(${REMAKE_PACK_ALL_SOURCE_TARGET}
+      COMMAND cpack --config ${pack_src_config}
+      COMMENT "Building ${pack_name} source package")
+
+    remake_var_regex(pack_variables "^CPACK_")
+    foreach(pack_var ${pack_variables})
+      remake_unset(${pack_var})
+    endforeach(pack_var)
+  endif(NOT EXISTS ${pack_src_config})
 endmacro(remake_pack_source)
 
 ### \brief Generate a binary Debian package from the ReMake project.

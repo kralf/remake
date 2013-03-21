@@ -10,7 +10,7 @@ include(ReMake)
 
 remake_project(
   ReMake
-  VERSION 1:0.5
+  VERSION 1:0.5.1
   RELEASE beta
   SUMMARY "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
   AUTHOR "Ralf Kaestner"
@@ -42,6 +42,13 @@ remake_pack_deb(
 
 remake_distribute_deb(
   DISTRIBUTION lucid
+  SECTION devel
+  UPLOAD ppa:kralf/asl
+  DEPENDS groff
+  PASS CMAKE_BUILD_TYPE REMAKE_SUBVERSION_REVISION
+)
+remake_distribute_deb(
+  DISTRIBUTION precise
   SECTION devel
   UPLOAD ppa:kralf/asl
   DEPENDS groff

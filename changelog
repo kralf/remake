@@ -1,3 +1,13 @@
+remake (1:0.5.1-154) lucid; urgency=low
+
+  * Extensions to remake_distribute_deb()
+    + Macro may now be issued multiple times for different Debian
+      distributions, where each call adapts the changelog file
+      accordingly
+  * Increased patch version to 1
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 21 Mar 2013 14:06:00 +0100
+
 remake (1:0.5-153) lucid; urgency=low
 
   * Added RECURSE option to remake_add_library()
