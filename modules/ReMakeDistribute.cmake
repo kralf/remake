@@ -257,7 +257,8 @@ macro(remake_distribute_deb)
         COMMAND echo -n "${distribute_prompt} " && read REPLY &&
           eval test \$REPLY = y VERBATIM)
       remake_file_name(distribute_file ${REMAKE_PROJECT_FILENAME}
-        ${distribute_version} source.changes)
+        ${REMAKE_PROJECT_FILENAME_VERSION}~${distribute_distribution}
+        source.changes)
       remake_target_add_command(${distribute_target}
         COMMAND dput ${distribute_upload}
           ${distribute_build_path}/${distribute_file}
