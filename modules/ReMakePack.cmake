@@ -281,11 +281,11 @@ macro(remake_pack_deb)
         if(${pack_deb_result} EQUAL 0)
           string(REGEX REPLACE "\n" ";" pack_deb_packages ${pack_deb_packages})
           foreach(pack_deb_pkg ${pack_deb_packages})
-            if(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_name_dep}[ ]+.*")
+            if(${pack_deb_pkg} MATCHES "^[a-z]i[ ]+${pack_name_dep}[ ]+.*")
               if(NOT pack_deb_found)
-                string(REGEX REPLACE "^ii[ ]+(${pack_name_dep})[ ]+.*$"
+                string(REGEX REPLACE "^[a-z]i[ ]+(${pack_name_dep})[ ]+.*$"
                   "\\1" pack_deb_pkg_name ${pack_deb_pkg})
-                string(REGEX REPLACE "^ii[ ]+${pack_name_dep}[ ]+([^ ]+).*$"
+                string(REGEX REPLACE "^[a-z]i[ ]+${pack_name_dep}[ ]+([^ ]+).*$"
                   "\\1" pack_deb_pkg_version ${pack_deb_pkg})
                 if(pack_version_dep)
                   string(REPLACE " " ";" pack_version_args ${pack_version_dep})
@@ -308,7 +308,7 @@ macro(remake_pack_deb)
                   "Multiple packages on build system match dependency")
                 message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
               endif(NOT pack_deb_found)
-            endif(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_name_dep}[ ]+.*")
+            endif(${pack_deb_pkg} MATCHES "^[a-z]i[ ]+${pack_name_dep}[ ]+.*")
           endforeach(pack_deb_pkg)
         endif(${pack_deb_result} EQUAL 0)
         if(NOT pack_deb_found)
