@@ -1,3 +1,20 @@
+remake (1:0.5.1-157) lucid; urgency=low
+
+  * New features
+    + Added VERBATIM option to remake_list()
+    + Added VERSION argument to remake_pack_binary() and remake_pack_source()
+  * Changes and bugfixes
+    + remake_pack_deb() now uses = instead of >= to indicate an exact
+      match in a dependency to another package in the same project
+    + Fixed bug in remake_distribute_deb() that caused unmet dependencies
+      when installing distributed binary packages (control file now contains
+      dependencies with the distribution names appended to the version)
+    + Changed remake_distribute_deb() such that, when detecting a release
+      build, the control file is updated with the matched package
+      dependencies of the build system
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 23 Mar 2013 13:07:00 +0100
+
 remake (1:0.5.1-156) lucid; urgency=low
 
   * Same bug as for previous revision, should now be fixed (really)

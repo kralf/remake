@@ -41,10 +41,10 @@ remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
 #   that the distribution may define multiple binaries, one for each Debian
 #   package defined by remake_pack_deb().
 #   \optional[value] DISTRIBUTION:distribution The name of the distribution
-#     for which the packages should be built, defaults to unstable. This
-#     parameter is only used for validating the information contained in
-#     the changelog prior to configuring the source package. Consult the
-#     archive maintainers for valid distribution names.
+#     for which the packages should be built, defaults to the output of
+#     lsb_release. This parameter is used for prefixing the version
+#     specified in the changelog file. Consult the archive maintainers for
+#     valid distribution names.
 #   \optional[value] SECTION:section The archive area and section of the
 #     distributed project, defaults to misc. See the Debian policies for
 #     naming conventions, and consult the archive maintainer for a list
@@ -96,7 +96,9 @@ macro(remake_distribute_deb)
   remake_set(distribute_section SELF DEFAULT misc)
   remake_set(distribute_priority SELF DEFAULT extra)
   remake_set(distribute_changelog SELF DEFAULT ${REMAKE_PROJECT_CHANGELOG})
-  remake_set(distribute_distribution SELF DEFAULT stable)
+  execute_process(COMMAND lsb_release -c -s
+    OUTPUT_VARIABLE distribute_release OUTPUT_STRIP_TRAILING_WHITESPACE)
+  remake_set(distribute_distribution SELF DEFAULT distribute_release)
   remake_set(distribute_urgency SELF DEFAULT low)
   remake_set(distribute_compatibility SELF DEFAULT 7)
   remake_set(distribute_pass SELF
@@ -164,7 +166,7 @@ macro(remake_distribute_deb)
         "${distribute_definitions} -D${distribute_var}")
     endforeach(distribute_var)
 
-    remake_set(distribute_control
+    remake_set(distribute_control_source
       "Source: ${REMAKE_PROJECT_FILENAME}"
       "Section: ${distribute_section}"
       "Priority: ${distribute_priority}"
@@ -185,6 +187,8 @@ macro(remake_distribute_deb)
       "override_dh_installchangelogs:"
       "\t\n"
       "override_dh_auto_install:")
+
+    remake_set(distribute_control_release ${distribute_control_source})
     foreach(distribute_package ${distribute_packages})
       include(${distribute_package})
 
@@ -196,10 +200,44 @@ macro(remake_distribute_deb)
         ${distribute_package} NAME_WE)
       remake_set(distribute_install "obj-$(DEB_BUILD_GNU_TYPE)")
 
-      remake_list_push(distribute_control
+      if(CPACK_DEBIAN_PACKAGE_DEPENDS)
+        string(REGEX REPLACE "[,][ ]*" ";" distribute_dependencies
+          ${CPACK_DEBIAN_PACKAGE_DEPENDS})
+
+        foreach(distribute_dependency ${distribute_dependencies})
+          if(distribute_dependency MATCHES
+            "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+            string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME}[-]?[^ ]*).*$"
+              "\\1" distribute_name_dep ${distribute_dependency})
+            string(REGEX REPLACE "^([^\(]+)[(]?([^\)]*)[)]?$" "\\2"
+              distribute_version_dep ${distribute_dependency})
+            if(${distribute_version_dep} STREQUAL
+              "= ${REMAKE_PROJECT_VERSION}")
+              remake_set(distribute_version_dep
+                "= ${distribute_version}")
+            endif(${distribute_version_dep} STREQUAL
+              "= ${REMAKE_PROJECT_VERSION}")
+            remake_list_replace(distribute_dependencies
+              ${distribute_dependency} VERBATIM
+              REPLACE "${distribute_name_dep} (${distribute_version_dep})")
+          endif(distribute_dependency MATCHES
+            "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+        endforeach(distribute_dependency)
+      else(CPACK_DEBIAN_PACKAGE_DEPENDS)
+        remake_unset(distribute_dependencies)
+      endif(CPACK_DEBIAN_PACKAGE_DEPENDS)
+
+      string(REPLACE ";" ", " distribute_dependencies
+        "${distribute_dependencies}")
+      remake_list_push(distribute_control_source
         "\nPackage: ${CPACK_PACKAGE_NAME}"
         "Architecture: ${distribute_arch}"
-        "Depends: ${CPACK_DEBIAN_PACKAGE_DEPENDS}"
+        "Depends: # Determined by build system"
+        "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
+      remake_list_push(distribute_control_release
+        "\nPackage: ${CPACK_PACKAGE_NAME}"
+        "Architecture: ${distribute_arch}"
+        "Depends: ${distribute_dependencies}"
         "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
       remake_set(distribute_rule "\tDESTDIR=debian/${CPACK_PACKAGE_NAME}")
       remake_set(distribute_rule
@@ -217,7 +255,8 @@ macro(remake_distribute_deb)
     remake_file(distribute_dir
       ${REMAKE_DISTRIBUTE_DIR}/debian/${distribute_distribution})
     remake_file_mkdir(${distribute_dir})
-    remake_file_write(${distribute_dir}/control LINES ${distribute_control})
+    remake_file_write(${distribute_dir}/control
+      LINES ${distribute_control_source})
     remake_file_write(${distribute_dir}/rules LINES ${distribute_rules})
     remake_file_permissions(${distribute_dir}/rules
       OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ)
@@ -229,10 +268,24 @@ macro(remake_distribute_deb)
       ${CMAKE_BINARY_DIR}/debian/${distribute_build_dir})
     remake_file_mkdir(${distribute_build_path})
 
+    remake_unset(distribute_release_build)
+    if(${distribute_distribution} STREQUAL ${distribute_release})
+      if(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
+        remake_file_create(${CMAKE_SOURCE_DIR}/debian/control)
+        remake_file_write(${CMAKE_SOURCE_DIR}/debian/control
+          LINES ${distribute_control_release})
+        remake_set(distribute_release_build ON)
+      endif(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
+    endif(${distribute_distribution} STREQUAL ${distribute_release})
+
     remake_pack_source_archive(GENERATOR TGZ ${distribute_exclude})
     add_dependencies(${distribute_target} ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
-    message(STATUS "Distribution: ${distribute_distribution} (Debian)")
+    if(distribute_release_build)
+      message(STATUS "Distribution: ${distribute_distribution} (Debian) *")
+    else(distribute_release_build)
+      message(STATUS "Distribution: ${distribute_distribution} (Debian)")
+    endif(distribute_release_build)
 
     remake_file_name(distribute_archive
       ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_FILENAME_VERSION})

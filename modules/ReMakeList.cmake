@@ -80,17 +80,25 @@ endmacro(remake_list_pop)
 #   \required[value] value The list value to be matched and replaced.
 #   \optional[list] REPLACE:value The optional replacement value that is
 #     used to substitute matching list values, defaults to the empty string.
+#   \optional[option] VERBATIM If present, this option causes the macro
+#     to match list values as verbatim strings rather than by regular
+#     expressions.
 macro(remake_list_replace list_name list_value)
-  remake_arguments(PREFIX list_ LIST REPLACE ${ARGN})
+  remake_arguments(PREFIX list_ LIST REPLACE OPTION VERBATIM ${ARGN})
 
-  string(REGEX REPLACE "[;]${list_value}[;]" ";${list_replace};"
-    ${list_name} "${${list_name}}")
-  string(REGEX REPLACE "^${list_value}[;]" "${list_replace};"
-    ${list_name} "${${list_name}}")
-  string(REGEX REPLACE "[;]${list_value}$" ";${list_replace}"
-    ${list_name} "${${list_name}}")
-  string(REGEX REPLACE "^${list_value}$" "${list_replace}"
-    ${list_name} "${${list_name}}")
+  if(list_verbatim)
+    string(REPLACE "${list_value}" "${list_replace}"
+      ${list_name} "${${list_name}}")
+  else(list_verbatim)
+    string(REGEX REPLACE "[;]${list_value}[;]" ";${list_replace};"
+      ${list_name} "${${list_name}}")
+    string(REGEX REPLACE "^${list_value}[;]" "${list_replace};"
+      ${list_name} "${${list_name}}")
+    string(REGEX REPLACE "[;]${list_value}$" ";${list_replace}"
+      ${list_name} "${${list_name}}")
+    string(REGEX REPLACE "^${list_value}$" "${list_replace}"
+      ${list_name} "${${list_name}}")
+  endif(list_verbatim)
 endmacro(remake_list_replace)
 
 ### \brief Search a list for existing values.

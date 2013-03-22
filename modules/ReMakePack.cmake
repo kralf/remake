@@ -48,11 +48,13 @@ remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
 #     generators.
 #   \optional[value] NAME:name The name of the binary package to be
 #     generated, defaults to the ${REMAKE_PROJECT_FILENAME}.
+#   \optional[value] VERSION:version The version of the binary package to
+#     be generated, defaults to the ${REMAKE_PROJECT_VERSION}.
 #   \optional[value] COMPONENT:component The name of the install
 #     component to generate the binary package from, defaults to
 #     ${REMAKE_DEFAULT_COMPONENT}.
 macro(remake_pack_binary pack_generator)
-  remake_arguments(PREFIX pack_ VAR NAME VAR COMPONENT ${ARGN})
+  remake_arguments(PREFIX pack_ VAR NAME VAR VERSION VAR COMPONENT ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)
@@ -62,6 +64,7 @@ macro(remake_pack_binary pack_generator)
     endif(NOT TARGET ${REMAKE_PACK_ALL_BINARY_TARGET})
 
     remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_FILENAME})
+    remake_set(pack_version SELF DEFAULT ${REMAKE_PROJECT_VERSION})
     remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
     if(pack_component STREQUAL REMAKE_DEFAULT_COMPONENT)
@@ -82,7 +85,7 @@ macro(remake_pack_binary pack_generator)
     remake_set(CPACK_SET_DESTDIR TRUE)
 
     remake_set(CPACK_PACKAGE_NAME ${pack_name})
-    remake_set(CPACK_PACKAGE_VERSION ${REMAKE_PROJECT_VERSION})
+    remake_set(CPACK_PACKAGE_VERSION ${pack_version})
     string(REGEX REPLACE "[.]$" "" pack_summary ${REMAKE_PROJECT_SUMMARY})
     if(pack_description)
       remake_set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
@@ -135,6 +138,8 @@ endmacro(remake_pack_binary)
 #     source package. See the CPack documentation for valid generators.
 #   \optional[value] NAME:name The name of the source package to be
 #     generated, defaults to ${REMAKE_PROJECT_FILENAME}.
+#   \optional[value] VERSION:version The version of the source package to
+#     be generated, defaults to the ${REMAKE_PROJECT_VERSION}.
 #   \optional[list] EXCLUDE:pattern An optional list of patterns matching
 #     additional files or directories in the source tree which shall not be
 #     packaged. Note that ${CMAKE_BINARY_DIR} and any hidden files or
@@ -142,13 +147,14 @@ endmacro(remake_pack_binary)
 #     in this list. See the CPack documentation for regular expression
 #     patterns and their proper escaping.
 macro(remake_pack_source pack_generator)
-  remake_arguments(PREFIX pack_ VAR NAME LIST EXCLUDE ${ARGN})
+  remake_arguments(PREFIX pack_ VAR NAME VAR VERSION LIST EXCLUDE ${ARGN})
 
   if(NOT TARGET ${REMAKE_PACK_ALL_SOURCE_TARGET})
     remake_target(${REMAKE_PACK_ALL_SOURCE_TARGET})
   endif(NOT TARGET ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
   remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_FILENAME})
+  remake_set(pack_version SELF DEFAULT ${REMAKE_PROJECT_VERSION})
   remake_file(pack_config
     ${REMAKE_PACK_DIR}/${pack_generator}/all.cpack)
   remake_file(pack_src_config
@@ -159,7 +165,7 @@ macro(remake_pack_source pack_generator)
     remake_set(CPACK_SOURCE_OUTPUT_CONFIG_FILE ${pack_src_config})
     remake_set(CPACK_SOURCE_GENERATOR ${pack_generator})
     remake_set(CPACK_PACKAGE_NAME ${pack_name})
-    remake_set(CPACK_PACKAGE_VERSION ${REMAKE_PROJECT_VERSION})
+    remake_set(CPACK_PACKAGE_VERSION ${pack_version})
 
     file(RELATIVE_PATH pack_binary_dir ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
     remake_set(CPACK_SOURCE_IGNORE_FILES "/[.].*/;/${pack_binary_dir}/")
@@ -207,7 +213,11 @@ endmacro(remake_pack_source)
 #   \optional[list] dep An optional list of package dependencies
 #     that are inscribed into the package manifest. The format of a
 #     dependency should comply to Debian conventions, meaning that the
-#     dependency is of the form ${PACKAGE} [(>= ${VERSION})].
+#     dependency is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
+#     attempts to match each dependency against an installed package
+#     reported by dpkg, therefore allowing regular expressions to be
+#     passed as dependencies. Note, however, that the expression syntax
+#     used must be valid for both dpkg and CMake at the same time.
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT VAR DESCRIPTION
     ARGN dependencies ${ARGN})
@@ -252,26 +262,60 @@ macro(remake_pack_deb)
           pack_component_dep ${pack_dependency})
         string(REGEX REPLACE "^([^\(]+)[(]?([^\)]*)[)]?$" "\\2"
           pack_version_dep ${pack_dependency})
+
         remake_set(pack_component_dep SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
-        remake_set(pack_version_dep SELF DEFAULT ">= ${REMAKE_PROJECT_VERSION}")
+        remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
         remake_list_push(pack_component_deps ${pack_component_dep})
-        remake_list_replace(pack_dependencies ${pack_dependency}
+        remake_list_replace(pack_dependencies ${pack_dependency} VERBATIM
           REPLACE "${pack_name_dep} (${pack_version_dep})")
       else(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
-        execute_process(COMMAND dpkg --list "${pack_dependency}[0-9]*"
+        remake_unset(pack_deb_found)
+        string(REGEX REPLACE "^([^ ]+).*$" "\\1" pack_name_dep
+          ${pack_dependency})
+        string(REGEX REPLACE "^([^ ]+)[ ]*[(]?([^\)]*)[)]?$" "\\2"
+          pack_version_dep ${pack_dependency})
+        execute_process(COMMAND dpkg --list "${pack_name_dep}"
           OUTPUT_VARIABLE pack_deb_packages OUTPUT_STRIP_TRAILING_WHITESPACE
           RESULT_VARIABLE pack_deb_result ERROR_QUIET)
+
         if(${pack_deb_result} EQUAL 0)
           string(REGEX REPLACE "\n" ";" pack_deb_packages ${pack_deb_packages})
           foreach(pack_deb_pkg ${pack_deb_packages})
-            if(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_dependency}[-0-9.]+ ")
-              string(REGEX REPLACE "^ii[ ]+(${pack_dependency}[-0-9.]+) .*$"
-                "\\1" pack_deb_pkg_name ${pack_deb_pkg})
-              remake_list_replace(pack_dependencies ${pack_dependency}
-                REPLACE ${pack_deb_pkg_name})
-            endif(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_dependency}[-0-9.]+ ")
+            if(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_name_dep}[ ]+.*")
+              if(NOT pack_deb_found)
+                string(REGEX REPLACE "^ii[ ]+(${pack_name_dep})[ ]+.*$"
+                  "\\1" pack_deb_pkg_name ${pack_deb_pkg})
+                string(REGEX REPLACE "^ii[ ]+${pack_name_dep}[ ]+([^ ]+).*$"
+                  "\\1" pack_deb_pkg_version ${pack_deb_pkg})
+                if(pack_version_dep)
+                  string(REPLACE " " ";" pack_version_args ${pack_version_dep})
+                  execute_process(COMMAND dpkg --compare-versions
+                    ${pack_deb_pkg_version} ${pack_version_args}
+                    RESULT_VARIABLE pack_deb_result ERROR_QUIET)
+                  if(NOT pack_deb_result)
+                    remake_list_replace(pack_dependencies ${pack_dependency}
+                      VERBATIM REPLACE
+                      "${pack_deb_pkg_name} (${pack_version_dep})")
+                    remake_set(pack_deb_found ON)
+                  endif(NOT pack_deb_result)
+                else(pack_version_dep)
+                  remake_list_replace(pack_dependencies ${pack_dependency}
+                    VERBATIM REPLACE ${pack_deb_pkg_name})
+                  remake_set(pack_deb_found ON)
+                endif(pack_version_dep)
+              else(NOT pack_deb_found)
+                remake_set(pack_deb_message
+                  "Multiple packages on build system match dependency")
+                message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
+              endif(NOT pack_deb_found)
+            endif(${pack_deb_pkg} MATCHES "^ii[ ]+${pack_name_dep}[ ]+.*")
           endforeach(pack_deb_pkg)
         endif(${pack_deb_result} EQUAL 0)
+        if(NOT pack_deb_found)
+          remake_set(pack_deb_message
+            "No package on build system matches dependency")
+          message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
+        endif(NOT pack_deb_found)
       endif(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
     endforeach(pack_dependency)
 
