@@ -1,3 +1,13 @@
+remake (1:0.5.1-159) lucid; urgency=low
+
+  * New feature:
+    + Extended remake_pack_deb() to take argument lists DEPENDS and RECOMMENDS
+      (should still be compliant with the old signature which did not use
+      a keyword)
+    + Modified remake_distribute_deb() to consider recommended packages
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 24 Mar 2013 07:22:00 +0100
+
 remake (1:0.5.1-158) lucid; urgency=low
 
   * Fixed bug in remake_pack_deb() that prevented correct matching of package

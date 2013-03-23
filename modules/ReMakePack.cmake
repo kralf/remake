@@ -210,17 +210,31 @@ endmacro(remake_pack_source)
 #   \optional[value] DESCRIPTION:string An optional description of the
 #     install component that is appended to the project summary when
 #     generating the package description.
-#   \optional[list] dep An optional list of package dependencies
-#     that are inscribed into the package manifest. The format of a
-#     dependency should comply to Debian conventions, meaning that the
-#     dependency is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
-#     attempts to match each dependency against an installed package
-#     reported by dpkg, therefore allowing regular expressions to be
-#     passed as dependencies. Note, however, that the expression syntax
-#     used must be valid for both dpkg and CMake at the same time.
+#   \optional[list] DEPENDS:pkg An optional list of mandatory package
+#     dependencies that are matched and inscribed into the package manifest.
+#     The format of a dependency should comply to Debian conventions, meaning
+#     that an entry is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
+#     requires each dependency to match against another binary package
+#     defined in a previous call to remake_pack_deb() or an installed
+#     package reported by dpkg on the build system. In the first case,
+#     the version of the dependency should be omitted as it will be equated
+#     with ${REMAKE_PROJECT_VERSION}. In the second case, the dependency
+#     may be passed as regular expression. Failure to match such expression
+#     will result in a fatal error. Note that the expression syntax used
+#     must be valid for both dpkg and CMake at the same time.
+#   \optional[list] RECOMMENDS:pkg An optional list of recommended packages
+#     that are directly inscribed into the package manifest. The format of a
+#     recommendation should comply to Debian conventions, meaning that
+#     an entry is of the form ${PACKAGE} [(>= ${VERSION})]. As opposed to
+#     mandatory dependencies, recommended packages are not matched against
+#     the names of packages installed on the build system or defined in a
+#     previous call to remake_pack_deb(). Therefore, a recommendation
+#     should generally be precise. As this is often difficult when
+#     attempting to build binary packages for several distributions, use
+#     of the DEPENDS argument is strongly encouraged.
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT VAR DESCRIPTION
-    ARGN dependencies ${ARGN})
+    LIST DEPENDS LIST RECOMMENDS ARGN depends ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)
@@ -254,7 +268,7 @@ macro(remake_pack_deb)
     endif(pack_suffix)
 
     remake_set(pack_component_deps)
-    foreach(pack_dependency ${pack_dependencies})
+    foreach(pack_dependency ${pack_depends})
       if(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
         string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME}[-]?[^ ]*).*$" "\\1"
           pack_name_dep ${pack_dependency})
@@ -266,7 +280,7 @@ macro(remake_pack_deb)
         remake_set(pack_component_dep SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
         remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
         remake_list_push(pack_component_deps ${pack_component_dep})
-        remake_list_replace(pack_dependencies ${pack_dependency} VERBATIM
+        remake_list_replace(pack_depends ${pack_dependency} VERBATIM
           REPLACE "${pack_name_dep} (${pack_version_dep})")
       else(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
         remake_unset(pack_deb_found)
@@ -293,13 +307,13 @@ macro(remake_pack_deb)
                     ${pack_deb_pkg_version} ${pack_version_args}
                     RESULT_VARIABLE pack_deb_result ERROR_QUIET)
                   if(NOT pack_deb_result)
-                    remake_list_replace(pack_dependencies ${pack_dependency}
+                    remake_list_replace(pack_depends ${pack_dependency}
                       VERBATIM REPLACE
                       "${pack_deb_pkg_name} (${pack_version_dep})")
                     remake_set(pack_deb_found ON)
                   endif(NOT pack_deb_result)
                 else(pack_version_dep)
-                  remake_list_replace(pack_dependencies ${pack_dependency}
+                  remake_list_replace(pack_depends ${pack_dependency}
                     VERBATIM REPLACE ${pack_deb_pkg_name})
                   remake_set(pack_deb_found ON)
                 endif(pack_version_dep)
@@ -319,8 +333,10 @@ macro(remake_pack_deb)
       endif(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
     endforeach(pack_dependency)
 
-    string(REPLACE ";" ", " pack_replace "${pack_dependencies}")
-    remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_replace})
+    string(REPLACE ";" ", " pack_depends "${pack_depends}")
+    string(REPLACE ";" ", " pack_recommends "${pack_recommends}")
+    remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_depends})
+    remake_set(CPACK_DEBIAN_PACKAGE_RECOMMENDS ${pack_recommends})
     remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
 
