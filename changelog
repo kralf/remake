@@ -1,3 +1,11 @@
+remake (1:0.5.1-160) lucid; urgency=low
+
+  * remake_distribute_deb() now initializes the distribution from a new
+    project variable RELEASE_DISTRIBUTION, as launchpad seems not to
+    provide proper distribution names through lsb_release
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 25 Mar 2013 11:19:00 +0100
+
 remake (1:0.5.1-159) lucid; urgency=low
 
   * New feature:

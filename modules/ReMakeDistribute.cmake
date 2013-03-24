@@ -98,7 +98,7 @@ macro(remake_distribute_deb)
   remake_set(distribute_changelog SELF DEFAULT ${REMAKE_PROJECT_CHANGELOG})
   execute_process(COMMAND lsb_release -c -s
     OUTPUT_VARIABLE distribute_release OUTPUT_STRIP_TRAILING_WHITESPACE)
-  remake_set(distribute_distribution SELF DEFAULT distribute_release)
+  remake_set(distribute_distribution SELF DEFAULT ${distribute_release})
   remake_set(distribute_urgency SELF DEFAULT low)
   remake_set(distribute_compatibility SELF DEFAULT 7)
   remake_set(distribute_pass SELF
@@ -156,7 +156,11 @@ macro(remake_distribute_deb)
       "debhelper (>= ${distribute_compatibility})" cmake)
     string(REGEX REPLACE ";" ", " distribute_depends "${distribute_depends}")
 
-    remake_set(distribute_definitions)
+    remake_project_set(RELEASE_DISTRIBUTION ${distribute_release} CACHE STRING
+      "Name of the distribution on release build system.")
+    remake_var_name(distribute_var ${REMAKE_PROJECT_NAME} RELEASE_DISTRIBUTION)
+    remake_set(distribute_definitions
+      "-D${distribute_var}=${distribute_distribution}")
     foreach(distribute_var ${distribute_pass})
       remake_set(distribute_definitions
         "${distribute_definitions} -D${distribute_var}=${${distribute_var}}")
@@ -270,15 +274,16 @@ macro(remake_distribute_deb)
       ${CMAKE_BINARY_DIR}/debian/${distribute_build_dir})
     remake_file_mkdir(${distribute_build_path})
 
+    remake_project_get(RELEASE_DISTRIBUTION)
     remake_unset(distribute_release_build)
-    if(${distribute_distribution} STREQUAL ${distribute_release})
+    if(${distribute_distribution} STREQUAL ${RELEASE_DISTRIBUTION})
       if(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
         remake_file_create(${CMAKE_SOURCE_DIR}/debian/control)
         remake_file_write(${CMAKE_SOURCE_DIR}/debian/control
           LINES ${distribute_control_release})
         remake_set(distribute_release_build ON)
       endif(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
-    endif(${distribute_distribution} STREQUAL ${distribute_release})
+    endif(${distribute_distribution} STREQUAL ${RELEASE_DISTRIBUTION})
 
     remake_pack_source_archive(GENERATOR TGZ ${distribute_exclude})
     add_dependencies(${distribute_target} ${REMAKE_PACK_ALL_SOURCE_TARGET})
