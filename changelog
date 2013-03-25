@@ -1,3 +1,11 @@
+remake (1:0.5.1-161) lucid; urgency=low
+
+  * Replaced "unsafe" remake_list_replace() uses in remake_pack_deb()
+    and remake_distribute_deb() by remake_list_push() (were potentially
+    causing wrong intra-project dependencies)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 26 Mar 2013 10:14:00 +0100
+
 remake (1:0.5.1-160) lucid; urgency=low
 
   * remake_distribute_deb() now initializes the distribution from a new

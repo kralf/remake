@@ -267,7 +267,8 @@ macro(remake_pack_deb)
         ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
     endif(pack_suffix)
 
-    remake_set(pack_component_deps)
+    remake_unset(pack_binary_deps)
+    remake_unset(pack_component_deps)
     foreach(pack_dependency ${pack_depends})
       if(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
         string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME}[-]?[^ ]*).*$" "\\1"
@@ -280,8 +281,7 @@ macro(remake_pack_deb)
         remake_set(pack_component_dep SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
         remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
         remake_list_push(pack_component_deps ${pack_component_dep})
-        remake_list_replace(pack_depends ${pack_dependency} VERBATIM
-          REPLACE "${pack_name_dep} (${pack_version_dep})")
+        remake_set(pack_dependency "${pack_name_dep} (${pack_version_dep})")
       else(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
         remake_unset(pack_deb_found)
         string(REGEX REPLACE "^([^ ]+).*$" "\\1" pack_name_dep
@@ -307,14 +307,12 @@ macro(remake_pack_deb)
                     ${pack_deb_pkg_version} ${pack_version_args}
                     RESULT_VARIABLE pack_deb_result ERROR_QUIET)
                   if(NOT pack_deb_result)
-                    remake_list_replace(pack_depends ${pack_dependency}
-                      VERBATIM REPLACE
+                    remake_set(pack_dependency
                       "${pack_deb_pkg_name} (${pack_version_dep})")
                     remake_set(pack_deb_found ON)
                   endif(NOT pack_deb_result)
                 else(pack_version_dep)
-                  remake_list_replace(pack_depends ${pack_dependency}
-                    VERBATIM REPLACE ${pack_deb_pkg_name})
+                  remake_set(pack_dependency ${pack_deb_pkg_name})
                   remake_set(pack_deb_found ON)
                 endif(pack_version_dep)
               else(NOT pack_deb_found)
@@ -331,11 +329,12 @@ macro(remake_pack_deb)
           message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
         endif(NOT pack_deb_found)
       endif(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+      remake_list_push(pack_binary_deps ${pack_dependency})
     endforeach(pack_dependency)
 
-    string(REPLACE ";" ", " pack_depends "${pack_depends}")
+    string(REPLACE ";" ", " pack_binary_deps "${pack_binary_deps}")
     string(REPLACE ";" ", " pack_recommends "${pack_recommends}")
-    remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_depends})
+    remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_binary_deps})
     remake_set(CPACK_DEBIAN_PACKAGE_RECOMMENDS ${pack_recommends})
     remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})

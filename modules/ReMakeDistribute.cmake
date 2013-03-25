@@ -204,6 +204,7 @@ macro(remake_distribute_deb)
         ${distribute_package} NAME_WE)
       remake_set(distribute_install "obj-$(DEB_BUILD_GNU_TYPE)")
 
+      remake_unset(distribute_binary_depends)
       if(CPACK_DEBIAN_PACKAGE_DEPENDS)
         string(REGEX REPLACE "[,][ ]*" ";" distribute_dependencies
           ${CPACK_DEBIAN_PACKAGE_DEPENDS})
@@ -221,18 +222,16 @@ macro(remake_distribute_deb)
                 "= ${distribute_version}")
             endif(${distribute_version_dep} STREQUAL
               "= ${REMAKE_PROJECT_VERSION}")
-            remake_list_replace(distribute_dependencies
-              ${distribute_dependency} VERBATIM
-              REPLACE "${distribute_name_dep} (${distribute_version_dep})")
+            remake_set(distribute_dependency
+              "${distribute_name_dep} (${distribute_version_dep})")
           endif(distribute_dependency MATCHES
             "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+          remake_list_push(distribute_binary_depends ${distribute_dependency})
         endforeach(distribute_dependency)
-      else(CPACK_DEBIAN_PACKAGE_DEPENDS)
-        remake_unset(distribute_dependencies)
       endif(CPACK_DEBIAN_PACKAGE_DEPENDS)
 
-      string(REPLACE ";" ", " distribute_dependencies
-        "${distribute_dependencies}")
+      string(REPLACE ";" ", " distribute_binary_depends
+        "${distribute_binary_depends}")
       remake_list_push(distribute_control_source
         "\nPackage: ${CPACK_PACKAGE_NAME}"
         "Architecture: ${distribute_arch}"
@@ -242,7 +241,7 @@ macro(remake_distribute_deb)
       remake_list_push(distribute_control_release
         "\nPackage: ${CPACK_PACKAGE_NAME}"
         "Architecture: ${distribute_arch}"
-        "Depends: ${distribute_dependencies}"
+        "Depends: ${distribute_binary_depends}"
         "Recommends: ${CPACK_DEBIAN_PACKAGE_RECOMMENDS}"
         "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
       remake_set(distribute_rule "\tDESTDIR=debian/${CPACK_PACKAGE_NAME}")
