@@ -1,3 +1,12 @@
+remake (1:0.5.1-162) lucid; urgency=low
+
+  * Optimized remake_list_replace()
+  * Fixed matching of dependencies defined through the DEPENDS parameter
+    of remake_pack_deb() (the macro now evaluates all installed packages
+    reported by dpkg-query)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 08 Apr 2013 23:53:00 +0100
+
 remake (1:0.5.1-161) lucid; urgency=low
 
   * Replaced "unsafe" remake_list_replace() uses in remake_pack_deb()

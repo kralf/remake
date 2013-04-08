@@ -220,8 +220,7 @@ endmacro(remake_pack_source)
 #     the version of the dependency should be omitted as it will be equated
 #     with ${REMAKE_PROJECT_VERSION}. In the second case, the dependency
 #     may be passed as regular expression. Failure to match such expression
-#     will result in a fatal error. Note that the expression syntax used
-#     must be valid for both dpkg and CMake at the same time.
+#     will result in a fatal error.
 #   \optional[list] RECOMMENDS:pkg An optional list of recommended packages
 #     that are directly inscribed into the package manifest. The format of a
 #     recommendation should comply to Debian conventions, meaning that
@@ -269,6 +268,7 @@ macro(remake_pack_deb)
 
     remake_unset(pack_binary_deps)
     remake_unset(pack_component_deps)
+    remake_unset(pack_deb_packages)
     foreach(pack_dependency ${pack_depends})
       if(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
         string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME}[-]?[^ ]*).*$" "\\1"
@@ -288,18 +288,20 @@ macro(remake_pack_deb)
           ${pack_dependency})
         string(REGEX REPLACE "^([^ ]+)[ ]*[(]?([^\)]*)[)]?$" "\\2"
           pack_version_dep ${pack_dependency})
-        execute_process(COMMAND dpkg --list "${pack_name_dep}"
-          OUTPUT_VARIABLE pack_deb_packages OUTPUT_STRIP_TRAILING_WHITESPACE
-          RESULT_VARIABLE pack_deb_result ERROR_QUIET)
+        if(NOT pack_deb_packages)
+          execute_process(COMMAND dpkg-query -W
+            OUTPUT_VARIABLE pack_deb_packages OUTPUT_STRIP_TRAILING_WHITESPACE
+            RESULT_VARIABLE pack_deb_result ERROR_QUIET)
+        endif(NOT pack_deb_packages)
 
         if(${pack_deb_result} EQUAL 0)
           string(REGEX REPLACE "\n" ";" pack_deb_packages ${pack_deb_packages})
           foreach(pack_deb_pkg ${pack_deb_packages})
-            if(${pack_deb_pkg} MATCHES "^[a-z]i[ ]+${pack_name_dep}[ ]+.*")
+            if(${pack_deb_pkg} MATCHES "${pack_name_dep}[\t]+.*")
               if(NOT pack_deb_found)
-                string(REGEX REPLACE "^[a-z]i[ ]+(${pack_name_dep})[ ]+.*$"
+                string(REGEX REPLACE "(${pack_name_dep})[\t]+.*"
                   "\\1" pack_deb_pkg_name ${pack_deb_pkg})
-                string(REGEX REPLACE "^[a-z]i[ ]+${pack_name_dep}[ ]+([^ ]+).*$"
+                string(REGEX REPLACE "${pack_name_dep}[\t]+(.*)"
                   "\\1" pack_deb_pkg_version ${pack_deb_pkg})
                 if(pack_version_dep)
                   string(REPLACE " " ";" pack_version_args ${pack_version_dep})
@@ -320,7 +322,7 @@ macro(remake_pack_deb)
                   "Multiple packages on build system match dependency")
                 message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
               endif(NOT pack_deb_found)
-            endif(${pack_deb_pkg} MATCHES "^[a-z]i[ ]+${pack_name_dep}[ ]+.*")
+            endif(${pack_deb_pkg} MATCHES "${pack_name_dep}[\t]+.*")
           endforeach(pack_deb_pkg)
         endif(${pack_deb_result} EQUAL 0)
         if(NOT pack_deb_found)

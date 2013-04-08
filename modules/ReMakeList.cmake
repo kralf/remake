@@ -91,13 +91,7 @@ macro(remake_list_replace list_name list_value)
       ${list_name} "${${list_name}}")
   else(list_verbatim)
     string(REGEX REPLACE "[;]${list_value}[;]" ";${list_replace};"
-      ${list_name} "${${list_name}}")
-    string(REGEX REPLACE "^${list_value}[;]" "${list_replace};"
-      ${list_name} "${${list_name}}")
-    string(REGEX REPLACE "[;]${list_value}$" ";${list_replace}"
-      ${list_name} "${${list_name}}")
-    string(REGEX REPLACE "^${list_value}$" "${list_replace}"
-      ${list_name} "${${list_name}}")
+      ${list_name} ";${${list_name}};")
   endif(list_verbatim)
 endmacro(remake_list_replace)
 
