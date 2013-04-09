@@ -292,16 +292,16 @@ macro(remake_pack_deb)
           execute_process(COMMAND dpkg-query -W
             OUTPUT_VARIABLE pack_deb_packages OUTPUT_STRIP_TRAILING_WHITESPACE
             RESULT_VARIABLE pack_deb_result ERROR_QUIET)
+          string(REGEX REPLACE "\n" ";" pack_deb_packages ${pack_deb_packages})
         endif(NOT pack_deb_packages)
 
         if(${pack_deb_result} EQUAL 0)
-          string(REGEX REPLACE "\n" ";" pack_deb_packages ${pack_deb_packages})
           foreach(pack_deb_pkg ${pack_deb_packages})
-            if(${pack_deb_pkg} MATCHES "${pack_name_dep}[\t]+.*")
+            if("${pack_deb_pkg}" MATCHES "^${pack_name_dep}[\t].*$")
               if(NOT pack_deb_found)
-                string(REGEX REPLACE "(${pack_name_dep})[\t]+.*"
+                string(REGEX REPLACE "^(${pack_name_dep})[\t].*$"
                   "\\1" pack_deb_pkg_name ${pack_deb_pkg})
-                string(REGEX REPLACE "${pack_name_dep}[\t]+(.*)"
+                string(REGEX REPLACE "^${pack_name_dep}[\t](.*)$"
                   "\\1" pack_deb_pkg_version ${pack_deb_pkg})
                 if(pack_version_dep)
                   string(REPLACE " " ";" pack_version_args ${pack_version_dep})
@@ -322,7 +322,7 @@ macro(remake_pack_deb)
                   "Multiple packages on build system match dependency")
                 message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
               endif(NOT pack_deb_found)
-            endif(${pack_deb_pkg} MATCHES "${pack_name_dep}[\t]+.*")
+            endif("${pack_deb_pkg}" MATCHES "^${pack_name_dep}[\t].*$")
           endforeach(pack_deb_pkg)
         endif(${pack_deb_result} EQUAL 0)
         if(NOT pack_deb_found)

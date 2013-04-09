@@ -1,3 +1,9 @@
+remake (1:0.5.1-163) lucid; urgency=low
+
+  * Fixed major bugs in remake_list_replace() and remake_pack_deb()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 09 Apr 2013 07:27:00 +0100
+
 remake (1:0.5.1-162) lucid; urgency=low
 
   * Optimized remake_list_replace()
