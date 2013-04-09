@@ -231,9 +231,12 @@ endmacro(remake_pack_source)
 #     should generally be precise. As this is often difficult when
 #     attempting to build binary packages for several distributions, use
 #     of the DEPENDS argument is strongly encouraged.
+#   \optional[list] EXTRA:glob An optional list of glob expressions matching
+#     extra control information files such as preinst, postinst, prerm, and
+#     postrm to be included in the Debian package's control section.
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT VAR DESCRIPTION
-    LIST DEPENDS LIST RECOMMENDS ARGN depends ${ARGN})
+    LIST DEPENDS LIST RECOMMENDS LIST EXTRA ARGN depends ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)
@@ -336,8 +339,10 @@ macro(remake_pack_deb)
 
     string(REPLACE ";" ", " pack_binary_deps "${pack_binary_deps}")
     string(REPLACE ";" ", " pack_recommends "${pack_recommends}")
+    remake_file_glob(pack_extra ${pack_extra})
     remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_binary_deps})
     remake_set(CPACK_DEBIAN_PACKAGE_RECOMMENDS ${pack_recommends})
+    remake_set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA ${pack_extra})
     remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
 

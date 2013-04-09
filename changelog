@@ -1,3 +1,12 @@
+remake (1:0.5.2-164) lucid; urgency=low
+
+  * New features:
+    + Added EXTRA option to remake_pack_deb()
+    + Revised remake_distribute_deb() to account for extra control
+      information files
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 09 Apr 2013 15:36:00 +0100
+
 remake (1:0.5.1-163) lucid; urgency=low
 
   * Fixed major bugs in remake_list_replace() and remake_pack_deb()

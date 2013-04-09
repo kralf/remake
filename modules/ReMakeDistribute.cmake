@@ -192,6 +192,10 @@ macro(remake_distribute_deb)
       "\t\n"
       "override_dh_auto_install:")
 
+    remake_file(distribute_dir
+      ${REMAKE_DISTRIBUTE_DIR}/debian/${distribute_distribution})
+    remake_file_mkdir(${distribute_dir})
+
     remake_set(distribute_control_release ${distribute_control_source})
     foreach(distribute_package ${distribute_packages})
       include(${distribute_package})
@@ -251,15 +255,21 @@ macro(remake_distribute_deb)
         "${distribute_rule} -P ${distribute_install}/cmake_install.cmake")
       remake_list_push(distribute_rules "${distribute_rule}")
 
+      remake_unset(distribute_extra_names)
+      foreach(distribute_extra ${CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA})
+        get_filename_component(distribute_extra_name ${distribute_extra} NAME)
+        file(COPY ${distribute_extra} DESTINATION ${distribute_dir}
+          FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE)
+        file(RENAME ${distribute_dir}/${distribute_extra_name}
+          ${distribute_dir}/${CPACK_PACKAGE_NAME}.${distribute_extra_name})
+      endforeach(distribute_extra ${CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA})
+
       remake_var_regex(pack_variables "^CPACK_")
       foreach(pack_var ${pack_variables})
         remake_set(${pack_var})
       endforeach(pack_var)
-    endforeach(distribute_package ${distribute_packages})
+    endforeach(distribute_package)
 
-    remake_file(distribute_dir
-      ${REMAKE_DISTRIBUTE_DIR}/debian/${distribute_distribution})
-    remake_file_mkdir(${distribute_dir})
     remake_file_write(${distribute_dir}/control
       LINES ${distribute_control_source})
     remake_file_write(${distribute_dir}/rules LINES ${distribute_rules})
