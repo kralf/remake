@@ -1,3 +1,9 @@
+remake (1:0.5.2-165) lucid; urgency=low
+
+  * Increased patch version
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 09 Apr 2013 15:38:00 +0100
+
 remake (1:0.5.2-164) lucid; urgency=low
 
   * New features:
