@@ -107,6 +107,15 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[list] NOTES:glob An optional list of glob expressions that
 #     are resolved in order to find additional notes to be installed
 #     with the project manifest files.
+#   \optional[list] EXTRA_C_FLAGS:flag An optional list of project-specific
+#     C-compiler flags which will be used to initialize the cache variable
+#     ${CMAKE_C_FLAGS}.
+#   \optional[list] EXTRA_CXX_FLAGS:flag An optional list of project-specific
+#     C++-compiler flags which will be used to initialize the cache variable
+#     ${CMAKE_CXX_FLAGS}.
+#   \optional[list] EXTRA_SHARED_LINKER_FLAGS:flag An optional list of
+#     project-specific shared library linker flags which will be used to
+#     initialize the cache variable ${CMAKE_SHARED_LINKER_FLAGS}.
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
@@ -114,7 +123,8 @@ macro(remake_project project_name)
     VAR README VAR COPYRIGHT VAR TODO VAR CHANGELOG VAR LIBRARY_DESTINATION
     VAR EXECUTABLE_DESTINATION VAR PLUGIN_DESTINATION VAR SCRIPT_DESTINATION
     VAR FILE_DESTINATION VAR CONFIGURATION_DESTINATION VAR HEADER_DESTINATION
-    VAR DOCUMENTATION_DESTINATION LIST NOTES ${ARGN})
+    VAR DOCUMENTATION_DESTINATION LIST NOTES LIST EXTRA_C_FLAGS
+    LIST EXTRA_CXX_FLAGS LIST EXTRA_SHARED_LINKER_FLAGS ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   remake_set(project_install SELF DEFAULT /usr/local)
@@ -249,6 +259,14 @@ macro(remake_project project_name)
     ${project_documentation_destination}
     CACHE STRING "Install destination of project documentation.")
 
+  remake_project_set(EXTRA_C_FLAGS ${project_extra_c_flags}
+    CACHE STRING "Extra flags used by the compiler to build the project.")
+  remake_project_set(EXTRA_CXX_FLAGS ${project_extra_c_flags}
+    CACHE STRING "Extra flags used by the compiler to build the project.")
+  remake_project_set(EXTRA_SHARED_LINKER_FLAGS
+    ${project_extra_shared_linker_flags} CACHE STRING
+    "Extra flags used by the linker during the creation of project dll's.")
+
   message(STATUS "Project: ${REMAKE_PROJECT_NAME} "
     "version ${REMAKE_PROJECT_VERSION}, "
     "release ${REMAKE_PROJECT_RELEASE}")
@@ -305,6 +323,23 @@ macro(remake_project project_name)
   if(EXISTS ${REMAKE_PROJECT_CONFIGURATION_DIR})
     remake_add_directories(${REMAKE_PROJECT_CONFIGURATION_DIR})
   endif(EXISTS ${REMAKE_PROJECT_CONFIGURATION_DIR})
+
+  remake_project_get(EXTRA_C_FLAGS)
+  if(EXTRA_C_FLAGS)
+    remake_set(CMAKE_C_FLAGS "${EXTRA_C_FLAGS} ${CMAKE_C_FLAGS}"
+      CACHE FORCE INIT)
+  endif(EXTRA_C_FLAGS)
+  remake_project_get(EXTRA_CXX_FLAGS)
+  if(EXTRA_CXX_FLAGS)
+    remake_set(CMAKE_CXX_FLAGS "${EXTRA_CXX_FLAGS} ${CMAKE_CXX_FLAGS}"
+      CACHE FORCE INIT)
+  endif(EXTRA_CXX_FLAGS)
+  remake_project_get(EXTRA_SHARED_LINKER_FLAGS)
+  if(EXTRA_SHARED_LINKER_FLAGS)
+    remake_set(CMAKE_SHARED_LINKER_FLAGS
+      "${EXTRA_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS}"
+      CACHE FORCE INIT)
+  endif(EXTRA_SHARED_LINKER_FLAGS)
 endmacro(remake_project)
 
 ### \brief Define the value of a ReMake project variable.

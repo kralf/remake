@@ -1,3 +1,17 @@
+remake (1:0.5.3-166) lucid; urgency=low
+
+  * Changed mechanism for testing whether cache variables have already
+    been initialized (now using an internal cache flag instead of
+    ${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
+  * New features:
+    + Added keyword arguments EXTRA_C_FLAGS, EXTRA_CXX_FLAGS, and
+      EXTRA_SHARED_LINKER_FLAGS to remake_project(), allowing the
+      project maintainer to "inject" project-specific build settings to
+      CMake's standard cache variable
+  * Increased patch version
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 10 Apr 2013 09:10:00 +0100
+
 remake (1:0.5.2-165) lucid; urgency=low
 
   * Increased patch version
