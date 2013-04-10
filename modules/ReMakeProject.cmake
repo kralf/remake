@@ -107,15 +107,15 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[list] NOTES:glob An optional list of glob expressions that
 #     are resolved in order to find additional notes to be installed
 #     with the project manifest files.
-#   \optional[list] EXTRA_C_FLAGS:flag An optional list of project-specific
-#     C-compiler flags which will be used to initialize the cache variable
-#     ${CMAKE_C_FLAGS}.
-#   \optional[list] EXTRA_CXX_FLAGS:flag An optional list of project-specific
-#     C++-compiler flags which will be used to initialize the cache variable
-#     ${CMAKE_CXX_FLAGS}.
-#   \optional[list] EXTRA_SHARED_LINKER_FLAGS:flag An optional list of
-#     project-specific shared library linker flags which will be used to
-#     initialize the cache variable ${CMAKE_SHARED_LINKER_FLAGS}.
+#   \optional[value] EXTRA_C_FLAGS:flags An optional string containing
+#     project-specific C-compiler flags which will be used to initialize
+#     the cache variable ${CMAKE_C_FLAGS}.
+#   \optional[value] EXTRA_CXX_FLAGS:flags An optional string containing
+#     project-specific C++-compiler flags which will be used to initialize
+#     the cache variable ${CMAKE_CXX_FLAGS}.
+#   \optional[value] EXTRA_SHARED_LINKER_FLAGS:flags An optional string
+#     containing project-specific shared library linker flags which will be
+#     used to initialize the cache variable ${CMAKE_SHARED_LINKER_FLAGS}.
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
@@ -261,7 +261,7 @@ macro(remake_project project_name)
 
   remake_project_set(EXTRA_C_FLAGS ${project_extra_c_flags}
     CACHE STRING "Extra flags used by the compiler to build the project.")
-  remake_project_set(EXTRA_CXX_FLAGS ${project_extra_c_flags}
+  remake_project_set(EXTRA_CXX_FLAGS ${project_extra_cxx_flags}
     CACHE STRING "Extra flags used by the compiler to build the project.")
   remake_project_set(EXTRA_SHARED_LINKER_FLAGS
     ${project_extra_shared_linker_flags} CACHE STRING

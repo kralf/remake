@@ -1,3 +1,10 @@
+remake (1:0.5.3-167) lucid; urgency=low
+
+  * Fixed assignment bug in remake_project() that would cause a failure
+    in passing EXTRA_CXX_FLAGS
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 10 Apr 2013 11:10:00 +0100
+
 remake (1:0.5.3-166) lucid; urgency=low
 
   * Changed mechanism for testing whether cache variables have already
