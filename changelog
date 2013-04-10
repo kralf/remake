@@ -1,3 +1,10 @@
+remake (1:0.5.3-168) lucid; urgency=low
+
+  * Improved handling of Git-based projects which do not reside in the
+    top-level Git directory
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 10 Apr 2013 14:05:00 +0100
+
 remake (1:0.5.3-167) lucid; urgency=low
 
   * Fixed assignment bug in remake_project() that would cause a failure

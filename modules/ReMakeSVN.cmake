@@ -29,6 +29,10 @@ include(ReMakePrivate)
 
 remake_set(REMAKE_SVN_DIR ReMakeSVN)
 
+if(NOT COMMAND remake_svn_revision)
+  remake_find_package(Subversion QUIET OPTIONAL)
+endif(NOT COMMAND remake_svn_revision)
+
 ### \brief Retrieve the Subversion head revision.
 #   This macro retrieves the Subversion head revision of the working directory.
 #   The macro defines an output variable with the name provided and assigns the
@@ -117,5 +121,3 @@ macro(remake_svn_log svn_file)
     endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
   endif(svn_revision)
 endmacro(remake_svn_log)
-
-remake_find_package(Subversion QUIET OPTIONAL)

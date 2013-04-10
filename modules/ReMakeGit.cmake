@@ -28,6 +28,10 @@ include(ReMakePrivate)
 
 remake_set(REMAKE_GIT_DIR ReMakeGit)
 
+if(NOT COMMAND remake_git_revision)
+  remake_find_executable(git PACKAGE Git QUIET OPTIONAL)
+endif(NOT COMMAND remake_git_revision)
+
 ### \brief Generate a sequential revision number.
 #   This macro attempts to generate a sequential revision number by counting
 #   the commits reachable from HEAD. Its purpose is to contribute a consecutive
@@ -47,10 +51,28 @@ macro(remake_git_revision git_var)
     "Git revision of project sources.")
 
   if(GIT_FOUND)
-    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+    execute_process(
+      COMMAND ${GIT_EXECUTABLE} rev-parse --show-toplevel
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      RESULT_VARIABLE git_result
+      OUTPUT_VARIABLE git_parse_toplevel
+      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    remake_unset(git_toplevel)
+    if(${git_result} EQUAL 0)
+      if(IS_DIRECTORY ${git_parse_toplevel}/.git)
+        remake_set(git_toplevel ${git_parse_toplevel})
+      endif(IS_DIRECTORY ${git_parse_toplevel}/.git)
+    endif(${git_result} EQUAL 0)
+
+    remake_project_set(GIT_TOPLEVEL "${git_toplevel}" CACHE PATH
+      "Git top-level directory containing the project sources.")
+    remake_project_get(GIT_TOPLEVEL OUTPUT git_toplevel)
+
+    if(git_toplevel)
       execute_process(
         COMMAND ${GIT_EXECUTABLE} rev-list HEAD
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        WORKING_DIRECTORY ${git_toplevel}
         RESULT_VARIABLE git_result
         OUTPUT_VARIABLE git_list)
 
@@ -62,7 +84,7 @@ macro(remake_git_revision git_var)
         remake_project_set(GIT_REVISION ${git_length}
           CACHE STRING "Git revision of project sources." FORCE)
       endif(${git_result} EQUAL 0)
-    endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.git)
+    endif(git_toplevel)
   endif(GIT_FOUND)
 
   remake_project_get(GIT_REVISION OUTPUT ${git_var})
@@ -88,37 +110,33 @@ macro(remake_git_log git_file)
   if(git_output)
     remake_set(${git_output})
   endif(git_output)
-  remake_project_get(GIT_REVISION OUTPUT git_revision)
+  remake_project_get(GIT_TOPLEVEL OUTPUT git_toplevel)
 
-  if(git_revision)
-    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.git)
-      if(NOT IS_ABSOLUTE ${git_file})
-        remake_set(git_absolute ${CMAKE_CURRENT_BINARY_DIR}/${git_file})
-      else(NOT IS_ABSOLUTE ${git_file})
-        remake_set(git_absolute ${git_file})
-      endif(NOT IS_ABSOLUTE ${git_file})
+  if(git_toplevel)
+    if(NOT IS_ABSOLUTE ${git_file})
+      remake_set(git_absolute ${git_toplevel}/${git_file})
+    else(NOT IS_ABSOLUTE ${git_file})
+      remake_set(git_absolute ${git_file})
+    endif(NOT IS_ABSOLUTE ${git_file})
 
-      remake_file_mkdir(${REMAKE_GIT_DIR})
-      remake_file(git_head ${REMAKE_GIT_DIR}/head)
-      add_custom_command(
-        OUTPUT ${git_head}
-        COMMAND ${GIT_EXECUTABLE} rev-list HEAD > ${git_head} VERBATIM
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD
-        COMMENT "Retrieving Git head commit")
-      remake_component_add_command(
-        OUTPUT ${git_absolute} AS ${git_target}
-        COMMAND ${GIT_EXECUTABLE} log > ${git_absolute}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        DEPENDS ${git_head}
-        COMMENT "Retrieving Git log messages"
-        ${COMPONENT})
+    remake_file_mkdir(${REMAKE_GIT_DIR})
+    remake_file(git_head ${REMAKE_GIT_DIR}/head)
+    add_custom_command(
+      OUTPUT ${git_head}
+      COMMAND ${GIT_EXECUTABLE} rev-list HEAD > ${git_head} VERBATIM
+      WORKING_DIRECTORY ${git_toplevel}
+      DEPENDS ${git_toplevel}/.git/HEAD
+      COMMENT "Retrieving Git head commit")
+    remake_component_add_command(
+      OUTPUT ${git_absolute} AS ${git_target}
+      COMMAND ${GIT_EXECUTABLE} log > ${git_absolute}
+      WORKING_DIRECTORY ${git_toplevel}
+      DEPENDS ${git_head}
+      COMMENT "Retrieving Git log messages"
+      ${COMPONENT})
 
-      if(git_output)
-        remake_set(${git_output} ${git_absolute})
-      endif(git_output)
-    endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.git)
-  endif(git_revision)
+    if(git_output)
+      remake_set(${git_output} ${git_absolute})
+    endif(git_output)
+  endif(git_toplevel)
 endmacro(remake_git_log)
-
-remake_find_executable(git PACKAGE Git QUIET OPTIONAL)
