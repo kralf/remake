@@ -1,3 +1,10 @@
+remake (1:0.5.3-169) lucid; urgency=low
+
+  * New features:
+    + Added options ALIAS and ARCH to remake_distribute_deb()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 15 Apr 2013 14:06:00 +0100
+
 remake (1:0.5.3-168) lucid; urgency=low
 
   * Improved handling of Git-based projects which do not reside in the
