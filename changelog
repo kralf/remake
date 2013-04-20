@@ -1,3 +1,9 @@
+remake (1:0.5.3-170) lucid; urgency=low
+
+  * Rebased project to github
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 20 Apr 2013 10:46:00 +0100
+
 remake (1:0.5.3-169) lucid; urgency=low
 
   * New features:
