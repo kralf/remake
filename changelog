@@ -1,3 +1,10 @@
+remake (1:0.5.3-171) lucid; urgency=low
+
+  * Added EXTRA_MODULE_LINKER_FLAGS and EXTRA_EXE_LINKER_FLAGS to
+    remake_project()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 21 Apr 2013 08:13:00 +0100
+
 remake (1:0.5.3-170) lucid; urgency=low
 
   * Rebased project to github

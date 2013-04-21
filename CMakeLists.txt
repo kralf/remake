@@ -16,7 +16,7 @@ remake_project(
   AUTHOR "Ralf Kaestner"
   AUTHOR "Dizan Vasquez"
   CONTACT "ralf.kaestner@gmail.com"
-  HOME "http://aslforge.ethz.ch/projects/remake"
+  HOME "http://github.com/kralf/remake"
   LICENSE "GNU Lesser General Public License (LGPL)"
   INSTALL /usr
 )

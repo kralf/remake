@@ -116,6 +116,12 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #   \optional[value] EXTRA_SHARED_LINKER_FLAGS:flags An optional string
 #     containing project-specific shared library linker flags which will be
 #     used to initialize the cache variable ${CMAKE_SHARED_LINKER_FLAGS}.
+#   \optional[value] EXTRA_MODULE_LINKER_FLAGS:flags An optional string
+#     containing project-specific module linker flags which will be
+#     used to initialize the cache variable ${CMAKE_MODULE_LINKER_FLAGS}.
+#   \optional[value] EXTRA_EXE_LINKER_FLAGS:flags An optional string
+#     containing project-specific executable linker flags which will be
+#     used to initialize the cache variable ${CMAKE_EXE_LINKER_FLAGS}.
 macro(remake_project project_name)
   remake_arguments(PREFIX project_ VAR VERSION VAR RELEASE VAR SUMMARY
     VAR AUTHOR VAR CONTACT VAR HOME VAR LICENSE VAR FILENAME VAR PREFIX
@@ -124,7 +130,8 @@ macro(remake_project project_name)
     VAR EXECUTABLE_DESTINATION VAR PLUGIN_DESTINATION VAR SCRIPT_DESTINATION
     VAR FILE_DESTINATION VAR CONFIGURATION_DESTINATION VAR HEADER_DESTINATION
     VAR DOCUMENTATION_DESTINATION LIST NOTES LIST EXTRA_C_FLAGS
-    LIST EXTRA_CXX_FLAGS LIST EXTRA_SHARED_LINKER_FLAGS ${ARGN})
+    LIST EXTRA_CXX_FLAGS LIST EXTRA_SHARED_LINKER_FLAGS
+    LIST EXTRA_MODULE_LINKER_FLAGS LIST EXTRA_EXE_LINKER_FLAGS ${ARGN})
   remake_set(project_version SELF DEFAULT 0.1)
   remake_set(project_release SELF DEFAULT alpha)
   remake_set(project_install SELF DEFAULT /usr/local)
@@ -266,6 +273,12 @@ macro(remake_project project_name)
   remake_project_set(EXTRA_SHARED_LINKER_FLAGS
     ${project_extra_shared_linker_flags} CACHE STRING
     "Extra flags used by the linker during the creation of project dll's.")
+  remake_project_set(EXTRA_MODULE_LINKER_FLAGS
+    ${project_extra_module_linker_flags} CACHE STRING
+    "Extra flags used by the linker during the creation of project modules.")
+  remake_project_set(EXTRA_EXE_LINKER_FLAGS
+    ${project_extra_exe_linker_flags} CACHE STRING
+    "Extra flags used by the linker during the creation of project executables.")
 
   message(STATUS "Project: ${REMAKE_PROJECT_NAME} "
     "version ${REMAKE_PROJECT_VERSION}, "
@@ -340,6 +353,18 @@ macro(remake_project project_name)
       "${EXTRA_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS}"
       CACHE FORCE INIT)
   endif(EXTRA_SHARED_LINKER_FLAGS)
+  remake_project_get(EXTRA_MODULE_LINKER_FLAGS)
+  if(EXTRA_MODULE_LINKER_FLAGS)
+    remake_set(CMAKE_MODULE_LINKER_FLAGS
+      "${EXTRA_MODULE_LINKER_FLAGS} ${CMAKE_MODULE_LINKER_FLAGS}"
+      CACHE FORCE INIT)
+  endif(EXTRA_MODULE_LINKER_FLAGS)
+  remake_project_get(EXTRA_EXE_LINKER_FLAGS)
+  if(EXTRA_EXE_LINKER_FLAGS)
+    remake_set(CMAKE_EXE_LINKER_FLAGS
+      "${EXTRA_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS}"
+      CACHE FORCE INIT)
+  endif(EXTRA_EXE_LINKER_FLAGS)
 endmacro(remake_project)
 
 ### \brief Define the value of a ReMake project variable.
