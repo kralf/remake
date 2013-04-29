@@ -456,8 +456,8 @@ endmacro(remake_add_scripts)
 ### \brief Add configuration file install rules.
 #   This macro automatically defines install rules for configuration targets
 #   from a list of glob expressions. As opposed to regular file targets,
-#   configuration targets are automatically configured by remake_file_install()
-#   prior to the install stage.
+#   configuration targets are automatically configured by
+#   remake_file_configure() prior to the install stage.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the configuration file templates.
 #   \optional[value] INSTALL:dirname The directory that shall be passed

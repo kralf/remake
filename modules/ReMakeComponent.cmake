@@ -190,7 +190,7 @@ endmacro(remake_component_switch)
 ### \brief Specify component-specific rules to run at build time.
 #   This macro defines component-specific build rules by calling CMake's
 #   add_library() or add_executable() with the provided component name and
-#   all additional arguments. The use of this macro is stronly encouraged
+#   all additional arguments. The use of this macro is strongly encouraged
 #   over the CMake standard macros since it allows for special treating
 #   of component-specific rules.
 #   \required[option] LIBRARY|EXECUTABLE The type of the target to be built.
@@ -240,7 +240,7 @@ endmacro(remake_component_build)
 ### \brief Specify a component-specific custom build rule.
 #   This macro defines a component-specific custom build rule by calling
 #   remake_target_add_command() for the top-level target of the component
-#   with the provided name. The use of this macro is stronly encouraged
+#   with the provided name. The use of this macro is strongly encouraged
 #   over the CMake standard macros since it allows for special treating
 #   of component-specific rules.
 #   \optional[list] arg The arguments to be passed on to
@@ -293,10 +293,10 @@ macro(remake_component_add_dependencies)
   endif(component_build)
 endmacro(remake_component_add_dependencies)
 
-### \brief Specifiy component-specific rules to run at install time.
+### \brief Specify component-specific rules to run at install time.
 #   This macro defines component-specific install rules by calling CMake's
 #   install() with the provided component name and all additional arguments.
-#   The use of this macro is stronly encouraged over the CMake standard
+#   The use of this macro is strongly encouraged over the CMake standard
 #   macro since it allows for special treating of component-specific rules.
 #   \optional[list] arg The arguments to be passed on to CMake's
 #     install() macro.

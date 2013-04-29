@@ -1,3 +1,15 @@
+remake (1:0.5.4-172) lucid; urgency=low
+
+  * Non-stable commit with several experimental extensions
+  * New features:
+    + Added Raspbian and Android toolchain files (need to be revised,
+      formatted, and tested)
+    + Started major revision of ReMakeROS macros
+    + Added remake_file_cat() macro
+  * Increased patch version
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 29 Apr 2013 16:33:00 +0100
+
 remake (1:0.5.3-171) lucid; urgency=low
 
   * Added EXTRA_MODULE_LINKER_FLAGS and EXTRA_EXE_LINKER_FLAGS to

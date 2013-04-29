@@ -421,7 +421,7 @@ endmacro(remake_file_read)
 ### \brief Write content to file.
 #   This macro appends a list of string values to a file. The name of the file
 #   to be written is automatically converted into a ReMake location by a call
-#   to remake_file(). If the file does not exists yets, it will automatically
+#   to remake_file(). If the file does not exist yet, it will automatically
 #   be created.
 #   \required[value] filename The name of the file to be written to.
 #   \optional[option] TOPLEVEL If this option is present, the file
@@ -502,6 +502,37 @@ macro(remake_file_copy file_copy_destination)
     endif(file_copy_output)
   endforeach(file_copy_src)
 endmacro(remake_file_copy)
+
+### \brief Concatenate lines from input files into an output file.
+#   This macro concatenates lines of multiple input files into an
+#   output file. Thereby, the input files are considered in the
+#   alphabetical order of their filenames.
+#   \required[value] filename The name of the output file which will
+#     hold the concatenated lines of all input files in order of
+#     their specification.
+#   \required[list] glob A list of glob expressions that are matched to
+#     find the input files. Note that the order in which files are
+#     matched will affect the output.
+#   \optional[option] APPEND If this option is present, the output
+#     file will be appended the concatenated input file lines.
+#   \optional[option] TOPLEVEL If this option is present, the output
+#     file is a top-level ReMake file.
+macro(remake_file_cat file_cat_name)
+  remake_arguments(PREFIX file_cat_ OPTION APPEND OPTION TOPLEVEL
+    ARGN globs ${ARGN})
+
+  remake_file(file_cat_output ${file_cat_name} ${TOPLEVEL})
+  remake_file_glob(file_cat_inputs FILES ${file_cat_globs})
+  list(SORT file_cat_inputs)
+
+  if(NOT file_cat_append)
+    remake_file_create(${file_cat_output})
+  endif(NOT file_cat_append)
+  foreach(file_cat_input ${file_cat_inputs})
+    remake_file_read(file_cat_content ${file_cat_input})
+    remake_file_write(${file_cat_output} LINES FROM file_cat_content)
+  endforeach(file_cat_input)
+endmacro(remake_file_cat)
 
 ### \brief Set file permissions.
 #   This macro sets the permissions on a file. Therefore, a temporary copy
@@ -586,8 +617,8 @@ endmacro(remake_file_link)
 #     breaks will be C-style escaped.
 macro(remake_file_configure)
   remake_arguments(PREFIX file_ VAR DESTINATION VAR EXT VAR OUTPUT
-    OPTION OUTDATED OPTION ESCAPE_QUOTES OPTION ESCAPE_NEWLINES ARGN globs
-    ${ARGN})
+    OPTION OUTDATED OPTION ESCAPE_QUOTES OPTION ESCAPE_NEWLINES
+    ARGN globs ${ARGN})
   remake_set(file_destination SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(file_output)

@@ -44,7 +44,7 @@ include(FindPkgConfig)
 #     evaluating if ${ALIAS}_FOUND is set to TRUE. The alias has to be
 #     provided in cases where the package name differs from the variable
 #     prefix assumed by CMake's find_package().
-#   \optional[list] arg A list of optional arguments to be forwared to
+#   \optional[list] arg A list of optional arguments to be forwarded to
 #     CMake's find_package() and pkg_check_modules(), respectively. See the
 #     CMake documentation for the correct usage.
 #   \optional[option] OPTIONAL If provided, this option is passed on to
@@ -86,7 +86,7 @@ endmacro(remake_find_package)
 #   \optional[value] PACKAGE:package The name of the package containing the
 #     requested library, defaults to the provided library name and is used
 #     for display and to set the PATH_SUFFIXES argument for find_path().
-#   \optional[list] arg A list of optional arguments to be forwared to
+#   \optional[list] arg A list of optional arguments to be forwarded to
 #     CMake's find_library() and find_path(). See the CMake documentation
 #     for correct usage.
 #   \optional[option] OPTIONAL If provided, this option is passed on to
@@ -134,7 +134,7 @@ endmacro(remake_find_library)
 #   \optional[value] PACKAGE:package The name of the package containing the
 #     requested executable, defaults to the upper-case conversion of the
 #     executable name and is used to set ${PACKAGE}_FOUND.
-#   \optional[list] arg A list of optional arguments to be forwared to
+#   \optional[list] arg A list of optional arguments to be forwarded to
 #     CMake's find_program(). See the CMake documentation for correct usage.
 #   \optional[option] OPTIONAL If provided, this option is passed on to
 #     remake_find_result().
@@ -158,7 +158,7 @@ endmacro(remake_find_executable)
 #   \required[value] file The name of the file to be discovered.
 #   \required[value] PACKAGE:package The name of the package containing the
 #     requested file which is used to set ${PACKAGE}_FOUND.
-#   \optional[list] arg A list of optional arguments to be forwared to
+#   \optional[list] arg A list of optional arguments to be forwarded to
 #     CMake's find_path(). See the CMake documentation for correct usage.
 #   \optional[option] OPTIONAL If provided, this option is passed on to
 #     remake_find_result().

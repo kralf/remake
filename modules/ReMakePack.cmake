@@ -201,7 +201,9 @@ endmacro(remake_pack_source)
 #   string in the package name.
 #   \optional[value] ARCH:architecture The package architecture that is
 #     inscribed into the package manifest, defaults to the local system
-#     architecture as returned by 'dpkg --print-architecture'.
+#     architecture as returned by 'dpkg --print-architecture'. When
+#     cross-compiling, the default may be overridden by the toolchain
+#     variable ${REMAKE_PACK_DEBIAN_ARCHITECTURE}.
 #   \optional[value] COMPONENT:component The name of the install component to
 #     generate the Debian package from, defaults to ${REMAKE_DEFAULT_COMPONENT}.
 #     Note that following Debian conventions, the component name is used as
@@ -248,9 +250,13 @@ macro(remake_pack_deb)
       remake_target(${REMAKE_PACK_UNINSTALL_ALL_TARGET})
     endif(NOT TARGET ${REMAKE_PACK_UNINSTALL_ALL_TARGET})
 
-    execute_process(COMMAND dpkg --print-architecture
-      OUTPUT_VARIABLE pack_deb_arch OUTPUT_STRIP_TRAILING_WHITESPACE)
-    remake_set(pack_arch SELF DEFAULT ${pack_deb_arch})
+    if(CMAKE_CROSSCOMPILING AND REMAKE_PACK_DEBIAN_ARCHITECTURE)
+      remake_set(pack_arch SELF DEFAULT ${REMAKE_PACK_DEBIAN_ARCHITECTURE})
+    else(CMAKE_CROSSCOMPILING AND REMAKE_PACK_DEBIAN_ARCHITECTURE)
+      execute_process(COMMAND dpkg --print-architecture
+        OUTPUT_VARIABLE pack_deb_arch OUTPUT_STRIP_TRAILING_WHITESPACE)
+      remake_set(pack_arch SELF DEFAULT ${pack_deb_arch})
+    endif(CMAKE_CROSSCOMPILING AND REMAKE_PACK_DEBIAN_ARCHITECTURE)
     if(pack_component MATCHES "^${REMAKE_DEFAULT_COMPONENT}[-]?.*$")
       string(REGEX REPLACE "^(${REMAKE_DEFAULT_COMPONENT})[-]?(.*)$" "\\2"
         pack_prefix ${pack_component})

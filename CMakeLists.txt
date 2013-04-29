@@ -2,15 +2,14 @@ cmake_minimum_required(VERSION 2.6.2)
 
 set(
   CMAKE_MODULE_PATH
-  ${CMAKE_CURRENT_SOURCE_DIR}/modules
-  ${CMAKE_BINARY_DIR}/modules
+  ${CMAKE_SOURCE_DIR}/modules
 )
 
 include(ReMake)
 
 remake_project(
   ReMake
-  VERSION 1:0.5.3
+  VERSION 1:0.5.4
   RELEASE beta
   SUMMARY "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
   AUTHOR "Ralf Kaestner"
@@ -23,6 +22,7 @@ remake_project(
 
 remake_add_directories(
   modules
+  toolchains
 )
 remake_doc(
   man INSTALL share
