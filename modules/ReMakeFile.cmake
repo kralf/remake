@@ -619,10 +619,13 @@ endmacro(remake_file_link)
 #     will be C-style escaped.
 #   \optional[option] ESCAPE_NEWLINES If specified, any substituted line
 #     breaks will be C-style escaped.
+#   \optional[option] STRIP_PATHS This option causes the macro to strip
+#     any directories from the relative-path output filenames and to
+#     directly place the output files under the destination directory.
 macro(remake_file_configure)
   remake_arguments(PREFIX file_ VAR DESTINATION VAR EXT VAR OUTPUT
     OPTION OUTDATED OPTION ESCAPE_QUOTES OPTION ESCAPE_NEWLINES
-    ARGN globs ${ARGN})
+    OPTION STRIP_PATHS ARGN globs ${ARGN})
   remake_set(file_destination SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(file_output)
@@ -633,8 +636,13 @@ macro(remake_file_configure)
   foreach(file_src ${file_sources})
     remake_file_read(file_content ${CMAKE_CURRENT_SOURCE_DIR}/${file_src})
     if(file_src MATCHES "[.]remake$")
-      string(REGEX REPLACE "[.]remake$" "" file_dst
-        ${file_destination}/${file_src})
+      if(file_strip_paths)
+        get_filename_component(file_src_name ${file_src} NAME)
+        remake_set(file_dst ${file_destination}/${file_src_name})
+      else(file_strip_paths)
+        remake_set(file_dst ${file_destination}/${file_src})
+      endif(file_strip_paths)
+      string(REGEX REPLACE "[.]remake$" "" file_dst ${file_dst})
       if(file_ext)
         remake_set(file_dst ${file_dst}.${file_ext})
       endif(file_ext)
@@ -665,7 +673,12 @@ macro(remake_file_configure)
         configure_file(${file_dst} ${file_dst})
       endif(NOT file_outdated OR ${file_src_abs} IS_NEWER_THAN ${file_dst_abs})
     else(file_src MATCHES "[.]remake$")
-      remake_set(file_dst ${file_destination}/${file_src})
+      if(file_strip_paths)
+        get_filename_component(file_src_name ${file_src} NAME)
+        remake_set(file_dst ${file_destination}/${file_src_name})
+      else(file_strip_paths)
+        remake_set(file_dst ${file_destination}/${file_src})
+      endif(file_strip_paths)
       if(file_ext)
         remake_set(file_dst ${file_dst}.${file_ext})
       endif(file_ext)

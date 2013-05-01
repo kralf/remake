@@ -177,8 +177,8 @@ endmacro(remake_target_get_sources)
 #   Note to be aware of the scope of the ${TARGET}_DEPENDS variable.
 #   \required[value] name The name of the target to add the target-level
 #     dependency to.
-#   \required[list] DEPENDS:target A list of top-level targets to be appended
-#     to the target's dependencies.
+#   \required[list] target A list of top-level targets to be appended to the
+#     target's dependencies.
 macro(remake_target_add_dependencies target_name)
   remake_arguments(PREFIX target_ ARGN depends ${ARGN})
   remake_var_name(target_global_var ${target_name} DEPENDS)

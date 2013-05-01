@@ -1,3 +1,11 @@
+remake (1:0.5.4-174) lucid; urgency=low
+
+  * Revisions:
+    + Added and revised ReMakeROS module macros
+    + Documented previously undocumented ReMakeROS macros
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 01 May 2013 21:49:00 +0100
+
 remake (1:0.5.4-173) lucid; urgency=low
 
   * New features:

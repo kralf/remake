@@ -350,7 +350,28 @@ endmacro(remake_ros_package_get)
 ### \brief Define a ROS stack or meta-package.
 #   Depending on the indicated ROS distribution, this macro defines a ROS
 #   stack or meta-package. Regarding future portability, its use should
-#   however be avoided in favor of remake_ros_package().
+#   however be avoided in favor of remake_ros_package(). For ROS "groovy"
+#   and later distributions, remake_ros_stack() is silently diverted to
+#   remake_ros_package(). Otherwise, the macro initializes the required
+#   stack variables and defines a rule for generating the stack manifest.
+#   \required[value] NAME:name The name of the ROS stack to be defined.
+#     Note that, in order for the stack name to be valid, it may not
+#     contain certain characters. See the ROS documentation for details.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that will be assigned the stack build and install rules.
+#     If no component name is provided, it will default to component name
+#     conversion of the provided stack name. See ReMakeComponent for details.
+#   \optional[value] DESCRIPTION:string An optional description of the ROS
+#     stack which is appended to the project summary when inscribed into the
+#     stack manifest.
+#   \optional[value] SOURCES:dir An optional directory name pointing to
+#     the sources of the ROS stack. If provided, the directory will be
+#     recursed by remake_add_directories() with the respective component set.
+#   \optional[list] DEPENDS:stack A list naming the dependencies of the
+#     defined ROS stack, defaulting to ros and ros_comm. This list will be
+#     passed to remake_ros_stack_add_dependencies(). Note that, for
+#     ROS "fuerte" and earlier distributions, stacks may only specify
+#     dependencies on other stacks.
 macro(remake_ros_stack)
   remake_arguments(PREFIX ros_ VAR NAME VAR COMPONENT VAR DESCRIPTION
     VAR SOURCES LIST DEPENDS ${ARGN})
@@ -450,7 +471,41 @@ endmacro(remake_ros_stack)
 #   Depending on the indicated ROS distribution and the provided arguments,
 #   this macro defines a ROS package, meta-package, or stack.
 #   Regarding future portability, its use is strongly encouraged over
-#   remake_ros_stack().
+#   remake_ros_stack(). For ROS "fuerte" and earlier distributions,
+#   remake_ros_package() is silently diverted to remake_ros_stack() if the
+#   META option is present. Otherwise, the macro initializes the required
+#   package variables and defines a rule for generating the package manifest.
+#   \required[value] NAME:name The name of the ROS package to be defined.
+#     Note that, in order for the package name to be valid, it may not
+#     contain certain characters. See the ROS documentation for details.
+#   \optional[value] COMPONENT:component The optional name of the install
+#     component that will be assigned the package build and install rules.
+#     If no component name is provided, it will default to component name
+#     conversion of the provided package name. See ReMakeComponent for details.
+#   \optional[value] DESCRIPTION:string An optional description of the ROS
+#     package which is appended to the project summary when inscribed into the
+#     package manifest.
+#   \optional[value] SOURCES:dir An optional directory name pointing to
+#     the sources of the ROS package. If provided, the directory will be
+#     recursed by remake_add_directories() with the respective component set.
+#   \optional[list] DEPENDS:pkg A list naming both build and runtime
+#     dependencies of the defined ROS package, defaulting to roscpp and
+#     rospy. This list will be passed to remake_ros_package_add_dependencies().
+#   \optional[list] BUILD_DEPENDS:pkg A list naming build-only
+#     dependencies of the defined ROS package. This list will be passed to
+#     remake_ros_package_add_dependencies().
+#   \optional[list] RUN_DEPENDS:pkg A list naming runtime-only
+#     dependencies of the defined ROS package. This list will be passed to
+#     remake_ros_package_add_dependencies().
+#   \optional[var] REVERSE_DEPENDS:meta_pkg The defined ROS meta-package or
+#     stack the ROS package reversly depends on. By default, the name of the
+#     meta-package or stack is inferred by converting ${REMAKE_COMPONENT}
+#     into a ROS-compliant package or stack name.
+#   \optional[option] META If provided, this option entails definition
+#     of a ROS meta-package or stack. Such meta-packages or stacks should
+#     not contain any build targets, but may depend on other ROS packages
+#     through the REVERSE_DEPENDS argument. However, ReMake does not actually
+#     enforce this particular constraint.
 macro(remake_ros_package)
   remake_arguments(PREFIX ros_ VAR NAME VAR COMPONENT VAR DESCRIPTION
     VAR SOURCES LIST DEPENDS LIST BUILD_DEPENDS LIST RUN_DEPENDS
@@ -721,24 +776,33 @@ macro(remake_ros_package_add_dependencies ros_package)
 endmacro(remake_ros_package_add_dependencies)
 
 ### \brief Add ROS services to a ROS package.
-#   This macro adds ROS services to an already defined ROS package.
+#   This macro adds ROS services to an already defined ROS package. It
+#   defines a target and the corresponding commands for generating C++
+#   headers and Python modules from a list of ROS service definitions.
+#   \optional[value] PACKAGE:package The name of the already defined
+#     ROS package for which the service definitions shall be processed,
+#     defaulting to the package name conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] glob A list of glob expressions that are resolved
+#     in order to find the service definitions, defaulting to *.srv and
+#     srv/*.srv.
 macro(remake_ros_package_add_services)  
   remake_arguments(PREFIX ros_ VAR PACKAGE ARGN globs ${ARGN})
   string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
   remake_set(ros_package SELF DEFAULT ${ros_default_package})
-  remake_set(ros_globs SELF DEFAULT *.srv)
+  remake_set(ros_globs SELF DEFAULT *.srv srv/*.srv)
 
   remake_ros()
 
   remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
   remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_name} TOPLEVEL)
   remake_file_mkdir(${ros_pkg_dir}/srv)
-  remake_file_configure(${ros_globs} DESTINATION ${ros_pkg_dir}/srv
+  remake_file_configure(${ros_globs}
+    DESTINATION ${ros_pkg_dir}/srv STRIP_PATHS
     OUTPUT ros_services)
 
   remake_find_executable(rosrun PATHS "${ROS_PATH}/bin")
 
-  if(ROSRUN_FOUND)
+  if(ROSRUN_FOUND AND ros_services)
     remake_target_name(ros_manifest_target
       ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
     remake_target_name(ros_services_target
@@ -748,8 +812,8 @@ macro(remake_ros_package_add_services)
     foreach(ros_service ${ros_services})
       get_filename_component(ros_service_name ${ros_service} NAME)
       get_filename_component(ros_service_name_we ${ros_service} NAME_WE)
-      remake_set(ros_service_header
-        ${ros_pkg_dir}/srv_gen/cpp/include/${ros_name}/${ros_service_name_we}.h)
+      remake_set(ros_output_dir ${ros_pkg_dir}/srv_gen/cpp/include/${ros_name})
+      remake_set(ros_service_header ${ros_output_dir}/${ros_service_name_we}.h)
 
       remake_component_add_command(
         OUTPUT ${ros_service_header} AS ${ros_services_target}
@@ -758,17 +822,58 @@ macro(remake_ros_package_add_services)
         WORKING_DIRECTORY ${ros_pkg_dir}
         DEPENDS ${ros_service}
         COMMENT "Generating ${ros_service_name_we} ROS service"
-        COMPONENT ${ros_component})
+        COMPONENT ${ros_component}-dev)
       remake_list_push(ros_service_headers ${ros_service_header})
     endforeach(ros_service)
     add_dependencies(${ros_services_target} ${ros_manifest_target})
 
     remake_add_headers(${ros_service_headers}
       COMPONENT ${ros_component}-dev GENERATED)
-  endif(ROSRUN_FOUND)
+    include_directories(${ros_output_dir})
+  endif(ROSRUN_FOUND AND ros_services)
 
   remake_component_install(
     FILES ${ros_services}
     DESTINATION srv
     COMPONENT ${ros_component})
 endmacro(remake_ros_package_add_services ros_package)
+
+### \brief Add an executables to a ROS package.
+#   This macro adds an executable targets to an already defined ROS package.
+#   Its primary advantage over remake_add_executable() is the convenient
+#   ability to specify dependencies on ROS messages or services generated
+#   by the enlisted ROS packages.
+#   \required[value] name The name of the executable target to be defined.
+#   \optional[list] arg The list of arguments to be passed on to
+#     remake_add_executable(). Note that this list should not contain
+#     a COMPONENT specifier as the component name will be inferred from the
+#     ROS package name. See ReMake for details.
+#   \optional[value] PACKAGE:package The name of the already defined ROS
+#     package which will be assigned the executable, defaulting to the
+#     package name conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] DEPENDS:pkg A list of already defined ROS packages
+#     which contain the messages or services definitions used by the
+#     executable, defaulting to the ROS package specified to be assigned
+#     the executable.
+macro(remake_ros_add_executable ros_name)
+  remake_arguments(PREFIX ros_ VAR PACKAGE LIST DEPENDS ARGN args ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+  remake_set(ros_depends SELF DEFAULT ${ros_package})
+
+  remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
+  remake_add_executable(${ros_name} ${ros_args} COMPONENT ${ros_component})
+
+  foreach(ros_dependency ${ros_depends})
+    remake_target_name(ros_messages_target
+      ${ros_dependency} ${REMAKE_ROS_PACKAGE_MESSAGES_TARGET_SUFFIX})
+    if(TARGET ros_messages_target)
+      add_dependencies(${ros_name} ${ros_messages_target})
+    endif(TARGET ros_messages_target)
+    remake_target_name(ros_services_target
+      ${ros_dependency} ${REMAKE_ROS_PACKAGE_SERVICES_TARGET_SUFFIX})
+    if(TARGET ros_services_target)
+      add_dependencies(${ros_name} ${ros_services_target})
+    endif(TARGET ros_services_target)
+  endforeach(ros_dependency)
+endmacro(remake_ros_add_executable)
