@@ -29,7 +29,11 @@ include(ReMakePrivate)
 #   values throughout the modules, thus introducing convenience and
 #   conventions into ReMake's naming schemes.
 
-remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
+if(NOT DEFINED REMAKE_PROJECT_CMAKE)
+  remake_set(REMAKE_PROJECT_CMAKE ON)
+
+  remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
+endif(NOT DEFINED REMAKE_PROJECT_CMAKE)
 
 ### \brief Define a ReMake project.
 #   This macro initializes all the ReMake project variables from the
@@ -50,7 +54,7 @@ remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
 #     This summary is used in several places, including the packaging module.
 #   \required[value] AUTHOR:name The name of the project author(s). Note that
 #     several authors may be specified by providing several AUTHOR arguments.
-#   \required[value] CONTACT:contact A contact to the project responsibles,
+#   \required[value] CONTACT:contact A contact to the project responsible,
 #     usually a valid e-mail address.
 #   \optional[value] HOME:home A URL pointing to the project homepage, where
 #     users may find further documentation and bug tracking facilities.
@@ -242,10 +246,21 @@ macro(remake_project project_name)
   if(NOT DEFINED project_prefix)
     remake_set(project_prefix ${REMAKE_PROJECT_FILENAME}-)
   endif(NOT DEFINED project_prefix)
-  remake_project_prefix(LIBRARY ${project_prefix}
+  remake_project_prefix(
+    LIBRARY ${project_prefix}
     PLUGIN ${project_prefix}
     EXECUTABLE ${project_prefix}
     SCRIPT ${project_prefix})
+
+  remake_project_set(COMPONENTS CACHE INTERNAL
+    "List of install components defined by the project.")
+
+  remake_project_set(FILENAME ${project_filename}
+    CACHE INTERNAL "Filename defined for the entire project.")
+  remake_project_set(PREFIX ${project_prefix}
+    CACHE INTERNAL "Prefix defined for the entire project.")
+  remake_project_set(INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX}
+    CACHE INTERNAL "Install path prefix of the entire project.")
 
   remake_project_set(LIBRARY_DESTINATION ${project_library_destination}
     CACHE STRING "Install destination of project libraries.")
@@ -403,6 +418,7 @@ macro(remake_project_get project_var)
 
   remake_var_name(project_global_var ${REMAKE_PROJECT_NAME} ${project_var})
   remake_set(project_global ${${project_global_var}})
+  remake_set(project_output SELF DEFAULT ${project_var})
 
   if(project_destination)
     if(NOT IS_ABSOLUTE ${project_global})
@@ -411,11 +427,7 @@ macro(remake_project_get project_var)
     endif(NOT IS_ABSOLUTE ${project_global})
   endif(project_destination)
 
-  if(project_output)
-    remake_set(${project_output} ${project_global})
-  else(project_output)
-    remake_set(${project_var} ${project_global})
-  endif(project_output)
+  remake_set(${project_output} ${project_global})
 endmacro(remake_project_get)
 
 ### \brief Define a ReMake project option.
@@ -441,7 +453,7 @@ macro(remake_project_option project_option project_description project_default)
 endmacro(remake_project_option)
 
 ### \brief Define the ReMake project prefix for target output.
-#   This macro initializes the ReMake project prefix for libaries, plugins,
+#   This macro initializes the ReMake project prefix for libraries, plugins,
 #   and executables produced by all targets. It gets invoked by
 #   remake_project() and needs not be called directly from a CMakeLists.txt
 #   file. Note that undefined prefixes default to ${REMAKE_PROJECT_FILENAME}-.

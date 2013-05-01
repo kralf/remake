@@ -31,12 +31,22 @@ include(ReMakePrivate)
 #   all ROS environment variables should be initialized by sourcing the
 #   corresponding ROS setup script prior to calling CMake.
 
-remake_set(REMAKE_ROS_DIR ReMakeROS)
-remake_set(REMAKE_ROS_STACK_DIR ${REMAKE_ROS_DIR}/stacks)
-remake_set(REMAKE_ROS_PACKAGE_DIR ${REMAKE_ROS_DIR}/packages)
-remake_set(REMAKE_ROS_ALL_MANIFESTS_TARGET ros_manifests)
-remake_set(REMAKE_ROS_STACK_MANIFEST_TARGET_SUFFIX ros_stack_manifest)
-remake_set(REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX ros_package_manifest)
+if(NOT DEFINED REMAKE_ROS_CMAKE)
+  remake_set(REMAKE_ROS_CMAKE ON)
+
+  remake_set(REMAKE_ROS_DIR ReMakeROS)
+  remake_set(REMAKE_ROS_STACK_DIR ${REMAKE_ROS_DIR}/stacks)
+  remake_set(REMAKE_ROS_PACKAGE_DIR ${REMAKE_ROS_DIR}/packages)
+  remake_set(REMAKE_ROS_FILENAME_PREFIX ros)
+  remake_set(REMAKE_ROS_ALL_MANIFESTS_TARGET ros_manifests)
+  remake_set(REMAKE_ROS_STACK_MANIFEST_TARGET_SUFFIX ros_stack_manifest)
+  remake_set(REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX ros_package_manifest)
+  remake_set(REMAKE_ROS_PACKAGE_MESSAGES_TARGET_SUFFIX ros_messages)
+  remake_set(REMAKE_ROS_PACKAGE_SERVICES_TARGET_SUFFIX ros_services)
+
+  remake_file_rmdir(${REMAKE_ROS_STACK_DIR} TOPLEVEL)
+  remake_file_rmdir(${REMAKE_ROS_PACKAGE_DIR} TOPLEVEL)
+endif(NOT DEFINED REMAKE_ROS_CMAKE)
 
 ### \brief Configure the ROS build system.
 #   This macro discovers ROS from its environment variables, initializes
@@ -61,39 +71,6 @@ macro(remake_ros)
     remake_file_mkdir(${REMAKE_ROS_PACKAGE_DIR} TOPLEVEL)
   endif(ROS_FOUND)
 endmacro(remake_ros)
-
-### \brief Define a ReMake ROS project.
-#   This macro initializes all the ReMake project variables according to the
-#   ROS conventions by calling remake_project(). For naming compliance, the
-#   provided project name is therefore prefixed with ros-${ROS_DISTRIBUTION}-
-#   to obtain the default FILENAME argument for remake_project(). Further, the
-#   default install prefix is initialized to ${ROS_PATH} as provided by the
-#   indicated ROS distribution. In place of remake_project(), the macro should
-#   appear first in the ROS project root's CMakeLists.txt file.
-#   \required[value] name The name of the ROS project to be defined, a string
-#     value which will receive the mandatory suffix -ros before being passed
-#     to remake_project().
-#   \optional[value] FILENAME:name An optional and valid filename that is
-#     used as FILENAME argument to remake_project(), defaults to the filename
-#     conversion of ros-${ROS_DISTRIBUTION}-${PROJECT_NAME}.
-#   \optional[value] INSTALL:dir The directory that shall be used as the
-#     ROS project's preset install prefix, defaults to the directory indicated
-#     by ${ROS_PATH}.
-#   \optional[list] arg A list of optional arguments to be forwarded to
-#     remake_project(). See ReMakeProject for the correct usage.
-macro(remake_ros_project ros_name)
-  remake_arguments(PREFIX ros_ VAR INSTALL VAR FILENAME ARGN args ${ARGN})
-
-  remake_ros()
-
-  remake_set(ros_install SELF DEFAULT ${ROS_PATH})
-  remake_file_name(ros_filename_conversion
-    "ros-${ROS_DISTRIBUTION}-${ros_name}")
-  remake_set(ros_filename SELF DEFAULT ${ros_filename_conversion})
-
-  remake_project("${ros_name}-ros" FILENAME ${ros_filename}
-    INSTALL ${ros_install} ${ros_args})
-endmacro(remake_ros_project)
 
 ### \brief Find a ROS stack.
 #   Depending on the indicated ROS distribution, this macro discovers a
@@ -263,35 +240,36 @@ macro(remake_ros_find_package ros_package)
 endmacro(remake_ros_find_package)
 
 ### \brief Define the value of a ROS stack variable.
-#   This macro is a helper macro that defines a variable for the specified
-#   ROS stack.
+#   This macro defines a ROS stack variable matching the ReMake naming
+#   conventions. The variable name is automatically prefixed with an
+#   upper-case conversion of the stack name. Thus, variables may
+#   appear in the cache as project variables named after
+#   ${STACK_NAME}_STACK_${VAR_NAME}. Additional arguments are
+#   passed on to remake_project_set(). Note that the ROS stack needs
+#   to be defined.
 #   \required[value] stack The name of the ROS stack for which the
 #     variable shall be defined.
 #   \required[value] variable The name of the stack variable to be
 #     defined.
-#   \optional[list] value The values to be set for the stack variable.
-#   \optional[option] APPEND With this option being present, the arguments
-#     will be appended to an already existing definition of the specified
-#     stack variable.
+#   \optional[list] arg The arguments to be passed on to remake_project_set().
+#      See ReMakeProject for details.
 macro(remake_ros_stack_set ros_stack ros_var)
-  remake_arguments(PREFIX ros_ OPTION APPEND OPTION META ARGN args ${ARGN})
-
   remake_file(ros_stack_dir ${REMAKE_ROS_STACK_DIR}/${ros_stack} TOPLEVEL)
   remake_file_name(ros_file ${ros_var})
 
   if(IS_DIRECTORY ${ros_stack_dir})
-    if(NOT ros_append)
-      remake_file_create(${ros_stack_dir}/${ros_file} TOPLEVEL)
-    endif(NOT ros_append)
-    remake_file_write(${ros_stack_dir}/${ros_file} TOPLEVEL ${ros_args})
+    remake_var_name(ros_stack_var ${ros_stack} STACK ${ros_var})
+    remake_project_set(${ros_stack_var} ${ARGN})
   else(IS_DIRECTORY ${ros_stack_dir})
     message(FATAL_ERROR "ROS stack ${ros_name} undefined!")
   endif(IS_DIRECTORY ${ros_stack_dir})
 endmacro(remake_ros_stack_set)
 
 ### \brief Retrieve the value of a ROS stack variable.
-#   This macro is a helper macro that retrieves the value of a stack variable
-#   defined for the specified ROS stack.
+#   This macro retrieves a ROS stack variable matching the ReMake
+#   naming conventions. Specifically, variables named after
+#   ${STACK_NAME}_STACK_${VAR_NAME} can be found by passing ${VAR_NAME}
+#   to this macro. Note that the component needs to be defined.
 #   \required[value] stack The name of the ROS stack to retrieve the
 #     variable value for.
 #   \required[value] variable The name of the stack variable to retrieve
@@ -305,46 +283,47 @@ macro(remake_ros_stack_get ros_stack ros_var)
   remake_file_name(ros_file ${ros_var})
 
   if(IS_DIRECTORY ${ros_stack_dir})
-    if(ros_output)
-      remake_file_read(${ros_output} ${ros_stack_dir}/${ros_file} TOPLEVEL)
-    else(ros_output)
-      remake_file_read(${ros_var} ${ros_stack_dir}/${ros_file} TOPLEVEL)
-    endif(ros_output)
+    remake_var_name(ros_stack_var ${ros_stack} STACK ${ros_var})
+    remake_set(ros_output SELF DEFAULT ${ros_var})
+
+    remake_project_get(${ros_stack_var} OUTPUT ${ros_output})
   else(IS_DIRECTORY ${ros_stack_dir})
     message(FATAL_ERROR "ROS stack ${ros_name} undefined!")
   endif(IS_DIRECTORY ${ros_stack_dir})
 endmacro(remake_ros_stack_get)
 
 ### \brief Define the value of a ROS package variable.
-#   This macro is a helper macro that defines a variable for the specified
-#   ROS package.
+#   This macro defines a ROS package variable matching the ReMake naming
+#   conventions. The variable name is automatically prefixed with an
+#   upper-case conversion of the package name. Thus, variables may
+#   appear in the cache as project variables named after
+#   ${PACKAGE_NAME}_PACKAGE_${VAR_NAME}. Additional arguments are
+#   passed on to remake_project_set(). Note that the ROS package needs
+#   to be defined.
 #   \required[value] package The name of the ROS package for which the
 #     variable shall be defined.
 #   \required[value] variable The name of the package variable to be
 #     defined.
-#   \optional[list] value The values to be set for the package variable.
-#   \optional[option] APPEND With this option being present, the arguments
-#     will be appended to an already existing definition of the specified
-#     package variable.
+#   \optional[list] arg The arguments to be passed on to remake_project_set().
+#      See ReMakeProject for details.
 macro(remake_ros_package_set ros_package ros_var)
-  remake_arguments(PREFIX ros_ OPTION APPEND OPTION META ARGN args ${ARGN})
-
-  remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_package} TOPLEVEL)
+  remake_file(ros_package_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_package}
+    TOPLEVEL)
   remake_file_name(ros_file ${ros_var})
 
-  if(IS_DIRECTORY ${ros_pkg_dir})
-    if(NOT ros_append)
-      remake_file_create(${ros_pkg_dir}/${ros_file} TOPLEVEL)
-    endif(NOT ros_append)
-    remake_file_write(${ros_pkg_dir}/${ros_file} TOPLEVEL ${ros_args})
-  else(IS_DIRECTORY ${ros_pkg_dir})
+  if(IS_DIRECTORY ${ros_package_dir})
+    remake_var_name(ros_package_var ${ros_package} PACKAGE ${ros_var})
+    remake_project_set(${ros_package_var} ${ARGN})
+  else(IS_DIRECTORY ${ros_package_dir})
     message(FATAL_ERROR "ROS package ${ros_name} undefined!")
-  endif(IS_DIRECTORY ${ros_pkg_dir})
+  endif(IS_DIRECTORY ${ros_package_dir})
 endmacro(remake_ros_package_set)
 
 ### \brief Retrieve the value of a ROS package variable.
-#   This macro is a helper macro that retrieves the value of a package variable
-#   defined for the specified ROS package.
+#   This macro retrieves a ROS package variable matching the ReMake
+#   naming conventions. Specifically, variables named after
+#   ${PACKAGE_NAME}_PACKAGE_${VAR_NAME} can be found by passing ${VAR_NAME}
+#   to this macro. Note that the component needs to be defined.
 #   \required[value] package The name of the ROS package to retrieve the
 #     variable value for.
 #   \required[value] variable The name of the package variable to retrieve
@@ -354,18 +333,18 @@ endmacro(remake_ros_package_set)
 macro(remake_ros_package_get ros_package ros_var)
   remake_arguments(PREFIX ros_ VAR OUTPUT ${ARGN})
 
-  remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_package} TOPLEVEL)
+  remake_file(ros_package_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_package}
+    TOPLEVEL)
   remake_file_name(ros_file ${ros_var})
 
-  if(IS_DIRECTORY ${ros_pkg_dir})
-    if(ros_output)
-      remake_file_read(${ros_output} ${ros_pkg_dir}/${ros_file} TOPLEVEL)
-    else(ros_output)
-      remake_file_read(${ros_var} ${ros_pkg_dir}/${ros_file} TOPLEVEL)
-    endif(ros_output)
-  else(IS_DIRECTORY ${ros_pkg_dir})
+  if(IS_DIRECTORY ${ros_package_dir})
+    remake_var_name(ros_package_var ${ros_package} PACKAGE ${ros_var})
+    remake_set(ros_output SELF DEFAULT ${ros_var})
+
+    remake_project_get(${ros_package_var} OUTPUT ${ros_output})
+  else(IS_DIRECTORY ${ros_package_dir})
     message(FATAL_ERROR "ROS package ${ros_name} undefined!")
-  endif(IS_DIRECTORY ${ros_pkg_dir})
+  endif(IS_DIRECTORY ${ros_package_dir})
 endmacro(remake_ros_package_get)
 
 ### \brief Define a ROS stack or meta-package.
@@ -375,7 +354,8 @@ endmacro(remake_ros_package_get)
 macro(remake_ros_stack)
   remake_arguments(PREFIX ros_ VAR NAME VAR COMPONENT VAR DESCRIPTION
     VAR SOURCES LIST DEPENDS ${ARGN})
-  remake_set(ros_component SELF DEFAULT ${REMAKE_COMPONENT})
+  string(REGEX REPLACE "_" "-" ros_default_component ${ros_name})
+  remake_set(ros_component SELF DEFAULT ${ros_default_component})
   remake_set(ros_depends SELF DEFAULT ros ros_comm)
 
   remake_ros()
@@ -386,9 +366,10 @@ macro(remake_ros_stack)
       message(FATAL_ERROR "ROS stack ${ros_name} multiply defined!")
     endif(IS_DIRECTORY ${ros_stack_dir})
     remake_file_mkdir(${ros_stack_dir})
+    remake_file_name(ros_filename
+      ${REMAKE_ROS_FILENAME_PREFIX}-${ROS_DISTRIBUTION}-${ros_name})
     remake_file_name(ros_dest_dir ${ros_name})
-    remake_set(ros_destination stacks/${ros_dest_dir})
-    remake_ros_stack_set(${ros_name} destination ${ros_destination})
+    remake_set(ros_dest_root ${ROS_PATH}/share)
 
     string(REGEX REPLACE "[.]$" "" ros_summary ${REMAKE_PROJECT_SUMMARY})
     if(ros_description)
@@ -411,7 +392,8 @@ macro(remake_ros_stack)
     remake_set(ros_manifest_tail "</stack>")
 
     remake_set(ros_manifest ${ros_stack_dir}/stack.xml)
-    remake_ros_stack_set(${ros_name} manifest ${ros_manifest})
+    remake_ros_stack_set(${ros_name} MANIFEST ${ros_manifest}
+      CACHE INTERNAL "Manifest file of ${ros_name} ROS stack.")
     remake_file_mkdir(${ros_manifest}.d)
     remake_file_write(${ros_manifest}.d/00-head
       LINES ${ros_manifest_head})
@@ -424,20 +406,26 @@ macro(remake_ros_stack)
     remake_file_write(${ros_manifest}.cmake LINES ${ros_manifest_script})
     remake_target_name(ros_manifest_target ${ros_name}
       ${REMAKE_ROS_STACK_MANIFEST_TARGET_SUFFIX})
+    remake_component(${ros_component}
+      FILENAME ${ros_filename}
+      PREFIX OFF
+      INSTALL ${ros_dest_root}/${ros_dest_dir})
     remake_component_add_command(
       OUTPUT ${ros_manifest} AS ${ros_manifest_target}
       COMMAND ${CMAKE_COMMAND} -P ${ros_manifest}.cmake
-      COMMENT "Building ${ros_name} ROS stack manifest"
+      COMMENT "Generating ${ros_name} ROS stack manifest"
       COMPONENT ${ros_component})
     remake_component_install(
       FILES ${ros_manifest}
-      DESTINATION ${ros_destination}
+      DESTINATION OFF
       COMPONENT ${ros_component})
     if(NOT TARGET ${REMAKE_ROS_ALL_MANIFESTS_TARGET})
       remake_target(${REMAKE_ROS_ALL_MANIFESTS_TARGET})
     endif(NOT TARGET ${REMAKE_ROS_ALL_MANIFESTS_TARGET})
     add_dependencies(${REMAKE_ROS_ALL_MANIFESTS_TARGET} ${ros_manifest_target})
 
+    remake_ros_stack_set(${ros_name} COMPONENT ${ros_component}
+      CACHE INTERNAL "Component of ${ros_name} ROS stack.")
     foreach(ros_dependency ${ros_depends})
       remake_ros_find_stack(${ros_dependency})
     endforeach(ros_dependency ${ros_depends})
@@ -449,8 +437,12 @@ macro(remake_ros_stack)
       remake_add_directories(${ros_sources} COMPONENT ${ros_component})
     endif(ros_sources)
   else(${ROS_DISTRIBUTION} STRLESS groovy)
-    remake_ros_package(NAME ${ros_name} DESCRIPTION "${ros_description}"
-      META RUN_DEPENDS ${ros_depends})
+    remake_ros_package(
+      NAME ${ros_name} META
+      COMPONENT ${ros_component}
+      DESCRIPTION "${ros_description}"
+      SOURCES ${ros_sources}
+      RUN_DEPENDS ${ros_depends})
   endif(${ROS_DISTRIBUTION} STRLESS groovy)
 endmacro(remake_ros_stack)
 
@@ -463,33 +455,45 @@ macro(remake_ros_package)
   remake_arguments(PREFIX ros_ VAR NAME VAR COMPONENT VAR DESCRIPTION
     VAR SOURCES LIST DEPENDS LIST BUILD_DEPENDS LIST RUN_DEPENDS
     VAR REVERSE_DEPENDS OPTION META ${ARGN})
-  remake_component_name(ros_default_component ${REMAKE_COMPONENT}
-    ${ros_name})
+  string(REGEX REPLACE "_" "-" ros_default_component ${ros_name})
   remake_set(ros_component SELF DEFAULT ${ros_default_component})
   remake_set(ros_depends SELF DEFAULT roscpp rospy)
+  string(REGEX REPLACE "-" "_" ros_default_reverse_depends ${REMAKE_COMPONENT})
+  remake_set(ros_reverse_depends SELF DEFAULT ${ros_default_reverse_depends})
 
   remake_ros()
 
   if(${ROS_DISTRIBUTION} STRLESS groovy AND NOT ros_meta)
+    if(ros_reverse_depends)
+      if(${ROS_DISTRIBUTION} STRLESS groovy)
+        remake_ros_stack_get(${ros_reverse_depends} COMPONENT
+          OUTPUT ros_dest_component)
+      else(${ROS_DISTRIBUTION} STRLESS groovy)
+        remake_ros_package_get(${ros_reverse_depends} META
+          OUTPUT ros_dest_meta)
+        if(NOT ros_dest_meta)
+          message(FATAL_ERROR
+            "ROS package ${ros_name} reversely depends on package!")
+        endif(NOT ros_dest_meta)
+        remake_ros_package_get(${ros_reverse_depends} COMPONENT
+          OUTPUT ros_dest_component)
+      endif(${ROS_DISTRIBUTION} STRLESS groovy)
+      remake_component_get(${ros_dest_component} INSTALL_PREFIX
+        OUTPUT ros_dest_root)
+    else(ros_reverse_depends)
+      remake_file_name(ros_dest_dir ${ros_name})
+      remake_set(ros_dest_root ${ROS_PATH}/share)
+    endif(ros_reverse_depends)
+    remake_file_name(ros_filename
+      ${REMAKE_ROS_FILENAME_PREFIX}-${ROS_DISTRIBUTION}-${ros_name})
+    string(REGEX REPLACE "_" "-" ros_filename ${ros_filename})
+    remake_file_name(ros_dest_dir ${ros_name})
+
     remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_name} TOPLEVEL)
     if(IS_DIRECTORY ${ros_pkg_dir})
       message(FATAL_ERROR "ROS package ${ros_name} multiply defined!")
     endif(IS_DIRECTORY ${ros_pkg_dir})
     remake_file_mkdir(${ros_pkg_dir})
-    remake_file_name(ros_dest_dir ${ros_name})
-    if(ros_reverse_depends)
-      if(${ROS_DISTRIBUTION} STRLESS groovy)
-        remake_ros_stack_get(${ros_reverse_depends} destination
-          OUTPUT ros_dest_root)
-      else(${ROS_DISTRIBUTION} STRLESS groovy)
-        remake_ros_package_get(${ros_reverse_depends} destination
-          OUTPUT ros_dest_root)
-      endif(${ROS_DISTRIBUTION} STRLESS groovy)
-      remake_set(ros_destination ${ros_dest_root}/${ros_dest_dir})
-    else(ros_reverse_depends)
-      remake_set(ros_destination ${ros_dest_dir})
-    endif(ros_reverse_depends)
-    remake_ros_package_set(${ros_name} destination ${ros_destination})
 
     string(REGEX REPLACE "[.]$" "" ros_summary ${REMAKE_PROJECT_SUMMARY})
     if(ros_description)
@@ -528,7 +532,8 @@ macro(remake_ros_package)
     else(${ROS_DISTRIBUTION} STRLESS groovy)
       remake_set(ros_manifest ${ros_pkg_dir}/package.xml)
     endif(${ROS_DISTRIBUTION} STRLESS groovy)
-    remake_ros_package_set(${ros_name} manifest ${ros_manifest})
+    remake_ros_package_set(${ros_name} MANIFEST ${ros_manifest}
+      CACHE INTERNAL "Manifest file of ${ros_name} ROS package.")
     remake_file_mkdir(${ros_manifest}.d)
     remake_file_write(${ros_manifest}.d/00-head
       LINES ${ros_manifest_head})
@@ -541,21 +546,33 @@ macro(remake_ros_package)
     remake_file_write(${ros_manifest}.cmake LINES ${ros_manifest_script})
     remake_target_name(ros_manifest_target ${ros_name}
       ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+    remake_component(${ros_component}
+      FILENAME ${ros_filename}
+      PREFIX OFF
+      INSTALL ${ros_dest_root}/${ros_dest_dir})
+    remake_component(${ros_component}-dev
+      FILENAME ${ros_filename}-dev
+      PREFIX OFF
+      INSTALL ${ROS_PATH}
+      HEADER_DESTINATION include/${ros_name})
     remake_component_add_command(
       OUTPUT ${ros_manifest} AS ${ros_manifest_target}
       COMMAND ${CMAKE_COMMAND} -P ${ros_manifest}.cmake
-      COMMENT "Building ${ros_name} ROS package manifest"
+      COMMENT "Generating ${ros_name} ROS package manifest"
       COMPONENT ${ros_component})
     remake_component_install(
       FILES ${ros_manifest}
-      DESTINATION ${ros_destination}
+      DESTINATION OFF
       COMPONENT ${ros_component})
     if(NOT TARGET ${REMAKE_ROS_ALL_MANIFESTS_TARGET})
       remake_target(${REMAKE_ROS_ALL_MANIFESTS_TARGET})
     endif(NOT TARGET ${REMAKE_ROS_ALL_MANIFESTS_TARGET})
     add_dependencies(${REMAKE_ROS_ALL_MANIFESTS_TARGET} ${ros_manifest_target})
 
-    remake_ros_package_set(${ros_name} meta ${ros_meta})
+    remake_ros_package_set(${ros_name} COMPONENT ${ros_component}
+      CACHE INTERNAL "Component of ${ros_name} ROS package.")
+    remake_ros_package_set(${ros_name} META ${ros_meta}
+      CACHE INTERNAL "ROS package ${ros_name} is a meta-package.")
     remake_set(ros_build_depends ${ros_depends} ${ros_build_depends})
     remake_set(ros_run_depends ${ros_depends} ${ros_run_depends})
     foreach(ros_dependency ${ros_build_depends})
@@ -575,14 +592,22 @@ macro(remake_ros_package)
     if(ros_meta)
       message(STATUS "ROS meta-package: ${ros_name}")
     else(ros_meta)
-      message(STATUS "ROS package: ${ros_name}")
+      if(ros_reverse_depends)
+        message(STATUS "ROS package: ${ros_name} (${ros_reverse_depends})")
+      else(ros_reverse_depends)
+        message(STATUS "ROS package: ${ros_name}")
+      endif(ros_reverse_depends)
     endif(ros_meta)
 
     if(ros_sources)
       remake_add_directories(${ros_sources} COMPONENT ${ros_component})
     endif(ros_sources)
   else(${ROS_DISTRIBUTION} STRLESS groovy AND NOT ros_meta)
-    remake_ros_stack(NAME ${ros_name} DESCRIPTION ${ros_description}
+    remake_ros_stack(
+      NAME ${ros_name}
+      COMPONENT ${ros_component}
+      DESCRIPTION ${ros_description}
+      SOURCES ${ros_sources}
       DEPENDS ${ros_depends})
   endif(${ROS_DISTRIBUTION} STRLESS groovy AND NOT ros_meta)
 endmacro(remake_ros_package)
@@ -605,7 +630,7 @@ macro(remake_ros_stack_add_dependencies ros_stack)
   remake_ros()
 
   if(${ROS_DISTRIBUTION} STRLESS groovy)
-    remake_ros_stack_get(${ros_stack} manifest OUTPUT ros_manifest)
+    remake_ros_stack_get(${ros_stack} MANIFEST OUTPUT ros_manifest)
     if(ros_depends)
       remake_unset(ros_manifest_depends)
       foreach(ros_dependency ${ros_depends})
@@ -650,7 +675,7 @@ macro(remake_ros_package_add_dependencies ros_package)
     remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_package} TOPLEVEL)
 
     if(IS_DIRECTORY ${ros_pkg_dir})
-      remake_ros_package_get(${ros_package} manifest OUTPUT ros_manifest)
+      remake_ros_package_get(${ros_package} MANIFEST OUTPUT ros_manifest)
       if(ros_depends)
         list(REMOVE_DUPLICATES ros_depends)
         remake_unset(ros_manifest_depends)
@@ -667,10 +692,10 @@ macro(remake_ros_package_add_dependencies ros_package)
   else(${ROS_DISTRIBUTION} STRLESS groovy)
     remake_set(ros_build_depends ${ros_depends} ${ros_build_depends})
     remake_set(ros_run_depends ${ros_depends} ${ros_run_depends})
-    remake_ros_package_get(${ros_package} manifest OUTPUT ros_manifest)
+    remake_ros_package_get(${ros_package} MANIFEST OUTPUT ros_manifest)
 
     if(ros_build_depends)
-      remake_ros_package_get(${ros_package} meta OUTPUT ros_meta)
+      remake_ros_package_get(${ros_package} META OUTPUT ros_meta)
       if(ros_meta)
         message(FATAL_ERROR
           "ROS meta-package ${ros_name} defines build dependencies!")
@@ -695,5 +720,55 @@ macro(remake_ros_package_add_dependencies ros_package)
   endif(${ROS_DISTRIBUTION} STRLESS groovy)
 endmacro(remake_ros_package_add_dependencies)
 
-remake_file_rmdir(${REMAKE_ROS_STACK_DIR} TOPLEVEL)
-remake_file_rmdir(${REMAKE_ROS_PACKAGE_DIR} TOPLEVEL)
+### \brief Add ROS services to a ROS package.
+#   This macro adds ROS services to an already defined ROS package.
+macro(remake_ros_package_add_services)  
+  remake_arguments(PREFIX ros_ VAR PACKAGE ARGN globs ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+  remake_set(ros_globs SELF DEFAULT *.srv)
+
+  remake_ros()
+
+  remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
+  remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_name} TOPLEVEL)
+  remake_file_mkdir(${ros_pkg_dir}/srv)
+  remake_file_configure(${ros_globs} DESTINATION ${ros_pkg_dir}/srv
+    OUTPUT ros_services)
+
+  remake_find_executable(rosrun PATHS "${ROS_PATH}/bin")
+
+  if(ROSRUN_FOUND)
+    remake_target_name(ros_manifest_target
+      ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+    remake_target_name(ros_services_target
+      ${ros_package} ${REMAKE_ROS_PACKAGE_SERVICES_TARGET_SUFFIX})
+
+    remake_unset(ros_service_headers)
+    foreach(ros_service ${ros_services})
+      get_filename_component(ros_service_name ${ros_service} NAME)
+      get_filename_component(ros_service_name_we ${ros_service} NAME_WE)
+      remake_set(ros_service_header
+        ${ros_pkg_dir}/srv_gen/cpp/include/${ros_name}/${ros_service_name_we}.h)
+
+      remake_component_add_command(
+        OUTPUT ${ros_service_header} AS ${ros_services_target}
+        COMMAND ${ROSRUN_EXECUTABLE} roscpp gensrv_cpp.py
+          srv/${ros_service_name}
+        WORKING_DIRECTORY ${ros_pkg_dir}
+        DEPENDS ${ros_service}
+        COMMENT "Generating ${ros_service_name_we} ROS service"
+        COMPONENT ${ros_component})
+      remake_list_push(ros_service_headers ${ros_service_header})
+    endforeach(ros_service)
+    add_dependencies(${ros_services_target} ${ros_manifest_target})
+
+    remake_add_headers(${ros_service_headers}
+      COMPONENT ${ros_component}-dev GENERATED)
+  endif(ROSRUN_FOUND)
+
+  remake_component_install(
+    FILES ${ros_services}
+    DESTINATION srv
+    COMPONENT ${ros_component})
+endmacro(remake_ros_package_add_services ros_package)

@@ -28,13 +28,17 @@ include(ReMakePrivate)
 #   of Python modules and extensions using generators such as the Simplified
 #   Wrapper and Interface Generator (SWIG).
 
-remake_set(REMAKE_PYTHON_DIR ReMakePython)
-remake_set(REMAKE_PYTHON_DISTRIBUTION_DIR ${REMAKE_PYTHON_DIR}/distributions)
-remake_set(REMAKE_PYTHON_PACKAGE_DIR ${REMAKE_PYTHON_DIR}/packages)
-remake_set(REMAKE_PYTHON_COMPONENT_SUFFIX python)
-remake_set(REMAKE_PYTHON_ALL_TARGET python_distributions)
-remake_set(REMAKE_PYTHON_TARGET_SUFFIX python_distribution)
-remake_set(REMAKE_PYTHON_EXT_PACKAGE extensions)
+if(NOT DEFINED REMAKE_PYTHON_CMAKE)
+  remake_set(REMAKE_PYTHON_CMAKE ON)
+
+  remake_set(REMAKE_PYTHON_DIR ReMakePython)
+  remake_set(REMAKE_PYTHON_DISTRIBUTION_DIR ${REMAKE_PYTHON_DIR}/distributions)
+  remake_set(REMAKE_PYTHON_PACKAGE_DIR ${REMAKE_PYTHON_DIR}/packages)
+  remake_set(REMAKE_PYTHON_COMPONENT_SUFFIX python)
+  remake_set(REMAKE_PYTHON_ALL_TARGET python_distributions)
+  remake_set(REMAKE_PYTHON_TARGET_SUFFIX python_distribution)
+  remake_set(REMAKE_PYTHON_EXT_PACKAGE extensions)
+endif(NOT DEFINED REMAKE_PYTHON_CMAKE)
 
 ### \brief Configure Python package distribution.
 #   This macro discovers the Python installation and configures Python

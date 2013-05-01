@@ -24,7 +24,11 @@ include(ReMakePrivate)
 #   The ReMake file macros are a set of helper macros to simplify
 #   file operations in ReMake.
 
-remake_set(REMAKE_FILE_DIR ReMakeFiles)
+if(NOT DEFINED REMAKE_FILE_CMAKE)
+  remake_set(REMAKE_FILE_CMAKE ON)
+
+  remake_set(REMAKE_FILE_DIR ReMakeFiles)
+endif(NOT DEFINED REMAKE_FILE_CMAKE)
 
 ### \brief Define a ReMake file.
 #   This macro creates a variable to hold the ReMake-compliant path to a
@@ -680,5 +684,7 @@ macro(remake_file_configure)
   endforeach(file_src)
 endmacro(remake_file_configure)
 
-remake_file(REMAKE_FILE_TIMESTAMP timestamp)
-remake_file_create(${REMAKE_FILE_TIMESTAMP})
+if(NOT DEFINED REMAKE_FILE_TIMESTAMP)
+  remake_file(REMAKE_FILE_TIMESTAMP timestamp)
+  remake_file_create(${REMAKE_FILE_TIMESTAMP})
+endif(NOT DEFINED REMAKE_FILE_TIMESTAMP)

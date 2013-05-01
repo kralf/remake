@@ -26,11 +26,12 @@ include(ReMakePrivate)
 ### \brief ReMake Git macros
 #   The ReMake Git module provides useful tools for Git-based projects.
 
-remake_set(REMAKE_GIT_DIR ReMakeGit)
+if(NOT DEFINED REMAKE_GIT_CMAKE)
+  remake_set(REMAKE_GIT_CMAKE ON)
 
-if(NOT COMMAND remake_git_revision)
+  remake_set(REMAKE_GIT_DIR ReMakeGit)
   remake_find_executable(git PACKAGE Git QUIET OPTIONAL)
-endif(NOT COMMAND remake_git_revision)
+endif(NOT DEFINED REMAKE_GIT_CMAKE)
 
 ### \brief Generate a sequential revision number.
 #   This macro attempts to generate a sequential revision number by counting

@@ -41,7 +41,11 @@ include(ReMakeComponent)
 #   \variable REMAKE_DOC_CONFIGURATION_DIR The directory containing the 
 #     project document configuration.
 
-remake_set(REMAKE_DOC_COMPONENT_SUFFIX doc)
+if(NOT DEFINED REMAKE_DOC_CMAKE)
+  remake_set(REMAKE_DOC_CMAKE ON)
+
+  remake_set(REMAKE_DOC_COMPONENT_SUFFIX doc)
+endif(NOT DEFINED REMAKE_DOC_CMAKE)
 
 ### \brief Configure ReMake documentation task support.
 #   This macro initializes all the ReMake documentation task variables from
@@ -64,7 +68,7 @@ remake_set(REMAKE_DOC_COMPONENT_SUFFIX doc)
 macro(remake_doc)
   remake_arguments(PREFIX doc_ VAR OUTPUT VAR INSTALL VAR CONFIGURATION
     ARGN types ${ARGN})
-  remake_set(doc_configuration SELF DEFAULT doc) 
+  remake_set(doc_configuration SELF DEFAULT doc)
 
   foreach(doc_type ${doc_types})
     remake_file_name(doc_file ${doc_type})

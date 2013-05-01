@@ -30,6 +30,10 @@ include(ReMakePrivate)
 #   Support is provided for major lexicographic and parser generators,
 #   such as Flex and Bison.
 
+if(NOT DEFINED REMAKE_GENERATE_CMAKE)
+  remake_set(REMAKE_GENERATE_CMAKE ON)
+endif(NOT DEFINED REMAKE_GENERATE_CMAKE)
+
 ### \brief Add Fast Lexical Analyzer (Flex) sources for a target.
 #   This macro specifies code generation rules for a list of Flex sources.
 #   It attempts to find the Flex executable and calls remake_generate()

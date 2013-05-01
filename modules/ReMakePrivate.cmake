@@ -27,15 +27,17 @@
 #   macros from a CMakeLists.txt file. However, the macros shall be documented
 #   for the beauty and purpose of completeness.
 
-if(NOT COMMAND remake_set)
+if(NOT DEFINED REMAKE_PRIVATE_CMAKE)
+  set(REMAKE_PRIVATE_CMAKE ON)
+
   if(NOT DEFINED REMAKE_CACHE_INITIALIZED)
     set(REMAKE_CACHE_INITIALIZED OFF CACHE INTERNAL
       "ReMake cache variables initialized.")
   else(NOT DEFINED REMAKE_CACHE_INITIALIZED)
     set(REMAKE_CACHE_INITIALIZED ON CACHE INTERNAL
-      "ReMake cache variables initialized." FORCE)
+      "ReMake cache variables initialized.")
   endif(NOT DEFINED REMAKE_CACHE_INITIALIZED)
-endif(NOT COMMAND remake_set)
+endif(NOT DEFINED REMAKE_PRIVATE_CMAKE)
 
 ### \brief Parse ReMake macro arguments.
 #   This macro generally parses the arguments of ReMake macros, thus enabling

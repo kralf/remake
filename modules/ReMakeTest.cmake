@@ -23,10 +23,14 @@ include(ReMakePrivate)
 ### \brief ReMake testing macros
 #   The ReMake testing module provides unit testing support.
 
-remake_set(REMAKE_TEST_ALL_TARGET tests)
-remake_set(REMAKE_TEST_TARGET_SUFFIX test)
+if(NOT DEFINED REMAKE_TEST_CMAKE)
+  remake_set(REMAKE_TEST_CMAKE ON)
 
-remake_set(REMAKE_TEST_DIR ReMakeTesting)
+  remake_set(REMAKE_TEST_ALL_TARGET tests)
+  remake_set(REMAKE_TEST_TARGET_SUFFIX test)
+
+  remake_set(REMAKE_TEST_DIR ReMakeTesting)
+endif(NOT DEFINED REMAKE_TEST_CMAKE)
 
 ### \brief Define a ReMake unit testing target.
 #   This macro adds a unit test for an existing executable target named

@@ -20,6 +20,14 @@
 
 include(ReMakePrivate)
 
+### \brief ReMake Qt4 macros
+#   The ReMake Qt4 macros provide seamless integration of Qt4 meta-object
+#   and user interface file processing with ReMake build targets.
+
+if(NOT DEFINED REMAKE_QT4_CMAKE)
+  remake_set(REMAKE_QT4_CMAKE ON)
+endif(NOT DEFINED REMAKE_QT4_CMAKE)
+
 ### \brief Configure Qt4 meta-object processing.
 #   This macro discovers the Qt4 package configuration and enables Qt4
 #   meta-object processing. Note that the macro automatically gets

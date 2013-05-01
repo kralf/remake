@@ -28,16 +28,20 @@ include(ReMakePrivate)
 #   into multi-project environments. Recursion support exists for selected
 #   build system types.
 
-remake_set(REMAKE_RECURSE_ALL_TARGET recursions)
-remake_set(REMAKE_RECURSE_TARGET_SUFFIX recursion)
-remake_set(REMAKE_RECURSE_CONFIGURE_ALL_TARGET recursions_configure)
-remake_set(REMAKE_RECURSE_CONFIGURE_TARGET_SUFFIX configure)
-remake_set(REMAKE_RECURSE_BUILD_ALL_TARGET recursions_build)
-remake_set(REMAKE_RECURSE_BUILD_TARGET_SUFFIX build)
-remake_set(REMAKE_RECURSE_INSTALL_ALL_TARGET recursions_install)
-remake_set(REMAKE_RECURSE_INSTALL_TARGET_SUFFIX install)
-remake_set(REMAKE_RECURSE_CLEAN_ALL_TARGET recursions_clean)
-remake_set(REMAKE_RECURSE_CLEAN_TARGET_SUFFIX clean)
+if(NOT DEFINED REMAKE_RECURSE_CMAKE)
+  remake_set(REMAKE_RECURSE_CMAKE ON)
+
+  remake_set(REMAKE_RECURSE_ALL_TARGET recursions)
+  remake_set(REMAKE_RECURSE_TARGET_SUFFIX recursion)
+  remake_set(REMAKE_RECURSE_CONFIGURE_ALL_TARGET recursions_configure)
+  remake_set(REMAKE_RECURSE_CONFIGURE_TARGET_SUFFIX configure)
+  remake_set(REMAKE_RECURSE_BUILD_ALL_TARGET recursions_build)
+  remake_set(REMAKE_RECURSE_BUILD_TARGET_SUFFIX build)
+  remake_set(REMAKE_RECURSE_INSTALL_ALL_TARGET recursions_install)
+  remake_set(REMAKE_RECURSE_INSTALL_TARGET_SUFFIX install)
+  remake_set(REMAKE_RECURSE_CLEAN_ALL_TARGET recursions_clean)
+  remake_set(REMAKE_RECURSE_CLEAN_TARGET_SUFFIX clean)
+endif(NOT DEFINED REMAKE_RECURSE_CMAKE)
 
 ### \brief Recurse into a Make project.
 #   This macro adds recursion targets for a classical Makefile-based project.

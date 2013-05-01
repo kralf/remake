@@ -25,29 +25,39 @@ include(ReMakeComponent)
 #   The ReMake packaging macros have been designed to provide simple and
 #   transparent package generation using CMake's CPack module.
 
-remake_set(REMAKE_PACK_ALL_BINARY_TARGET packages)
-remake_set(REMAKE_PACK_ALL_SOURCE_TARGET source_packages)
-remake_set(REMAKE_PACK_BINARY_TARGET_SUFFIX package)
-remake_set(REMAKE_PACK_INSTALL_ALL_TARGET packages_install)
-remake_set(REMAKE_PACK_INSTALL_TARGET_SUFFIX package_install)
-remake_set(REMAKE_PACK_UNINSTALL_ALL_TARGET packages_uninstall)
-remake_set(REMAKE_PACK_UNINSTALL_TARGET_SUFFIX package_uninstall)
+if(NOT DEFINED REMAKE_PACK_CMAKE)
+  remake_set(REMAKE_PACK_CMAKE ON)
 
-remake_set(REMAKE_PACK_DIR ReMakePackages)
-remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
+  remake_set(REMAKE_PACK_ALL_BINARY_TARGET packages)
+  remake_set(REMAKE_PACK_ALL_SOURCE_TARGET source_packages)
+  remake_set(REMAKE_PACK_BINARY_TARGET_SUFFIX package)
+  remake_set(REMAKE_PACK_INSTALL_ALL_TARGET packages_install)
+  remake_set(REMAKE_PACK_INSTALL_TARGET_SUFFIX package_install)
+  remake_set(REMAKE_PACK_UNINSTALL_ALL_TARGET packages_uninstall)
+  remake_set(REMAKE_PACK_UNINSTALL_TARGET_SUFFIX package_uninstall)
 
-### \brief Generate binary packages from a ReMake project.
+  remake_set(REMAKE_PACK_DIR ReMakePackages)
+  remake_set(REMAKE_PACK_SOURCE_DIR ReMakeSourcePackages)
+
+  remake_file_rmdir(${REMAKE_PACK_DIR})
+  remake_file_rmdir(${REMAKE_PACK_SOURCE_DIR})
+  remake_file_mkdir(${REMAKE_PACK_DIR})
+  remake_file_mkdir(${REMAKE_PACK_SOURCE_DIR})
+endif(NOT DEFINED REMAKE_PACK_CMAKE)
+
+### \brief Generate binary packages from a ReMake project component.
 #   This macro generally configures binary package generation for a
-#   ReMake project using CMake's CPack macros. It gets invoked by the
-#   generator-specific macros defined in this module and should not be
-#   called directly from a CMakeLists.txt file. The macro creates a
-#   package build target from the specified install component and
+#   ReMake project component using CMake's CPack macros. It gets invoked
+#   by the generator-specific macros defined in this module and should
+#   not be called directly from a CMakeLists.txt file. The macro creates
+#   a  package build target from the specified install component and
 #   initializes the CPack variables.
 #   \required[value] generator The generator to be used for creating the
 #     binary component package. See the CPack documentation for valid
 #     generators.
 #   \optional[value] NAME:name The name of the binary package to be
-#     generated, defaults to the ${REMAKE_PROJECT_FILENAME}.
+#     generated, defaults to the component-specific filename defined
+#     for the provided component.
 #   \optional[value] VERSION:version The version of the binary package to
 #     be generated, defaults to the ${REMAKE_PROJECT_VERSION}.
 #   \optional[value] COMPONENT:component The name of the install
@@ -63,9 +73,10 @@ macro(remake_pack_binary pack_generator)
       remake_target(${REMAKE_PACK_ALL_BINARY_TARGET})
     endif(NOT TARGET ${REMAKE_PACK_ALL_BINARY_TARGET})
 
-    remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_FILENAME})
+    remake_component_get(${pack_component} FILENAME
+      OUTPUT ${pack_default_name})
+    remake_set(pack_name SELF DEFAULT ${pack_default_name})
     remake_set(pack_version SELF DEFAULT ${REMAKE_PROJECT_VERSION})
-    remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
     if(pack_component STREQUAL REMAKE_DEFAULT_COMPONENT)
       remake_set(pack_prefix)
@@ -189,16 +200,15 @@ macro(remake_pack_source pack_generator)
   endif(NOT EXISTS ${pack_src_config})
 endmacro(remake_pack_source)
 
-### \brief Generate a binary Debian package from the ReMake project.
+### \brief Generate a binary Debian package from a ReMake project component.
 #   This macro configures package generation using CPack's DEB generator
 #   for binary Debian packages. It acquires all the information necessary
-#   from the current project settings and the arguments passed. In addition
-#   to creating a package build target through remake_pack(), the macro
-#   adds simplified package install and uninstall targets. Project-internal
-#   dependencies between these targets are automatically resolved. Also,
-#   the macro provides automated resolution of package dependencies with
-#   hardcoded version information, i.e. packages including the version
-#   string in the package name.
+#   from the current project and component settings and the arguments passed.
+#   In addition to creating a component-specific package build target through
+#   remake_pack(), the macro adds simplified package install and uninstall
+#   targets. Project-internal dependencies between these targets are
+#   automatically resolved. Also, the macro provides automated resolution of
+#   dependencies on packages installed on the build system.
 #   \optional[value] ARCH:architecture The package architecture that is
 #     inscribed into the package manifest, defaults to the local system
 #     architecture as returned by 'dpkg --print-architecture'. When
@@ -257,46 +267,28 @@ macro(remake_pack_deb)
         OUTPUT_VARIABLE pack_deb_arch OUTPUT_STRIP_TRAILING_WHITESPACE)
       remake_set(pack_arch SELF DEFAULT ${pack_deb_arch})
     endif(CMAKE_CROSSCOMPILING AND REMAKE_PACK_DEBIAN_ARCHITECTURE)
-    if(pack_component MATCHES "^${REMAKE_DEFAULT_COMPONENT}[-]?.*$")
-      string(REGEX REPLACE "^(${REMAKE_DEFAULT_COMPONENT})[-]?(.*)$" "\\2"
-        pack_prefix ${pack_component})
-    else(pack_component MATCHES "^${REMAKE_DEFAULT_COMPONENT}[-]?.*$")
-      remake_set(pack_prefix ${pack_component})
-    endif(pack_component MATCHES "^${REMAKE_DEFAULT_COMPONENT}[-]?.*$")
-    remake_set(pack_suffix ${pack_prefix})
 
-    if(pack_suffix)
-      remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME}-${pack_suffix})
-      remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}-${pack_suffix}
-        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
-    else(pack_suffix)
-      remake_file_name(pack_name ${REMAKE_PROJECT_FILENAME})
-      remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}
-        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
-    endif(pack_suffix)
+    remake_component_get(${pack_component} FILENAME OUTPUT pack_name)
+    remake_file_name(pack_file ${pack_name} ${REMAKE_PROJECT_FILENAME_VERSION}
+      ${pack_arch})
 
     remake_unset(pack_binary_deps)
     remake_unset(pack_component_deps)
     remake_unset(pack_deb_packages)
     foreach(pack_dependency ${pack_depends})
-      if(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
-        string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME}[-]?[^ ]*).*$" "\\1"
-          pack_name_dep ${pack_dependency})
-        string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME})[-]?([^ ]*).*$" "\\2"
-          pack_component_dep ${pack_dependency})
-        string(REGEX REPLACE "^([^\(]+)[(]?([^\)]*)[)]?$" "\\2"
-          pack_version_dep ${pack_dependency})
+      remake_pack_resolve_deb(${pack_dependency}
+        OUTPUT_NAME pack_name_dep
+        OUTPUT_VERSION pack_version_dep
+        OUTPUT_COMPONENT pack_component_dep)
 
-        remake_set(pack_component_dep SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
-        remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
+      if(pack_component_dep)
         remake_list_push(pack_component_deps ${pack_component_dep})
+        remake_component_get(${pack_component_dep} FILENAME
+          OUTPUT pack_name_dep)
+        remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
         remake_set(pack_dependency "${pack_name_dep} (${pack_version_dep})")
-      else(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+      else(pack_component_dep)
         remake_unset(pack_deb_found)
-        string(REGEX REPLACE "^([^ ]+).*$" "\\1" pack_name_dep
-          ${pack_dependency})
-        string(REGEX REPLACE "^([^ ]+)[ ]*[(]?([^\)]*)[)]?$" "\\2"
-          pack_version_dep ${pack_dependency})
         if(NOT pack_deb_packages)
           execute_process(COMMAND dpkg-query -W
             OUTPUT_VARIABLE pack_deb_packages OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -339,7 +331,7 @@ macro(remake_pack_deb)
             "No package on build system matches dependency")
           message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
         endif(NOT pack_deb_found)
-      endif(pack_dependency MATCHES "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+      endif(pack_component_dep)
       remake_list_push(pack_binary_deps ${pack_dependency})
     endforeach(pack_dependency)
 
@@ -390,10 +382,10 @@ macro(remake_pack_deb)
   endif(pack_build)
 endmacro(remake_pack_deb)
 
-### \brief Generate a binary archive from the ReMake project.
+### \brief Generate a binary archive from a ReMake project component.
 #   This macro configures binary package generation using one of CPack's
 #   archive generators. It acquires all the information necessary from the
-#   current project settings and the arguments passed.
+#   current project and component settings and the arguments passed.
 #   \optional[value] GENERATOR:generator The generator to be used for creating
 #     the binary archive, defaults to TGZ. See the CPack documentation for valid
 #     archive generators.
@@ -423,13 +415,9 @@ macro(remake_pack_archive)
     endif(pack_component MATCHES "^${REMAKE_DEFAULT_COMPONENT}[-]?.*$")
     remake_set(pack_suffix ${pack_prefix})
 
-    if(pack_suffix)
-      remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}-${pack_suffix}
-        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
-    else(pack_suffix)
-      remake_file_name(pack_file ${REMAKE_PROJECT_FILENAME}
-        ${REMAKE_PROJECT_FILENAME_VERSION} ${pack_arch})
-    endif(pack_suffix)
+    remake_component_get(${pack_component} FILENAME OUTPUT pack_name)
+    remake_file_name(pack_file ${pack_name} ${REMAKE_PROJECT_FILENAME_VERSION}
+      ${pack_arch})
 
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
     remake_pack_binary(${pack_generator} COMPONENT ${pack_component})
@@ -457,7 +445,54 @@ macro(remake_pack_source_archive)
   remake_pack_source(${pack_generator} ${EXCLUDE})
 endmacro(remake_pack_source_archive)
 
-remake_file_rmdir(${REMAKE_PACK_DIR})
-remake_file_rmdir(${REMAKE_PACK_SOURCE_DIR})
-remake_file_mkdir(${REMAKE_PACK_DIR})
-remake_file_mkdir(${REMAKE_PACK_SOURCE_DIR})
+### \brief Resolve project-internal package dependencies.
+#   This macro is a helper macro to resolve project-internal dependencies
+#   between Debian packages. It takes a Debian-compliant fully qualified
+#   package name and matches it against the component specifications to
+#   deliver the corresponding component name.
+#   \required[value] name The fully qualified Debian package name,
+#     consisting in the actual package name and an optional version
+#     specifier, for which to resolve the project component. See the
+#     Debian policies for naming conventions.
+#   \optional[value] OUTPUT_NAME:variable The name of an optional output
+#     variable that will be assigned the actual name of the package.
+#   \optional[value] OUTPUT_VERSION:variable The name of an optional output
+#     variable that will be assigned the version of the package.
+#   \optional[value] OUTPUT_COMPONENT:variable The name of an optional output
+#     variable that will be assigned the name of the resolved component. Note
+#     that if none of the components matches the provided package name, the
+#     output variable will be undefined.
+macro(remake_pack_resolve_deb pack_full_name)
+  remake_arguments(PREFIX pack_deb_ VAR OUTPUT_NAME VAR OUTPUT_VERSION
+    VAR OUTPUT_COMPONENT ${ARGN})
+
+  if(${pack_full_name} MATCHES "^[^ ]+[ ]+[(][^)]*[)]$")
+    string(REGEX REPLACE "^([^ ]+)[ ]+[(]([^)]*)[)]$" "\\1"
+      pack_deb_name ${pack_full_name})
+    string(REGEX REPLACE "^([^ ]+)[ ]+[(]([^)]*)[)]$" "\\2"
+      pack_deb_version ${pack_full_name})
+  else(${pack_full_name} MATCHES "^[^ ]+[ ]+[(][^)]*[)]$")
+    remake_set(pack_deb_name ${pack_full_name})
+    remake_unset(pack_deb_version)
+  endif(${pack_full_name} MATCHES "^[^ ]+[ ]+[(][^)]*[)]$")
+
+  if(pack_deb_output_name)
+    remake_set(${pack_deb_output_name} ${pack_deb_name})
+  endif(pack_deb_output_name)
+  if(pack_deb_output_version)
+    remake_set(${pack_deb_output_version} ${pack_deb_version})
+  endif(pack_deb_output_version)
+
+  if(pack_deb_output_component)
+    remake_unset(${pack_deb_output_component})
+    remake_project_get(COMPONENTS OUTPUT pack_deb_components)
+
+    foreach(pack_deb_component ${pack_deb_components})
+      remake_component_get(${pack_deb_component} FILENAME
+        OUTPUT pack_deb_filename)
+      if(pack_deb_filename STREQUAL pack_deb_name)
+        remake_set(${pack_deb_output_component} ${pack_deb_component})
+      endif(pack_deb_filename STREQUAL pack_deb_name)
+    endforeach(pack_deb_component)
+  endif(pack_deb_output_component)
+endmacro(remake_pack_resolve_deb)

@@ -26,10 +26,16 @@ include(ReMakePack)
 #   The ReMake distribution macros facilitate automated distribution of
 #   a ReMake project.
 
-remake_set(REMAKE_DISTRIBUTE_TARGET_SUFFIX distribution)
-remake_set(REMAKE_DISTRIBUTE_ALL_TARGET distributions)
+if(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
+  remake_set(REMAKE_DISTRIBUTE_CMAKE ON)
 
-remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
+  remake_set(REMAKE_DISTRIBUTE_TARGET_SUFFIX distribution)
+  remake_set(REMAKE_DISTRIBUTE_ALL_TARGET distributions)
+
+  remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
+  remake_file_rmdir(${REMAKE_DISTRIBUTE_DIR})
+  remake_file_mkdir(${REMAKE_DISTRIBUTE_DIR})
+endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 
 ### \brief Distribute a ReMake project according to the Debian standards.
 #   This macro configures source package distribution for a ReMake project
@@ -223,22 +229,17 @@ macro(remake_distribute_deb)
           ${CPACK_DEBIAN_PACKAGE_DEPENDS})
 
         foreach(distribute_dependency ${distribute_dependencies})
-          if(distribute_dependency MATCHES
-            "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
-            string(REGEX REPLACE "^(${REMAKE_PROJECT_FILENAME}[-]?[^ ]*).*$"
-              "\\1" distribute_name_dep ${distribute_dependency})
-            string(REGEX REPLACE "^([^\(]+)[(]?([^\)]*)[)]?$" "\\2"
-              distribute_version_dep ${distribute_dependency})
-            if(${distribute_version_dep} STREQUAL
-              "= ${REMAKE_PROJECT_VERSION}")
-              remake_set(distribute_version_dep
-                "= ${distribute_version}")
-            endif(${distribute_version_dep} STREQUAL
-              "= ${REMAKE_PROJECT_VERSION}")
+          remake_pack_resolve_deb(${distribute_dependency}
+            OUTPUT_NAME distribute_name_dep
+            OUTPUT_VERSION distribute_version_dep
+            OUTPUT_COMPONENT distribute_component_dep)
+
+          if(distribute_component_dep)
+            remake_set(distribute_version_dep
+              "${distribute_version_dep}~${distribute_alias}")
             remake_set(distribute_dependency
               "${distribute_name_dep} (${distribute_version_dep})")
-          endif(distribute_dependency MATCHES
-            "^${REMAKE_PROJECT_FILENAME}[-]?.*$")
+          endif(distribute_component_dep)
           remake_list_push(distribute_binary_depends ${distribute_dependency})
         endforeach(distribute_dependency)
       endif(CPACK_DEBIAN_PACKAGE_DEPENDS)
@@ -344,6 +345,3 @@ macro(remake_distribute_deb)
     endif(distribute_upload)
   endif(distribute_packages)
 endmacro(remake_distribute_deb)
-
-remake_file_rmdir(${REMAKE_DISTRIBUTE_DIR})
-remake_file_mkdir(${REMAKE_DISTRIBUTE_DIR})

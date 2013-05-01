@@ -26,6 +26,10 @@ include(FindPkgConfig)
 #   The ReMake package and file discovery macros provide a useful abstraction
 #   to CMake's native find functionalities.
 
+if(NOT DEFINED REMAKE_FIND_CMAKE)
+  remake_set(REMAKE_FIND_CMAKE ON)
+endif(NOT DEFINED REMAKE_FIND_CMAKE)
+
 ### \brief Find a package.
 #   This macro calls CMake's find_package() or pkg_check_modules() to find
 #   and load settings from an external project installed on the system. If

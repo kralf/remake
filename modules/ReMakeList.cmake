@@ -24,6 +24,10 @@ include(ReMakePrivate)
 #   The ReMake list macros are a set of helper macros to simplify
 #   operations over lists in ReMake.
 
+if(NOT DEFINED REMAKE_LIST_CMAKE)
+  remake_set(REMAKE_LIST_CMAKE ON)
+endif(NOT DEFINED REMAKE_LIST_CMAKE)
+
 ### \brief Append values to the back of a list.
 #   This macro appends a list of values to the back of a list.
 #   \required[value] list The name of the list to append values to.

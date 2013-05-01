@@ -32,7 +32,11 @@ include(ReMakePrivate)
 #   Note that dependent branches are generally required to be defined from
 #   the same source tree directory, i.e. the same CMakeLists.txt file.
 
-remake_set(REMAKE_BRANCH_TARGET_SUFFIX branch)
+if(NOT DEFINED REMAKE_BRANCH_CMAKE)
+  remake_set(REMAKE_BRANCH_CMAKE ON)
+
+  remake_set(REMAKE_BRANCH_TARGET_SUFFIX branch)
+endif(NOT DEFINED REMAKE_BRANCH_CMAKE)
 
 ### \brief Define a ReMake branch.
 #   This macro adds a ReMake branch along with a list of dependencies for

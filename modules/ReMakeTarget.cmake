@@ -27,7 +27,12 @@ include(ReMakePrivate)
 #   macros are specifically designed to also work in directories below the
 #   top-level.
 
-remake_set(REMAKE_TARGET_DIR ReMakeTargets)
+if(NOT DEFINED REMAKE_TARGET_CMAKE)
+  remake_set(REMAKE_TARGET_CMAKE ON)
+
+  remake_set(REMAKE_TARGET_DIR ReMakeTargets)
+  remake_file_rmdir(${REMAKE_TARGET_DIR} TOPLEVEL)
+endif(NOT DEFINED REMAKE_TARGET_CMAKE)
 
 ### \brief Define a new top-level target.
 #   The macro creates a top-level target by calling CMake's add_custom_target()
@@ -192,5 +197,3 @@ macro(remake_target_get_dependencies target_var target_name)
   remake_var_name(target_global_var ${target_name} DEPENDS)
   remake_set(${target_var} ${${target_global_var}})
 endmacro(remake_target_get_dependencies)
-
-remake_file_rmdir(${REMAKE_TARGET_DIR} TOPLEVEL)

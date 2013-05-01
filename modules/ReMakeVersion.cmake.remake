@@ -23,7 +23,11 @@ include(ReMakePrivate)
 ### \brief ReMake version information
 #   The ReMake version module only holds the current version of ReMake.
 
-remake_set(REMAKE_MAJOR ${REMAKE_PROJECT_MAJOR})
-remake_set(REMAKE_MINOR ${REMAKE_PROJECT_MINOR})
-remake_set(REMAKE_PATCH ${REMAKE_PROJECT_PATCH})
-remake_set(REMAKE_VERSION ${REMAKE_PROJECT_VERSION})
+if(NOT DEFINED REMAKE_VERSION_CMAKE)
+  remake_set(REMAKE_VERSION_CMAKE ON)
+
+  remake_set(REMAKE_MAJOR ${REMAKE_PROJECT_MAJOR})
+  remake_set(REMAKE_MINOR ${REMAKE_PROJECT_MINOR})
+  remake_set(REMAKE_PATCH ${REMAKE_PROJECT_PATCH})
+  remake_set(REMAKE_VERSION ${REMAKE_PROJECT_VERSION})
+endif(NOT DEFINED REMAKE_VERSION_CMAKE)

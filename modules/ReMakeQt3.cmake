@@ -20,6 +20,14 @@
 
 include(ReMakePrivate)
 
+### \brief ReMake Qt3 macros
+#   The ReMake Qt3 macros provide seamless integration of Qt3 meta-object
+#   processing with ReMake build targets.
+
+if(NOT DEFINED REMAKE_QT3_CMAKE)
+  remake_set(REMAKE_QT3_CMAKE ON)
+endif(NOT DEFINED REMAKE_QT3_CMAKE)
+
 ### \brief Configure Qt3 meta-object processing.
 #   This macro discovers the Qt3 package configuration and enables Qt3
 #   meta-object processing. Note that the macro automatically gets

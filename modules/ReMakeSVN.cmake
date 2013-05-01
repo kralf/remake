@@ -27,11 +27,12 @@ include(ReMakePrivate)
 #   The ReMake Subversion module provides useful tools for Subversion-based
 #   projects.
 
-remake_set(REMAKE_SVN_DIR ReMakeSVN)
+if(NOT DEFINED REMAKE_SVN_CMAKE)
+  remake_set(REMAKE_SVN_CMAKE ON)
 
-if(NOT COMMAND remake_svn_revision)
+  remake_set(REMAKE_SVN_DIR ReMakeSVN)
   remake_find_package(Subversion QUIET OPTIONAL)
-endif(NOT COMMAND remake_svn_revision)
+endif(NOT DEFINED REMAKE_SVN_CMAKE)
 
 ### \brief Retrieve the Subversion head revision.
 #   This macro retrieves the Subversion head revision of the working directory.
