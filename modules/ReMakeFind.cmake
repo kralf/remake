@@ -62,7 +62,7 @@ macro(remake_find_package find_package)
     remake_set(find_args SELF DEFAULT ${find_package})
     pkg_check_modules(${find_package_var} ${find_args})
     remake_find_result(${find_package} ${${find_package_var}_FOUND}
-      ${OPTIONAL})
+      TYPE package ${OPTIONAL})
   else(find_config)
     if(find_alias)
       remake_var_name(find_package_var ${find_alias} FOUND)
@@ -71,7 +71,7 @@ macro(remake_find_package find_package)
     endif(find_alias)
     find_package(${find_package} ${find_args})
     remake_find_result(${find_package} ${${find_package}_FOUND}
-      ${${find_package_var}} ${OPTIONAL})
+      ${${find_package_var}} TYPE package ${OPTIONAL})
   endif(find_config)
 endmacro(remake_find_package)
 
@@ -124,7 +124,8 @@ macro(remake_find_library find_lib find_header)
     remake_set(${find_headers_var})
   endif(${find_lib_var})
 
-  remake_find_result(${find_package} ${${find_headers_var}} ${OPTIONAL})
+  remake_find_result(${find_package} ${${find_headers_var}} TYPE library
+    ${OPTIONAL})
 endmacro(remake_find_library)
 
 ### \brief Find an executable program.
@@ -149,7 +150,8 @@ macro(remake_find_executable find_exec)
 
   find_program(${find_exec_var} NAMES ${find_exec} ${find_args})
 
-  remake_find_result(${find_package} ${${find_exec_var}} ${OPTIONAL})
+  remake_find_result(${find_package} ${${find_exec_var}} TYPE executable
+    ${OPTIONAL})
 endmacro(remake_find_executable)
 
 ### \brief Find a file.
@@ -172,7 +174,7 @@ macro(remake_find_file find_file)
 
   find_path(${find_path_var} NAMES ${find_file} ${find_args})
 
-  remake_find_result(${find_package} ${${find_path_var}} ${OPTIONAL})
+  remake_find_result(${find_package} ${${find_path_var}} TYPE file ${OPTIONAL})
 endmacro(remake_find_file)
 
 ### \brief Evaluate the result of a find operation.
@@ -180,26 +182,29 @@ endmacro(remake_find_file)
 #   It gets invoked by the specific find macros defined in this module
 #   and should not be called directly from a CMakeLists.txt file. The macro's
 #   main purpose is to emit a message on the result of the find operation and
-#   to set the ${PACKAGE}_FOUND cache variable.
-#   \required[value] package The name of the package that was to be found.
+#   to set the ${NAME}_FOUND cache variable.
+#   \required[value] name The name of the object that was to be found.
+#   \required[value] TYPE:type The type of object that was to be found,
+#     defaulting to package.
 #   \optional[option] OPTIONAL If provided, a negative result will
 #     not lead to a fatal error but to a warning message instead.
 #   \required[value] result The find result returned to the calling macro,
 #     usually depends on the macro-specific find operation.
-macro(remake_find_result find_package)
-  remake_arguments(PREFIX find_ OPTION OPTIONAL ARGN result ${ARGN})
-  remake_var_name(find_result_var ${find_package} FOUND)
+macro(remake_find_result find_name)
+  remake_arguments(PREFIX find_ VAR TYPE OPTION OPTIONAL ARGN result ${ARGN})
+  remake_set(find_type SELF DEFAULT package)
+  remake_var_name(find_result_var ${find_name} FOUND)
 
   if(find_result)
     remake_set(${find_result_var} ON CACHE BOOL
-      "Found ${find_package} package." FORCE)
+      "Found ${find_type} ${find_name}." FORCE)
   else(find_result)
     remake_set(${find_result_var} OFF CACHE BOOL
-      "Found ${find_package} package." FORCE)
+      "Found ${find_type} ${find_name}." FORCE)
     if(find_optional)
-      message(STATUS "Warning: Missing ${find_package} support!")
+      message(STATUS "Warning: Missing ${find_type} ${find_name}!")
     else(find_optional)
-      message(FATAL_ERROR "Missing ${find_package} support!")
+      message(FATAL_ERROR "Missing ${find_type} ${find_name}!")
     endif(find_optional)
   endif(find_result)
 endmacro(remake_find_result)

@@ -281,10 +281,22 @@ endmacro(remake_set)
 #   CMake's unset() macro.
 #   \required[list] variable A list containing the names of the variables
 #     to be unset.
+#   \optional[option] CACHE With this option being present, the given
+#     variables are removed from the cache.
 macro(remake_unset)
-  foreach(private_var ${ARGN})
-    unset(${private_var})
-  endforeach(private_var)
+  set(private_args "${ARGN}")
+  list(FIND private_args CACHE private_index)
+
+  if(private_index LESS 0)
+    foreach(private_var ${private_args})
+      unset(${private_var})
+    endforeach(private_var)
+  else(private_index LESS 0)
+    list(REMOVE_AT private_args ${private_index})
+    foreach(private_var ${private_args})
+      unset(${private_var} CACHE)
+    endforeach(private_var)
+  endif(private_index LESS 0)
 endmacro(remake_unset)
 
 ### \brief Generate debugging output from a list of variables.

@@ -1,3 +1,11 @@
+remake (1:0.5.4-175) lucid; urgency=low
+
+  * More revisions:
+    + Existing ReMakeROS macros tested for ROS "fuerte"
+    + Currently no handling of generated Python modules
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 02 May 2013 16:08:00 +0100
+
 remake (1:0.5.4-174) lucid; urgency=low
 
   * Revisions:

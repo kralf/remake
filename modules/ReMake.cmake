@@ -184,6 +184,12 @@ endmacro(remake_add_library)
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the plugin sources, defaulting to *.c
 #     and *.cpp.
+#   \optional[list] GENERATED:file An optional list of filenames referring
+#     to generated source files. Note that, if the files will not be generated
+#     within the same CMake scope, a corresponding generator top-level target
+#     should be provided through the DEPENDS argument.
+#   \optional[list] DEPENDS:target An optional list of top-level targets the
+#     library target depends on.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). See
 #     ReMakeComponent and the CMake documentation for details.
@@ -195,8 +201,8 @@ endmacro(remake_add_library)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     plugin library target.
 macro(remake_add_plugin remake_name)
-  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
-    ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ LIST GENERATED LIST DEPENDS VAR COMPONENT
+    VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
@@ -233,13 +239,20 @@ macro(remake_add_plugin remake_name)
 
   remake_component_build(
     LIBRARY ${remake_name}${remake_suffix}
-    SHARED ${remake_sources} ${remake_target_sources}
+    SHARED ${remake_sources} ${remake_target_sources} ${remake_generated}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK}
     COMPONENT ${remake_component})
+  if(remake_generated)
+    set_source_files_properties(${remake_generated} PROPERTIES GENERATED ON)
+  endif(remake_generated)
+
   if(remake_target_depends)
     add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
   endif(remake_target_depends)
+  if(remake_depends)
+    add_dependencies(${remake_name}${remake_suffix} ${remake_depends})
+  endif(remake_depends)
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
     LIBRARY DESTINATION ${remake_plugins}
@@ -256,6 +269,12 @@ endmacro(remake_add_plugin)
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the executable's sources, defaulting to *.c
 #     and *.cpp.
+#   \optional[list] GENERATED:file An optional list of filenames referring
+#     to generated source files. Note that, if the files will not be generated
+#     within the same CMake scope, a corresponding generator top-level target
+#     should be provided through the DEPENDS argument.
+#   \optional[list] DEPENDS:target An optional list of top-level targets the
+#     executable target depends on.
 #   \optional[option] TESTING With this option being present, the executable is
 #     assumed to be a testing binary. Consequently, a call to remake_test()
 #     creates a testing target for this executable. See ReMakeTest for details.
@@ -273,8 +292,9 @@ endmacro(remake_add_plugin)
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     executable target.
 macro(remake_add_executable remake_name)
-  remake_arguments(PREFIX remake_ OPTION TESTING VAR INSTALL VAR COMPONENT
-    VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ LIST GENERATED LIST DEPENDS OPTION TESTING
+    VAR INSTALL VAR COMPONENT VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
+    ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
@@ -306,13 +326,20 @@ macro(remake_add_executable remake_name)
 
   remake_component_build(
     EXECUTABLE ${remake_name}${remake_suffix}
-    ${remake_sources} ${remake_target_sources}
+    ${remake_sources} ${remake_target_sources} ${remake_generated}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK}
     COMPONENT ${remake_component})
+  if(remake_generated)
+    set_source_files_properties(${remake_generated} PROPERTIES GENERATED ON)
+  endif(remake_generated)
+
   if(remake_target_depends)
     add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
   endif(remake_target_depends)
+  if(remake_depends)
+    add_dependencies(${remake_name}${remake_suffix} ${remake_depends})
+  endif(remake_depends)
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
     RUNTIME DESTINATION ${remake_install}

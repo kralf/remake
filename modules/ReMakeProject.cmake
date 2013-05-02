@@ -159,7 +159,8 @@ macro(remake_project project_name)
   remake_set(project_lisence SELF DEFAULT
     "GNU Lesser General Public License (LGPL)")
 
-  remake_set(REMAKE_PROJECT_NAME ${project_name})
+  remake_set(REMAKE_PROJECT_NAME ${project_name} CACHE INTERNAL
+    "Name of the ReMake project.")
 
   remake_file_name(project_filename_conversion ${REMAKE_PROJECT_NAME})
   remake_set(project_filename SELF DEFAULT ${project_filename_conversion})
@@ -399,6 +400,19 @@ macro(remake_project_set project_var)
   remake_var_name(project_global_var ${REMAKE_PROJECT_NAME} ${project_var})
   remake_set(${project_global_var} ${ARGN})
 endmacro(remake_project_set)
+
+### \brief Undefine the value of a ReMake project variable.
+#   This macro undefines a project variable which has been defined by
+#   remake_project_get(). The variable name is automatically prefixed with an
+#   upper-case conversion of the project name found in the cache. Additional
+#   arguments are passed on to remake_unset().
+#   \required[value] variable The name of the project variable to be undefined.
+#   \optional[list] arg The arguments to be passed on to remake_unset(). See
+#     ReMakePrivate for details.
+macro(remake_project_unset project_var)
+  remake_var_name(project_global_var ${REMAKE_PROJECT_NAME} ${project_var})
+  remake_unset(${project_global_var} ${ARGN})
+endmacro(remake_project_unset)
 
 ### \brief Retrieve the value of a ReMake project variable.
 #   This macro retrieves a project variable matching the ReMake naming
