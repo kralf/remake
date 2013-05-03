@@ -205,6 +205,9 @@ endmacro(remake_var_regex)
 #     ignore external variable assignments. A typical use for this
 #     functionality is to assign default values to otherwise undefined or 
 #     empty variables.
+#   \optional[option] APPEND This option indicates for the macro to append
+#     the provided value to the currently assigned variable value. In CMake,
+#     the result value may thus be interpreted as a list.
 #   \optional[option] INIT If present, this option causes cache variables
 #     to be initialized only during the first run of CMake. This is
 #     particularly useful when attempting to change the default value of
@@ -221,7 +224,7 @@ endmacro(remake_var_regex)
 #     usage.
 macro(remake_set private_var)
   remake_arguments(PREFIX private_ VAR FROM VAR DEFAULT OPTION SELF
-    OPTION FORCE OPTION INIT ARGN set_args ${ARGN})
+    OPTION APPEND OPTION FORCE OPTION INIT ARGN set_args ${ARGN})
 
   set(private_initialized OFF)
   if(private_init)
@@ -258,13 +261,27 @@ macro(remake_set private_var)
       if(private_from MATCHES ^ENV{[^}]*}$)
         string(REGEX REPLACE "^ENV{" "" private_from ${private_from})
         string(REGEX REPLACE "}$" "" private_from ${private_from})
-        set(${private_var} $ENV{${private_from}} ${private_set_args})
+        if(private_append)
+          set(${private_var} ${${private_var}} $ENV{${private_from}}
+            ${private_set_args})
+        else(private_append)
+          set(${private_var} $ENV{${private_from}} ${private_set_args})
+        endif(private_append)
       else(private_from MATCHES ^ENV{[^}]*}$)
-        set(${private_var} ${${private_from}} ${private_set_args})
+        if(private_append)
+          set(${private_var} ${${private_var}} ${${private_from}}
+            ${private_set_args})
+        else(private_append)
+          set(${private_var} ${${private_from}} ${private_set_args})
+        endif(private_append)
       endif(private_from MATCHES ^ENV{[^}]*}$)
     else(private_from)
       if(NOT private_self)
-        set(${private_var} ${private_set_args})
+        if(private_append)
+          set(${private_var} ${${private_var}} ${private_set_args})
+        else(private_append)
+          set(${private_var} ${private_set_args})
+        endif(private_append)
       endif(NOT private_self)
     endif(private_from)
 

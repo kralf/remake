@@ -403,7 +403,7 @@ endmacro(remake_project_set)
 
 ### \brief Undefine the value of a ReMake project variable.
 #   This macro undefines a project variable which has been defined by
-#   remake_project_get(). The variable name is automatically prefixed with an
+#   remake_project_set(). The variable name is automatically prefixed with an
 #   upper-case conversion of the project name found in the cache. Additional
 #   arguments are passed on to remake_unset().
 #   \required[value] variable The name of the project variable to be undefined.
