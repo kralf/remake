@@ -1,3 +1,11 @@
+remake (1:0.5.4-177) lucid; urgency=low
+
+  * Added ReMakeDebian macros to aggregate some of the re-used Debian
+    facilities in a separate ReMake module
+  * Added remake_ros_pack_deb() macro
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 03 May 2013 14:00:00 +0100
+
 remake (1:0.5.4-176) lucid; urgency=low
 
   * Simplified ReMakeROS generation macros

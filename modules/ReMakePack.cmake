@@ -20,6 +20,7 @@
 
 include(ReMakePrivate)
 include(ReMakeComponent)
+include(ReMakeDebian)
 
 ### \brief ReMake packaging macros
 #   The ReMake packaging macros have been designed to provide simple and
@@ -276,62 +277,33 @@ macro(remake_pack_deb)
     remake_unset(pack_component_deps)
     remake_unset(pack_deb_packages)
     foreach(pack_dependency ${pack_depends})
-      remake_pack_resolve_deb(${pack_dependency}
-        OUTPUT_NAME pack_name_dep
-        OUTPUT_VERSION pack_version_dep
-        OUTPUT_COMPONENT pack_component_dep)
+      remake_debian_resolve_package("${pack_dependency}"
+        OUTPUT pack_component_dep)
 
       if(pack_component_dep)
         remake_list_push(pack_component_deps ${pack_component_dep})
         remake_component_get(${pack_component_dep} FILENAME
           OUTPUT pack_name_dep)
         remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
-        remake_set(pack_dependency "${pack_name_dep} (${pack_version_dep})")
+        remake_debian_compose_package(${pack_name_dep}
+          VERSION ${pack_version_dep} OUTPUT pack_dependency)
       else(pack_component_dep)
-        remake_unset(pack_deb_found)
-        if(NOT pack_deb_packages)
-          execute_process(COMMAND dpkg-query -W
-            OUTPUT_VARIABLE pack_deb_packages OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE pack_deb_result ERROR_QUIET)
-          string(REGEX REPLACE "\n" ";" pack_deb_packages ${pack_deb_packages})
-        endif(NOT pack_deb_packages)
+        remake_debian_find_package("${pack_dependency}" OUTPUT pack_deb_found)
 
-        if(${pack_deb_result} EQUAL 0)
-          foreach(pack_deb_pkg ${pack_deb_packages})
-            if("${pack_deb_pkg}" MATCHES "^${pack_name_dep}[\t].*$")
-              if(NOT pack_deb_found)
-                string(REGEX REPLACE "^(${pack_name_dep})[\t].*$"
-                  "\\1" pack_deb_pkg_name ${pack_deb_pkg})
-                string(REGEX REPLACE "^${pack_name_dep}[\t](.*)$"
-                  "\\1" pack_deb_pkg_version ${pack_deb_pkg})
-                if(pack_version_dep)
-                  string(REPLACE " " ";" pack_version_args ${pack_version_dep})
-                  execute_process(COMMAND dpkg --compare-versions
-                    ${pack_deb_pkg_version} ${pack_version_args}
-                    RESULT_VARIABLE pack_deb_result ERROR_QUIET)
-                  if(NOT pack_deb_result)
-                    remake_set(pack_dependency
-                      "${pack_deb_pkg_name} (${pack_version_dep})")
-                    remake_set(pack_deb_found ON)
-                  endif(NOT pack_deb_result)
-                else(pack_version_dep)
-                  remake_set(pack_dependency ${pack_deb_pkg_name})
-                  remake_set(pack_deb_found ON)
-                endif(pack_version_dep)
-              else(NOT pack_deb_found)
-                remake_set(pack_deb_message
-                  "Multiple packages on build system match dependency")
-                message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
-              endif(NOT pack_deb_found)
-            endif("${pack_deb_pkg}" MATCHES "^${pack_name_dep}[\t].*$")
-          endforeach(pack_deb_pkg)
-        endif(${pack_deb_result} EQUAL 0)
-        if(NOT pack_deb_found)
+        list(LENGTH pack_deb_found pack_deb_length)
+        if(NOT pack_deb_length)
           remake_set(pack_deb_message
             "No package on build system matches dependency")
           message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
-        endif(NOT pack_deb_found)
+        elseif(pack_deb_length GREATER 1)
+          remake_set(pack_deb_message
+            "Multiple packages on build system match dependency")
+          message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
+        else(NOT pack_deb_length)
+          remake_set(pack_dependency ${pack_deb_found})
+        endif(NOT pack_deb_length)
       endif(pack_component_dep)
+
       remake_list_push(pack_binary_deps ${pack_dependency})
     endforeach(pack_dependency)
 
@@ -454,55 +426,3 @@ macro(remake_pack_source_archive)
   remake_set(CPACK_SOURCE_PACKAGE_FILE_NAME ${pack_file})
   remake_pack_source(${pack_generator} ${EXCLUDE})
 endmacro(remake_pack_source_archive)
-
-### \brief Resolve project-internal package dependencies.
-#   This macro is a helper macro to resolve project-internal dependencies
-#   between Debian packages. It takes a Debian-compliant fully qualified
-#   package name and matches it against the component specifications to
-#   deliver the corresponding component name.
-#   \required[value] name The fully qualified Debian package name,
-#     consisting in the actual package name and an optional version
-#     specifier, for which to resolve the project component. See the
-#     Debian policies for naming conventions.
-#   \optional[value] OUTPUT_NAME:variable The name of an optional output
-#     variable that will be assigned the actual name of the package.
-#   \optional[value] OUTPUT_VERSION:variable The name of an optional output
-#     variable that will be assigned the version of the package.
-#   \optional[value] OUTPUT_COMPONENT:variable The name of an optional output
-#     variable that will be assigned the name of the resolved component. Note
-#     that if none of the components matches the provided package name, the
-#     output variable will be undefined.
-macro(remake_pack_resolve_deb pack_full_name)
-  remake_arguments(PREFIX pack_deb_ VAR OUTPUT_NAME VAR OUTPUT_VERSION
-    VAR OUTPUT_COMPONENT ${ARGN})
-
-  if(${pack_full_name} MATCHES "^[^ ]+[ ]+[(][^)]*[)]$")
-    string(REGEX REPLACE "^([^ ]+)[ ]+[(]([^)]*)[)]$" "\\1"
-      pack_deb_name ${pack_full_name})
-    string(REGEX REPLACE "^([^ ]+)[ ]+[(]([^)]*)[)]$" "\\2"
-      pack_deb_version ${pack_full_name})
-  else(${pack_full_name} MATCHES "^[^ ]+[ ]+[(][^)]*[)]$")
-    remake_set(pack_deb_name ${pack_full_name})
-    remake_unset(pack_deb_version)
-  endif(${pack_full_name} MATCHES "^[^ ]+[ ]+[(][^)]*[)]$")
-
-  if(pack_deb_output_name)
-    remake_set(${pack_deb_output_name} ${pack_deb_name})
-  endif(pack_deb_output_name)
-  if(pack_deb_output_version)
-    remake_set(${pack_deb_output_version} ${pack_deb_version})
-  endif(pack_deb_output_version)
-
-  if(pack_deb_output_component)
-    remake_unset(${pack_deb_output_component})
-    remake_project_get(COMPONENTS OUTPUT pack_deb_components)
-
-    foreach(pack_deb_component ${pack_deb_components})
-      remake_component_get(${pack_deb_component} FILENAME
-        OUTPUT pack_deb_filename)
-      if(pack_deb_filename STREQUAL pack_deb_name)
-        remake_set(${pack_deb_output_component} ${pack_deb_component})
-      endif(pack_deb_filename STREQUAL pack_deb_name)
-    endforeach(pack_deb_component)
-  endif(pack_deb_output_component)
-endmacro(remake_pack_resolve_deb)

@@ -21,6 +21,7 @@
 include(ReMakeProject)
 include(ReMakeBranch)
 include(ReMakeComponent)
+include(ReMakeDebian)
 include(ReMakeFind)
 include(ReMakeFile)
 include(ReMakeGenerate)
@@ -404,8 +405,8 @@ endmacro(remake_add_executables)
 #     ${HEADER_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(), defaults to
-#     ${REMAKE_COMPONENT}-dev. See ReMakeComponent and the CMake documentation
-#     for details.
+#     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_DEVEL_SUFFIX}. See ReMakeComponent
+#     and the CMake documentation for details.
 #   \optional[option] GENERATED With this option being present, the macro
 #     assumes that the header files do not yet exists but will be generated
 #     during the run of CMake or the build process. Note that the option
@@ -414,7 +415,8 @@ macro(remake_add_headers)
   remake_arguments(PREFIX remake_ OPTION RECURSE VAR INSTALL VAR COMPONENT
     OPTION GENERATED ARGN globs ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
-  remake_component_name(remake_default_component ${REMAKE_COMPONENT} dev)
+  remake_component_name(remake_default_component ${REMAKE_COMPONENT}
+    ${REMAKE_COMPONENT_DEVEL_SUFFIX})
   remake_set(remake_component SELF DEFAULT ${remake_default_component})
 
   remake_component_get(${remake_component} HEADER_DESTINATION DESTINATION)

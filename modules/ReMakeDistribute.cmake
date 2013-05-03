@@ -21,6 +21,7 @@
 include(ReMakePrivate)
 include(ReMakeComponent)
 include(ReMakePack)
+include(ReMakeDebian)
 
 ### \brief ReMake distribution macros
 #   The ReMake distribution macros facilitate automated distribution of
@@ -229,12 +230,14 @@ macro(remake_distribute_deb)
           ${CPACK_DEBIAN_PACKAGE_DEPENDS})
 
         foreach(distribute_dependency ${distribute_dependencies})
-          remake_pack_resolve_deb(${distribute_dependency}
-            OUTPUT_NAME distribute_name_dep
-            OUTPUT_VERSION distribute_version_dep
-            OUTPUT_COMPONENT distribute_component_dep)
+          remake_debian_resolve_package("${distribute_dependency}"
+            OUTPUT distribute_component_dep)
 
           if(distribute_component_dep)
+            remake_debian_decompose_package("${distribute_dependency}"
+              OUTPUT_NAME distribute_name_dep
+              OUTPUT_VERSION distribute_version_dep)
+
             remake_set(distribute_version_dep
               "${distribute_version_dep}~${distribute_alias}")
             remake_set(distribute_dependency

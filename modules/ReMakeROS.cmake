@@ -23,6 +23,8 @@ include(ReMakeFind)
 include(ReMakeFile)
 include(ReMakeComponent)
 include(ReMakePython)
+include(ReMakePack)
+include(ReMakeDebian)
 
 include(ReMakePrivate)
 
@@ -77,6 +79,10 @@ macro(remake_ros)
   if(ROS_FOUND)
     if(${ROS_DISTRIBUTION} STRLESS groovy)
       remake_file_mkdir(${REMAKE_ROS_STACK_DIR} TOPLEVEL)
+      remake_set(REMAKE_ROS_STACK_MANIFEST "stack.xml")
+      remake_set(REMAKE_ROS_PACKAGE_MANIFEST "manifest.xml")
+    else(${ROS_DISTRIBUTION} STRLESS groovy)
+      remake_set(REMAKE_ROS_PACKAGE_MANIFEST "package.xml")
     endif(${ROS_DISTRIBUTION} STRLESS groovy)
     remake_file_mkdir(${REMAKE_ROS_PACKAGE_DIR} TOPLEVEL)
   endif(ROS_FOUND)
@@ -450,12 +456,14 @@ macro(remake_ros_package_generate ros_name)
       DEPENDS ${ros_${ros_name}_headers} ${ros_${ros_name}_modules})
     remake_component_add_dependencies(COMPONENT ${ros_component}
       DEPENDS ${ros_${ros_name}s_target})
-    remake_component_add_dependencies(COMPONENT ${ros_component}-dev
+    remake_component_name(ros_dev_component ${ros_component}
+      ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+    remake_component_add_dependencies(COMPONENT ${ros_dev_component}
       DEPENDS ${ros_${ros_name}s_target})
     add_dependencies(${ros_${ros_name}s_target} ${ros_manifest_target})
 
     remake_add_headers(${ros_${ros_name}_headers}
-      COMPONENT ${ros_component}-dev GENERATED)
+      COMPONENT ${ros_dev_component} GENERATED)
     include_directories(${ros_include_dir})
 
     remake_ros_package_get(${ros_package} INCLUDE_DIRS OUTPUT ros_include_dirs)
@@ -543,7 +551,7 @@ macro(remake_ros_stack ros_name)
       "  <url>${REMAKE_PROJECT_HOME}</url>")
     remake_set(ros_manifest_tail "</stack>")
 
-    remake_set(ros_manifest ${ros_stack_dir}/stack.xml)
+    remake_set(ros_manifest ${ros_stack_dir}/${REMAKE_ROS_STACK_MANIFEST})
     remake_ros_stack_set(${ros_name} MANIFEST ${ros_manifest}
       CACHE INTERNAL "Manifest file of ${ros_name} ROS stack.")
     remake_file_mkdir(${ros_manifest}.d)
@@ -578,6 +586,8 @@ macro(remake_ros_stack ros_name)
 
     remake_ros_stack_set(${ros_name} COMPONENT ${ros_component}
       CACHE INTERNAL "Component of ${ros_name} ROS stack.")
+    remake_ros_stack_set(${ros_name} DESCRIPTION ${ros_description}
+      CACHE INTERNAL "Description of ${ros_name} ROS stack.")
     remake_ros_stack_add_dependencies(${ros_name} DEPENDS ${ros_depends})
 
     message(STATUS "ROS stack: ${ros_name}")
@@ -716,11 +726,7 @@ macro(remake_ros_package ros_name)
     endif(ros_meta)
     remake_list_push(ros_manifest_tail "</package>")
 
-    if(${ROS_DISTRIBUTION} STRLESS groovy)
-      remake_set(ros_manifest ${ros_pkg_dir}/manifest.xml)
-    else(${ROS_DISTRIBUTION} STRLESS groovy)
-      remake_set(ros_manifest ${ros_pkg_dir}/package.xml)
-    endif(${ROS_DISTRIBUTION} STRLESS groovy)
+    remake_set(ros_manifest ${ros_pkg_dir}/${REMAKE_ROS_PACKAGE_MANIFEST})
     remake_ros_package_set(${ros_name} MANIFEST ${ros_manifest}
       CACHE INTERNAL "Manifest file of ROS package ${ros_name}.")
     remake_file_mkdir(${ros_manifest}.d)
@@ -739,8 +745,10 @@ macro(remake_ros_package ros_name)
       FILENAME ${ros_filename}
       PREFIX OFF
       INSTALL ${ros_dest_root}/${ros_dest_dir})
-    remake_component(${ros_component}-dev
-      FILENAME ${ros_filename}-dev
+    remake_component_name(ros_dev_component ${ros_component}
+      ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+    remake_component(${ros_dev_component}
+      FILENAME ${ros_filename}-${REMAKE_COMPONENT_DEVEL_SUFFIX}
       PREFIX OFF
       INSTALL ${ROS_PATH}
       HEADER_DESTINATION include/${ros_name})
@@ -760,6 +768,8 @@ macro(remake_ros_package ros_name)
 
     remake_ros_package_set(${ros_name} COMPONENT ${ros_component}
       CACHE INTERNAL "Component of ROS package ${ros_name}.")
+    remake_ros_package_set(${ros_name} DESCRIPTION ${ros_description}
+      CACHE INTERNAL "Description of ${ros_name} ROS package.")
     remake_ros_package_set(${ros_name} META ${ros_meta}
       CACHE INTERNAL "ROS package ${ros_name} is a meta-package.")
     remake_set(ros_build_depends ${ros_depends} ${ros_build_depends})
@@ -769,10 +779,13 @@ macro(remake_ros_package ros_name)
       BUILD_DEPENDS ${ros_build_depends}
       RUN_DEPENDS ${ros_run_depends})
     if(ros_reverse_depends)
-      if(NOT ${ROS_DISTRIBUTION} STRLESS groovy)
+      if(${ROS_DISTRIBUTION} STRLESS groovy)
+        remake_ros_stack_add_dependencies(${ros_reverse_depends}
+          DEPLOYS ${ros_name})
+      else(${ROS_DISTRIBUTION} STRLESS groovy)
         remake_ros_package_add_dependencies(${ros_reverse_depends}
           RUN_DEPENDS ${ros_name})
-      endif(NOT ${ROS_DISTRIBUTION} STRLESS groovy)
+      endif(${ROS_DISTRIBUTION} STRLESS groovy)
     endif(ros_reverse_depends)
 
     if(ros_meta)
@@ -813,8 +826,11 @@ endmacro(remake_ros_package)
 #     the stack-level dependencies should be added.
 #   \required[list] DEPENDS:stack A list of stack-level dependencies that
 #     are inscribed into the ROS stack manifest.
+#   \required[list] DEPLOYS:pkg A list of ROS packages that are to be deployed
+#     by the ROS stack. Note that these packages will not be enlisted in the
+#     stack manifest.
 macro(remake_ros_stack_add_dependencies ros_name)
-  remake_arguments(PREFIX ros_ LIST DEPENDS ${ARGN})
+  remake_arguments(PREFIX ros_ LIST DEPENDS LIST DEPLOYS ${ARGN})
 
   remake_ros()
 
@@ -822,7 +838,7 @@ macro(remake_ros_stack_add_dependencies ros_name)
     if(ros_depends)
       remake_project_get(ROS_STACKS OUTPUT ros_stacks)
       remake_ros_stack_get(${ros_name} MANIFEST OUTPUT ros_manifest)
-      remake_ros_stack_get(${ros_name} BUILD_DEPENDS OUTPUT ros_build_deps)
+      remake_ros_stack_get(${ros_name} RUN_DEPENDS OUTPUT ros_run_deps)
 
       remake_unset(ros_manifest_depends)
       foreach(ros_dependency ${ros_depends})
@@ -849,19 +865,31 @@ macro(remake_ros_stack_add_dependencies ros_name)
 
         remake_list_push(ros_manifest_depends
           "  <depend stack=\"${ros_dependency}\"/>")
-        remake_list_push(ros_build_deps ${ros_dependency})
+        remake_list_push(ros_run_deps ${ros_dependency})
       endforeach(ros_dependency)
 
       remake_file_write(${ros_manifest}.d/50-depends LINES
         ${ros_manifest_depends})
-      if(ros_build_deps)
-        list(REMOVE_DUPLICATES ros_build_deps)
-      endif(ros_build_deps)
-      remake_ros_stack_set(${ros_name} BUILD_DEPENDS ${ros_build_deps}
-        CACHE INTERAL "Build dependencies of ROS stack ${ros_name}.")
+      if(ros_run_deps)
+        list(REMOVE_DUPLICATES ros_run_deps)
+      endif(ros_run_deps)
+      remake_ros_stack_set(${ros_name} RUN_DEPENDS ${ros_run_deps}
+        CACHE INTERAL "Runtime dependencies of ROS stack ${ros_name}.")
     endif(ros_depends)
+
+    if(ros_deploys)
+      remake_ros_stack_get(${ros_name} DEPLOYS OUTPUT ros_stack_deploys)
+      remake_list_push(ros_stack_deploys ${ros_deploys})
+      remake_ros_stack_set(${ros_name} DEPLOYS ${ros_stack_deploys}
+        CACHE INTERNAL "Packages deployed by ROS stack ${ros_name}.")
+    endif(ros_deploys)
   else(${ROS_DISTRIBUTION} STRLESS groovy)
-    remake_ros_package_add_dependencies(${ros_name} DEPENDS ${ros_depends})
+    if(ros_deploys)
+      remake_ros_package_add_dependencies(${ros_name} ${DEPENDS}
+        RUN_DEPENDS ${ros_deploys})
+    else(ros_deploys)
+      remake_ros_package_add_dependencies(${ros_name} ${DEPENDS})
+    endif(ros_deploys)
   endif(${ROS_DISTRIBUTION} STRLESS groovy)
 endmacro(remake_ros_stack_add_dependencies)
 
@@ -893,18 +921,20 @@ macro(remake_ros_package_add_dependencies ros_name)
 
   remake_ros()
 
-  remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
-  remake_set(ros_index 0)
-  if(${ROS_DISTRIBUTION} STRLESS groovy)
-    remake_list_push(ros_build_depends ${ros_depends} ${ros_run_depends})
-    remake_unset(ros_run_depends)
+  remake_list_push(ros_build_depends ${ros_depends})
+  if(ros_build_depends)
     list(REMOVE_DUPLICATES ros_build_depends)
+  endif(ros_build_depends)
+  remake_list_push(ros_run_depends ${ros_depends})
+  if(ros_run_depends)
+    list(REMOVE_DUPLICATES ros_run_depends)
+  endif(ros_run_depends)
+
+  remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
+  if(${ROS_DISTRIBUTION} STRLESS groovy)
     list(FIND ros_packages ${ros_name} ros_index)
   else(${ROS_DISTRIBUTION} STRLESS groovy)
-    remake_list_push(ros_build_depends ${ros_depends})
-    list(REMOVE_DUPLICATES ros_build_depends)
-    remake_list_push(ros_run_depends ${ros_depends})
-    list(REMOVE_DUPLICATES ros_run_depends)
+    remake_set(ros_index 0)
   endif(${ROS_DISTRIBUTION} STRLESS groovy)
 
   if(NOT ros_index LESS 0)
@@ -971,16 +1001,30 @@ macro(remake_ros_package_add_dependencies ros_name)
     endif(ros_build_depends)
 
     if(ros_run_depends)
+      remake_ros_package_get(${ros_name} RUN_DEPENDS OUTPUT ros_run_deps)
+
       remake_unset(ros_manifest_run_depends)
       foreach(ros_dependency ${ros_run_depends})
-        remake_list_push(ros_manifest_run_depends
-          "  <run_depend>${ros_dependency}</run_depend>")
+        if(${ROS_DISTRIBUTION} STRLESS groovy)
+          remake_list_push(ros_manifest_depends
+            "  <depend package=\"${ros_dependency}\"/>")
+        else(${ROS_DISTRIBUTION} STRLESS groovy)
+          remake_list_push(ros_manifest_run_depends
+            "  <run_depend>${ros_dependency}</run_depend>")
+        endif(${ROS_DISTRIBUTION} STRLESS groovy)
+        remake_list_push(ros_run_deps ${ros_dependency})
       endforeach(ros_dependency)
+
       remake_file_write(${ros_manifest}.d/51-run_depends LINES
         ${ros_manifest_run_depends})
+      if(ros_run_deps)
+        list(REMOVE_DUPLICATES ros_run_deps)
+      endif(ros_run_deps)
+      remake_ros_package_set(${ros_name} RUN_DEPENDS ${ros_run_deps}
+        CACHE INTERAL "Runtime dependencies of ROS package ${ros_name}.")
     endif(ros_run_depends)
   else(NOT ros_index LESS 0)
-    remake_ros_stack_add_dependencies(${ros_name} DEPENDS ${ros_build_depends})
+    remake_ros_stack_add_dependencies(${ros_name} ${DEPENDS})
   endif(NOT ros_index LESS 0)
 endmacro(remake_ros_package_add_dependencies)
 
@@ -1077,67 +1121,158 @@ macro(remake_ros_package_add_executable ros_name)
   endif(ros_depends)
 endmacro(remake_ros_package_add_executable)
 
-### \brief Add a library to a ROS package.
-#   This macro adds a library target to an already defined ROS package.
-#   Its primary advantage over remake_add_library() is the automated
-#   resolution of dependencies on ROS messages or services generated
-#   by the enlisted ROS packages. Moreover, the macro will add all ROS
-#   libraries which need to be linked into the library target from the
-#   build dependencies defined for its ROS package.
-#   \required[value] name The name of the library target to be defined.
-#   \optional[value] PACKAGE:package The name of the already defined ROS
-#     package which will be assigned the library, defaulting to the
-#     package name conversion of ${REMAKE_COMPONENT}.
-#   \optional[list] SOURCES:glob A list of glob expressions resolving to
-#     the source files associated with the library target, defaulting
-#     to *.cpp.
-#   \optional[list] arg The list of additional arguments to be passed on to
-#     remake_add_library(). Note that this list should not contain
-#     a COMPONENT specifier as the component name will be inferred from the
-#     ROS package name. Similarly, it is not necessary to provide a glob
-#     expression for the source files. See ReMake for details.
-macro(remake_ros_package_add_library ros_name)
-  remake_arguments(PREFIX ros_ VAR PACKAGE LIST SOURCES LIST DEPENDS
-    ARGN args ${ARGN})
-  remake_arguments(PREFIX ros_ VAR PACKAGE LIST SOURCES ARGN args ${ARGN})
-  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
-  remake_set(ros_package SELF DEFAULT ${ros_default_package})
-  remake_set(ros_sources SELF DEFAULT ${ros_name}.cpp)
+### \brief Generate binary Debian packages from a ReMakeROS project.
+#   This macro configures package generation for a ReMakeROS project
+#   using the ReMakePack module. It acquires all the information necessary
+#   from the defined ROS packages, meta-packages, or stacks. For each
+#   of them, Debian package generators will be defined. The macro generally
+#   breaks with the conventional ROS packaging strategies. Firstly, it
+#   defines Debian packages for non-meta ROS packages instead of including
+#   these non-meta packages in a Debian package of the reversely dependent
+#   ROS meta package or stack. It however installs dependencies between
+#   the Debian packages such as to ensure the correct deployment of all ROS
+#   packages belonging to a ROS meta-package or stack. Secondly, the macro
+#   follows the Debian packaging conventions in separating runtime and
+#   development files. In order to satisfy build dependencies between
+#   ROS packages, one therefore has to deploy the corresponding development
+#   packages on the build system. And lastly, the macro defines two
+#   additional Debian packages named after the ReMake project. One Debian
+#   package installs the project's default component which usually contains
+#   the license file, the changelog, and similar distribution-relevant files.
+#   Another package installs the project's default development component
+#   and may or may not contain any files. Nevertheless, it will define
+#   dependencies on those development packages which do not yet depend
+#   on any other Debian package generated from the project.
+macro(remake_ros_pack_deb)
+  remake_ros()
+
+  remake_unset(ros_pkg_components)
+  if(${ROS_DISTRIBUTION} STRLESS groovy)
+    remake_project_get(ROS_STACKS OUTPUT ros_stacks)
+    foreach(ros_stack ${ros_stacks})
+      remake_ros_stack_get(${ros_stack} COMPONENT OUTPUT ros_component)
+      remake_var_name(ros_var ${ros_component} DESCRIPTION)
+      remake_ros_stack_get(${ros_stack} DESCRIPTION OUTPUT ${ros_var})
+      remake_var_name(ros_var ${ros_component} DEPENDS)
+      remake_ros_stack_get(${ros_stack} RUN_DEPENDS OUTPUT ${ros_var})
+      remake_ros_stack_get(${ros_stack} DEPLOYS OUTPUT ros_deploys)
+      remake_list_push(${ros_var} ${ros_deploys})
+      remake_var_name(ros_var ${ros_component} MANIFEST)
+      remake_set(${ros_var} ${REMAKE_ROS_STACK_MANIFEST})
+      remake_list_push(ros_pkg_components ${ros_component})
+    endforeach(ros_stack)
+  endif(${ROS_DISTRIBUTION} STRLESS groovy)
 
   remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
-  remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
-  remake_ros_package_get(${ros_package} BUILD_DEPENDS OUTPUT ros_build_deps)
-  remake_ros_package_get(${ros_package} LINK_LIBRARIES OUTPUT ros_link_libs)
+  foreach(ros_package ${ros_packages})
+    remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
+    remake_component_name(ros_dev_component ${ros_component}
+      ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+    remake_var_name(ros_var ${ros_component} DESCRIPTION)
+    remake_ros_package_get(${ros_package} DESCRIPTION OUTPUT ${ros_var})
+    remake_var_name(ros_dev_var ${ros_dev_component} DESCRIPTION)
+    remake_set(${ros_dev_var} "${${ros_var}} development headers")
+    remake_var_name(ros_var ${ros_component} DEPENDS)
+    remake_ros_package_get(${ros_package} RUN_DEPENDS OUTPUT ${ros_var})
+    remake_var_name(ros_dev_var ${ros_dev_component} DEPENDS)
+    remake_ros_package_get(${ros_package} BUILD_DEPENDS OUTPUT ros_build_deps)
+    foreach(ros_build_dep ${ros_build_deps})
+      list(FIND ros_packages ${ros_build_dep} ros_index)
+      if(ros_index LESS 0)
+        remake_list_push(${ros_dev_var} ${ros_build_dep})
+      else(ros_index LESS 0)
+        remake_list_push(${ros_dev_var}
+          ${ros_build_dep}-${REMAKE_COMPONENT_DEVEL_SUFFIX})
+      endif(ros_index LESS 0)
+    endforeach(ros_build_dep)
+    remake_var_name(ros_var ${ros_component} MANIFEST)
+    remake_set(${ros_var} ${REMAKE_ROS_PACKAGE_MANIFEST})
+    remake_list_push(ros_pkg_components ${ros_component} ${ros_dev_component})
+  endforeach(ros_package)
 
-  remake_unset(ros_generated ros_depends)
-  foreach(ros_dependency ${ros_package} ${ros_build_deps})
-    list(FIND ros_packages ${ros_dependency} ros_index)
+  foreach(ros_pkg_component ${ros_pkg_components})
+    remake_var_name(ros_var ${ros_pkg_component} DESCRIPTION)
+    remake_set(ros_pkg_description FROM ${ros_var})
+    remake_var_name(ros_var ${ros_pkg_component} DEPENDS)
+    remake_set(ros_depends FROM ${ros_var})
+    remake_var_name(ros_var ${ros_pkg_component} MANIFEST)
+    remake_set(ros_pkg_manifest FROM ${ros_var})
 
-    if(NOT ros_index LESS 0)
-      remake_target_name(ros_messages_target
-        ${ros_dependency} ${REMAKE_ROS_PACKAGE_MESSAGES_TARGET_SUFFIX})
-      remake_target_name(ros_services_target
-        ${ros_dependency} ${REMAKE_ROS_PACKAGE_SERVICES_TARGET_SUFFIX})
+    remake_unset(ros_pkg_depends)
+    foreach(ros_dependency ${ros_depends})
+      string(REGEX REPLACE "-${REMAKE_COMPONENT_DEVEL_SUFFIX}$" ""
+        ros_dep_pkg ${ros_dependency})
+      list(FIND ros_packages ${ros_dep_pkg} ros_index)
+      if(ros_index LESS 0)
+        remake_var_name(ros_var ROS ${ros_dependency} PATH)
+        remake_set(ros_manifest ${${ros_var}}/${ros_pkg_manifest})
 
-      if(TARGET ${ros_messages_target})
-        remake_list_push(ros_depends ${ros_messages_target})
-      endif(TARGET ${ros_messages_target})
-      if(TARGET ${ros_services_target})
-        remake_list_push(ros_depends ${ros_services_target})
-      endif(TARGET ${ros_services_target})
-    endif(NOT ros_index LESS 0)
-  endforeach(ros_dependency)
+        string(REGEX REPLACE "_" "-" ros_dependency ${ros_dependency})
+        remake_debian_find_package(
+          ros-${ROS_DISTRIBUTION}-${ros_dependency}
+          CONTAINS ${ros_manifest}
+          OUTPUT ros_dep_pkg)
 
-  if(ros_depends)
-    remake_add_library(
-      ${ros_name} ${ros_sources} ${ros_args}
-      DEPENDS ${ros_depends}
-      LINK ${ros_link_libs}
-      COMPONENT ${ros_component})
-  else(ros_depends)
-    remake_add_library(
-      ${ros_name} ${ros_sources} ${ros_args}
-      LINK ${ros_link_libs}
-      COMPONENT ${ros_component})
-  endif(ros_depends)
-endmacro(remake_ros_package_add_library)
+        if(ros_dep_pkg)
+          remake_list_push(ros_pkg_depends ${ros_dep_pkg})
+        else(ros_dep_pkg)
+          remake_list_push(ros_pkg_depends ${ros_dependency})
+        endif(ros_dep_pkg)
+      else(ros_index LESS 0)
+        remake_ros_package_get(${ros_dep_pkg} COMPONENT
+          OUTPUT ros_dep_component)
+
+        if(ros_dependency MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
+          remake_component_name(ros_dep_component ${ros_dep_component}
+            ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+        endif(ros_dependency MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
+        remake_var_name(ros_var ${ros_dep_component} OTHER_DEPENDS)
+        remake_set(${ros_var} ON)
+
+        remake_component_get(${ros_dep_component} FILENAME
+          OUTPUT ros_dep_filename)
+        remake_list_push(ros_pkg_depends ${ros_dep_filename})
+      endif(ros_index LESS 0)
+    endforeach(ros_dependency)
+
+    if(ros_pkg_depends)
+      list(REMOVE_DUPLICATES ros_pkg_depends)
+    endif(ros_pkg_depends)
+    remake_pack_deb(
+      COMPONENT ${ros_pkg_component}
+      DESCRIPTION "${ros_pkg_description}"
+      DEPENDS ${ros_pkg_depends})
+
+    if(NOT ros_pkg_has_depends)
+      remake_component_get(${ros_pkg_component} FILENAME
+        OUTPUT ros_pkg_filename)
+      remake_list_push(ros_pkg_main_depends ${ros_pkg_filename})
+    endif(NOT ros_pkg_has_depends)
+  endforeach(ros_pkg_component)
+
+  remake_unset(ros_pkg_main_depends ros_pkg_main_dev_depends)
+  foreach(ros_pkg_component ${ros_pkg_components})
+    remake_var_name(ros_var ${ros_pkg_component} OTHER_DEPENDS)
+    remake_var_name(ros_dev_var ${ros_pkg_component} OTHER_DEV_DEPENDS)
+
+    if(NOT ${ros_var})
+      remake_component_get(${ros_pkg_component} FILENAME
+        OUTPUT ros_pkg_filename)
+      if(ros_pkg_component MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
+        remake_list_push(ros_pkg_main_dev_depends ${ros_pkg_filename})
+      else(ros_pkg_component MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
+        remake_list_push(ros_pkg_main_depends ${ros_pkg_filename})
+      endif(ros_pkg_component MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
+    endif(NOT ${ros_var})
+  endforeach(ros_pkg_component)
+
+  remake_pack_deb(
+    DEPENDS ${ros_pkg_main_depends})
+  remake_component_name(ros_dev_component
+    ${REMAKE_DEFAULT_COMPONENT} ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+  remake_component(${ros_dev_component})
+  remake_pack_deb(
+    COMPONENT ${ros_dev_component}
+    DESCRIPTION "development headers"
+    DEPENDS ${ros_pkg_main_dev_depends})
+endmacro(remake_ros_pack_deb)
