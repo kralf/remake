@@ -1,3 +1,11 @@
+remake (1:0.5.4-179) lucid; urgency=low
+
+  * Finished revision of ReMakePython module:
+    + Turned remake_python() into a pure configuration macro which does
+      not anymore include the Python sources directory 
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 04 May 2013 09:47:00 +0100
+
 remake (1:0.5.4-178) lucid; urgency=low
 
   * Started major revision of ReMakePython module:

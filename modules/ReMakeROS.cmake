@@ -1,5 +1,5 @@
 ############################################################################
-#    Copyright (C) 2009 by Ralf 'Decan' Kaestner                           #
+#    Copyright (C) 2013 by Ralf Kaestner                                   #
 #    ralf.kaestner@gmail.com                                               #
 #                                                                          #
 #    This program is free software; you can redistribute it and#or modify  #
@@ -62,19 +62,28 @@ endif(NOT DEFINED REMAKE_ROS_CMAKE)
 macro(remake_ros)
   if(NOT ROS_FOUND)
     remake_find_file(include/ros/ros.h PACKAGE ROS PATHS "$ENV{ROS_ROOT}/..")
-    remake_set(ROS_DISTRIBUTION $ENV{ROS_DISTRO} CACHE STRING
-      "Name of the ROS distribution.")
-    remake_set(ros_package_path $ENV{ROS_PACKAGE_PATH})
-    if(ros_package_path)
-      string(REGEX REPLACE ":" ";" ros_package_path ${ros_package_path})
-    endif(ros_package_path)
-    remake_set(ROS_PACKAGE_PATH ${ros_package_path} CACHE STRING
-      "Paths to the ROS packages.")
-  endif(NOT ROS_FOUND)
 
-  if(NOT ROS_DISTRIBUTION)
-    message(FATAL_ERROR "ROS distribution is undefined.")
-  endif(NOT ROS_DISTRIBUTION)
+    if(ROS_FOUND)
+      remake_set(ROS_DISTRIBUTION $ENV{ROS_DISTRO} CACHE STRING
+        "Name of the ROS distribution.")
+      if(NOT ROS_DISTRIBUTION)
+        remake_unset(ROS_FOUND CACHE)
+        message(FATAL_ERROR "ROS distribution is undefined.")
+      endif(NOT ROS_DISTRIBUTION)
+
+      remake_set(ros_package_path $ENV{ROS_PACKAGE_PATH})
+      if(ros_package_path)
+        string(REGEX REPLACE ":" ";" ros_package_path ${ros_package_path})
+      endif(ros_package_path)
+      remake_set(ROS_PACKAGE_PATH ${ros_package_path} CACHE STRING
+        "Paths to the ROS packages.")
+
+      if(NOT IS_DIRECTORY ROS_PACKAGE_PATH)
+        remake_unset(ROS_FOUND CACHE)
+        message(FATAL_ERROR "ROS package path is invalid.")
+      endif(NOT IS_DIRECTORY ROS_PACKAGE_PATH)
+    endif(ROS_FOUND)
+  endif(NOT ROS_FOUND)
 
   if(ROS_FOUND)
     if(${ROS_DISTRIBUTION} STRLESS groovy)
@@ -246,7 +255,7 @@ macro(remake_ros_stack ros_name)
 
     remake_set(ros_manifest ${ros_stack_dir}/${REMAKE_ROS_STACK_MANIFEST})
     remake_ros_stack_set(${ros_name} MANIFEST ${ros_manifest}
-      CACHE INTERNAL "Manifest file of ${ros_name} ROS stack.")
+      CACHE INTERNAL "Manifest file of ROS stack ${ros_name}.")
     remake_file_mkdir(${ros_manifest}.d)
     remake_file_write(${ros_manifest}.d/00-head
       LINES ${ros_manifest_head})

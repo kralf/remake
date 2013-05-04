@@ -1,5 +1,5 @@
 ############################################################################
-#    Copyright (C) 2009 by Ralf 'Decan' Kaestner                           #
+#    Copyright (C) 2013 by Ralf Kaestner                                   #
 #    ralf.kaestner@gmail.com                                               #
 #                                                                          #
 #    This program is free software; you can redistribute it and#or modify  #
@@ -50,16 +50,11 @@ endif(NOT DEFINED REMAKE_PYTHON_CMAKE)
 #   This macro discovers the Python installation and configures Python
 #   package distribution. It initializes a project variable named
 #   PYTHON_MODULE_DESTINATION that holds the default install destination
-#   of all packages and defaults to the local Python distribution root. The
-#   macro should be called in the project root's CMakeLists.txt file, before
-#   any other Python macro.
-#   \optional[value] SOURCES:dir The directory containing the project's
-#     Python sources, defaults to python.
+#   of all packages and defaults to the local Python distribution root. Note
+#   that the macro automatically gets invoked by the macros defined in this
+#   module. It needs not be called directly from a CMakeLists.txt file.
 macro(remake_python)
-  remake_arguments(PREFIX python_ VAR SOURCES ${ARGN})
-  remake_set(python_sources SELF DEFAULT python)
-
-  if(NOT DEFINED PYTHON_FOUND)
+  if(NOT PYTHON_FOUND)
     remake_find_executable(python)
 
     if(PYTHON_FOUND)
@@ -68,41 +63,20 @@ macro(remake_python)
         "print get_python_lib()")
       execute_process(
         COMMAND ${PYTHON_EXECUTABLE} -c "${python_command}"
+        RESULT_VARIABLE python_result
         OUTPUT_VARIABLE python_destination
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
-      if(python_destination)
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+      if(NOT python_result)
         remake_project_set(PYTHON_MODULE_DESTINATION ${python_destination}
           CACHE PATH "Install destination of Python modules.")
-      endif(python_destination)
+      endif(NOT python_result)
     endif(PYTHON_FOUND)
-  endif(NOT DEFINED PYTHON_FOUND)
+  endif(NOT PYTHON_FOUND)
 
   if(PYTHON_FOUND)
     remake_file_mkdir(${REMAKE_PYTHON_DISTRIBUTION_DIR} TOPLEVEL)
     remake_file_mkdir(${REMAKE_PYTHON_PACKAGE_DIR} TOPLEVEL)
-    get_filename_component(REMAKE_PYTHON_SOURCE_DIR ${python_sources}
-      ABSOLUTE)
-    if(EXISTS ${REMAKE_PYTHON_SOURCE_DIR})
-      string(REGEX REPLACE "^${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}"
-        REMAKE_PYTHON_BINARY_DIR ${REMAKE_PYTHON_SOURCE_DIR})
-      remake_add_directories(${REMAKE_PYTHON_SOURCE_DIR})
-    endif(EXISTS ${REMAKE_PYTHON_SOURCE_DIR})
-
-    remake_file(python_dist_glob ${REMAKE_PYTHON_DISTRIBUTION_DIR}/* TOPLEVEL)
-    remake_file_glob(python_dist_conf_dirs DIRECTORIES ${python_dist_glob})
-    remake_unset(python_distributions)
-    foreach(python_dist_conf_dir ${python_dist_conf_dirs})
-      get_filename_component(python_distribution ${python_dist_conf_dir} NAME)
-      remake_list_push(python_distributions ${python_distribution})
-    endforeach(python_dist_conf_dir)
-
-    if(python_distributions)
-      list(SORT python_distributions)
-      string(REPLACE ";" ", " python_dist_names "${python_distributions}")
-      message(STATUS "Python distribution(s): ${python_dist_names}")
-    else(python_distributions)
-      message(STATUS "Python distribution(s): none defined")
-    endif(python_distributions)
   endif(PYTHON_FOUND)
 endmacro(remake_python)
 
@@ -152,6 +126,8 @@ macro(remake_python_distribute)
   remake_set(python_name SELF DEFAULT ${python_default_name})
   remake_python_package_name(python_default_pkg ${python_component})
   remake_set(python_packages SELF DEFAULT ${python_default_pkg})
+
+  remake_python()
 
   remake_project_get(PYTHON_DISTRIBUTIONS OUTPUT python_distributions)
   list(FIND python_distributions ${python_name} python_index)
@@ -292,6 +268,8 @@ macro(remake_python_distribute)
       DESTINATION ${PYTHON_MODULE_DESTINATION}/${python_destination}
       ${COMPONENT})
   endforeach(python_install)
+
+  message(STATUS "Python distribution: ${python_name}")
 endmacro(remake_python_distribute)
 
 ### \brief Output a valid Python package name from a ReMake component name.
@@ -342,6 +320,8 @@ macro(remake_python_package)
   remake_set(python_name SELF DEFAULT ${python_default_name})
   remake_set(python_directory SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
   remake_set(python_globs SELF DEFAULT *.py)
+
+  remake_python()
 
   remake_project_get(PYTHON_PACKAGES OUTPUT python_packages)
   list(FIND python_packages ${python_name} python_index)
@@ -464,6 +444,8 @@ macro(remake_python_add_modules)
   remake_set(python_package SELF DEFAULT ${python_default_package})
   remake_set(python_globs SELF DEFAULT *.py)
 
+  remake_python()
+
   remake_python_package_get(${python_package} DIRECTORY OUTPUT python_pkg_dir)
   if(python_generated)
     remake_set(python_mod_sources ${python_globs})
@@ -529,6 +511,8 @@ macro(remake_python_add_extension python_name)
   remake_python_package_name(python_default_package ${python_component})
   remake_set(python_package SELF DEFAULT ${python_default_package})
   remake_set(python_modules SELF DEFAULT ${python_name})
+
+  remake_python()
 
   remake_python_package_get(${python_package} EXTENSIONS OUTPUT
     python_extensions)
@@ -660,55 +644,53 @@ macro(remake_python_swig)
     remake_find_executable(swig)
   endif(NOT SWIG_FOUND)
 
-  if(SWIG_FOUND)
-    remake_set(python_swig_include_flags)
-    get_property(python_include_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
-    foreach(python_include_dir ${python_include_dirs})
-      remake_list_push(python_swig_include_flags "-I${python_include_dir}")
-    endforeach(python_include_dir)
+  remake_set(python_swig_include_flags)
+  get_property(python_include_dirs DIRECTORY PROPERTY INCLUDE_DIRECTORIES)
+  foreach(python_include_dir ${python_include_dirs})
+    remake_list_push(python_swig_include_flags "-I${python_include_dir}")
+  endforeach(python_include_dir)
 
-    remake_unset(python_libraries python_library_dirs python_depends)
-    foreach(python_library ${python_link})
-      get_property(python_lib_name TARGET ${python_library}
-        PROPERTY OUTPUT_NAME)
-      get_property(python_lib_location TARGET ${python_library}
-        PROPERTY LOCATION)
-      get_filename_component(python_lib_path ${python_lib_location} PATH)
+  remake_unset(python_libraries python_library_dirs python_depends)
+  foreach(python_library ${python_link})
+    get_property(python_lib_name TARGET ${python_library}
+      PROPERTY OUTPUT_NAME)
+    get_property(python_lib_location TARGET ${python_library}
+      PROPERTY LOCATION)
+    get_filename_component(python_lib_path ${python_lib_location} PATH)
 
-      remake_list_push(python_library_dirs ${python_lib_path})
-      remake_list_push(python_libraries ${python_lib_name})
-    endforeach(python_library)
+    remake_list_push(python_library_dirs ${python_lib_path})
+    remake_list_push(python_libraries ${python_lib_name})
+  endforeach(python_library)
 
-    remake_file_glob(python_swig_sources ${python_globs})
-    foreach(python_src ${python_swig_sources})
-      get_filename_component(python_extension ${python_src} NAME_WE)
+  remake_file_glob(python_swig_sources ${python_globs})
+  foreach(python_src ${python_swig_sources})
+    get_filename_component(python_extension ${python_src} NAME_WE)
 
-      remake_python_add_extension(${python_extension} ${python_src}
-        PACKAGE ${python_package}
-        DEPENDS ${python_depends}
-        OUTPUT _${python_extension}.so
-        CLEAN ${CMAKE_CURRENT_SOURCE_DIR}/${python_extension}.py
-          ${CMAKE_CURRENT_SOURCE_DIR}/${python_extension}_wrap.cpp
-        OPTIONS swig_opts include_dirs library_dirs libraries)
+    remake_python_add_extension(${python_extension} ${python_src}
+      PACKAGE ${python_package}
+      DEPENDS ${python_depends}
+      OUTPUT _${python_extension}.so
+      CLEAN ${CMAKE_CURRENT_SOURCE_DIR}/${python_extension}.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/${python_extension}_wrap.cpp
+      OPTIONS swig_opts include_dirs library_dirs libraries)
 
-      remake_set(python_description
-        "Python SWIG extension ${python_extension}")
-      remake_set(python_description
-        "${python_description} in package ${python_package}")
-      remake_python_extension_set(${python_package} ${python_extension}
-        SWIG_OPTS -modern -c++ ${python_swig_include_flags}
-        CACHE INTERNAL "SWIG options of ${python_description}.")
-      remake_python_extension_set(${python_package} ${python_extension}
-        INCLUDE_DIRS ${python_include_dirs}
-        CACHE INTERNAL "Include directories of ${python_description}.")
-      remake_python_extension_set(${python_package} ${python_extension}
-        LIBRARY_DIRS ${python_library_dirs}
-        CACHE INTERNAL "Library directories of ${python_description}.")
-      remake_python_extension_set(${python_package} ${python_extension}
-        LIBRARIES ${python_libraries}
-        CACHE INTERNAL "Link libraries of ${python_description}.")
-    endforeach(python_src)
-  endif(SWIG_FOUND)
+    remake_set(python_description
+      "Python SWIG extension ${python_extension}")
+    remake_set(python_description
+      "${python_description} in package ${python_package}")
+    remake_python_extension_set(${python_package} ${python_extension}
+      SWIG_OPTS -modern -c++ ${python_swig_include_flags}
+      CACHE INTERNAL "SWIG options of ${python_description}.")
+    remake_python_extension_set(${python_package} ${python_extension}
+      INCLUDE_DIRS ${python_include_dirs}
+      CACHE INTERNAL "Include directories of ${python_description}.")
+    remake_python_extension_set(${python_package} ${python_extension}
+      LIBRARY_DIRS ${python_library_dirs}
+      CACHE INTERNAL "Library directories of ${python_description}.")
+    remake_python_extension_set(${python_package} ${python_extension}
+      LIBRARIES ${python_libraries}
+      CACHE INTERNAL "Link libraries of ${python_description}.")
+  endforeach(python_src)
 endmacro(remake_python_swig)
 
 ### \brief Add Python distribution build rule.
