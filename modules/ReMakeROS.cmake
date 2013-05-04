@@ -61,27 +61,58 @@ endif(NOT DEFINED REMAKE_ROS_CMAKE)
 #   It needs not be called directly from a CMakeLists.txt file.
 macro(remake_ros)
   if(NOT ROS_FOUND)
-    remake_find_file(include/ros/ros.h PACKAGE ROS PATHS "$ENV{ROS_ROOT}/..")
+    remake_set(ros_paths PATHS)
+    if(ENV{ROS_ROOT})
+      remake_list_push(ros_paths "$ENV{ROS_ROOT}/../..")
+    elseif(ROS_DISTRIBUTION)
+      remake_list_push(ros_paths "/opt/ros/${ROS_DISTRIBUTION}")
+    endif(ENV{ROS_ROOT})
+
+    remake_find_executable(env.sh PACKAGE ROS ${ros_paths})
 
     if(ROS_FOUND)
-      remake_set(ROS_DISTRIBUTION $ENV{ROS_DISTRO} CACHE STRING
-        "Name of the ROS distribution.")
+      get_filename_component(ros_path ${ROS_EXECUTABLE} PATH)
+      remake_set(ROS_PATH ${ros_path} CACHE STRING
+        "Path to the ROS distribution." FORCE)
+
+      if(ENV{ROS_DISTRO})
+        remake_set(ros_distribution $ENV{ROS_DISTRO})
+      else(ENV{ROS_DISTRO})
+        remake_ros_command(echo $ROS_DISTRO OUTPUT ros_command)
+        execute_process(
+          COMMAND ${ros_command}
+          OUTPUT_VARIABLE ros_distribution
+          ERROR_VARIABLE ros_error
+          ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif(ENV{ROS_DISTRO})
+      remake_set(ROS_DISTRIBUTION ${ros_distribution} CACHE STRING
+        "Name of the ROS distribution." FORCE)
       if(NOT ROS_DISTRIBUTION)
         remake_unset(ROS_FOUND CACHE)
         message(FATAL_ERROR "ROS distribution is undefined.")
       endif(NOT ROS_DISTRIBUTION)
 
-      remake_set(ros_package_path $ENV{ROS_PACKAGE_PATH})
+      if(ENV{ROS_PACKAGE_PATH})
+        remake_set(ros_package_path $ENV{ROS_PACKAGE_PATH})
+      else(ENV{ROS_PACKAGE_PATH})
+        remake_ros_command(echo $ROS_PACKAGE_PATH OUTPUT ros_command)
+        execute_process(
+          COMMAND ${ros_command}
+          OUTPUT_VARIABLE ros_package_path
+          ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+      endif(ENV{ROS_PACKAGE_PATH})
       if(ros_package_path)
         string(REGEX REPLACE ":" ";" ros_package_path ${ros_package_path})
       endif(ros_package_path)
       remake_set(ROS_PACKAGE_PATH ${ros_package_path} CACHE STRING
-        "Paths to the ROS packages.")
+        "Paths to the ROS packages." FORCE)
 
-      if(NOT IS_DIRECTORY ROS_PACKAGE_PATH)
-        remake_unset(ROS_FOUND CACHE)
-        message(FATAL_ERROR "ROS package path is invalid.")
-      endif(NOT IS_DIRECTORY ROS_PACKAGE_PATH)
+      foreach(ros_path ${ROS_PACKAGE_PATH})
+        if(NOT IS_DIRECTORY ${ros_path})
+          remake_unset(ROS_FOUND CACHE)
+          message(FATAL_ERROR "ROS package path ${ros_path} is invalid.")
+        endif(NOT IS_DIRECTORY ${ros_path})
+      endforeach(ros_path)
     endif(ROS_FOUND)
   endif(NOT ROS_FOUND)
 
@@ -96,6 +127,26 @@ macro(remake_ros)
     remake_file_mkdir(${REMAKE_ROS_PACKAGE_DIR} TOPLEVEL)
   endif(ROS_FOUND)
 endmacro(remake_ros)
+
+### \brief Construct a ROS command.
+#   This macro constructs a ROS command to be executed within the ROS
+#   environment. It embeds the provided verbatim command into a shell
+#   command and passes this shell command as command line arguments to the
+#   ROS executable env.sh. The resulting command may then be provided to
+#   CMake's execute_process() or add_custom_command() macros. See the CMake
+#   documentation for details.
+#   \required[value] cmd The ROS command to be executed.
+#   \optional[list] arg An optional list of arguments which shall be passed
+#     to the ROS command.
+#   \required[value] OUTPUT:variable The name of an output variable that will
+#     be assigned the constructed ROS command.
+macro(remake_ros_command)
+  remake_arguments(PREFIX ros_command_ VAR OUTPUT ARGN args ${ARGN})
+
+  string(REGEX REPLACE ";" " " ros_shell_command "${ros_command_args}")
+  remake_set(${ros_command_output}
+    ${ROS_EXECUTABLE} sh -c "${ros_shell_command}" VERBATIM)
+endmacro(remake_ros_command)
 
 ### \brief Find a ROS stack.
 #   Depending on the indicated ROS distribution, this macro discovers a
@@ -130,20 +181,23 @@ macro(remake_ros_find_stack ros_name)
     remake_unset(ros_stack_include_dirs ros_stack_libraries
       ros_stack_library_dirs)
 
+    remake_ros_command(${ROSSTACK_EXECUTABLE} find ${ros_name}
+      OUTPUT ros_command)
     execute_process(
-      COMMAND ${ROSSTACK_EXECUTABLE} find ${ros_name}
+      COMMAND ${ros_command}
       RESULT_VARIABLE ros_result
       OUTPUT_VARIABLE ${ros_stack_path_var}
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      ERROR_QUIET)
+      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     if(ros_result)
       remake_set(${ros_stack_path_var} ${ros_stack_path_var}-NOTFOUND)
     else(ros_result)
+      remake_ros_command(${ROSSTACK_EXECUTABLE} contents ${ros_name}
+        OUTPUT ros_command)
       execute_process(
-        COMMAND ${ROSSTACK_EXECUTABLE} contents ${ros_name}
+        COMMAND ${ros_command}
         OUTPUT_VARIABLE ros_packages
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
       if(ros_packages)
         string(REGEX REPLACE "[ \n]+" ";" ros_packages ${ros_packages})
       endif(ros_packages)
@@ -475,28 +529,35 @@ macro(remake_ros_find_package ros_name)
     remake_var_name(ros_pkg_libraries_var ROS ${ros_name} LIBRARIES)
     remake_var_name(ros_pkg_library_dirs_var ROS ${ros_name} LIBRARY_DIRS)
 
+    remake_ros_command(${ROSPACK_EXECUTABLE} find ${ros_name}
+      OUTPUT ros_command)
     execute_process(
-      COMMAND ${ROSPACK_EXECUTABLE} find ${ros_name}
+      COMMAND ${ros_command}
       RESULT_VARIABLE ros_result
       OUTPUT_VARIABLE ${ros_pkg_path_var}
-      OUTPUT_STRIP_TRAILING_WHITESPACE
-      ERROR_QUIET)
+      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     if(ros_result)
       remake_set(${ros_pkg_path_var} ${ros_pkg_path_var}-NOTFOUND)
     else(ros_result)
+      remake_ros_command(${ROSPACK_EXECUTABLE} cflags-only-I ${ros_name}
+        OUTPUT ros_command)
       execute_process(
-        COMMAND ${ROSPACK_EXECUTABLE} cflags-only-I ${ros_name}
+        COMMAND ${ros_command}
         OUTPUT_VARIABLE ros_pkg_include_dirs
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+      remake_ros_command(${ROSPACK_EXECUTABLE} libs-only-l ${ros_name}
+        OUTPUT ros_command)
       execute_process(
-        COMMAND ${ROSPACK_EXECUTABLE} libs-only-l ${ros_name}
+        COMMAND ${ros_command}
         OUTPUT_VARIABLE ros_pkg_libraries
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+      remake_ros_command(${ROSPACK_EXECUTABLE} libs-only-L ${ros_name}
+        OUTPUT ros_command)
       execute_process(
-        COMMAND ${ROSPACK_EXECUTABLE} libs-only-L ${ros_name}
+        COMMAND ${ros_command}
         OUTPUT_VARIABLE ros_pkg_library_dirs
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
       if(ros_pkg_include_dirs)
         string(REGEX REPLACE "[ ]+" ";" ros_pkg_include_dirs
@@ -679,6 +740,12 @@ macro(remake_ros_package ros_name)
       PREFIX OFF
       INSTALL ${ROS_PATH}
       HEADER_DESTINATION include/${ros_name})
+    remake_component_name(ros_python_component ${ros_component}
+      ${REMAKE_PYTHON_COMPONENT_SUFFIX})
+    remake_component(${ros_python_component}
+      FILENAME ${ros_filename}-${REMAKE_PYTHON_COMPONENT_SUFFIX}
+      PREFIX OFF
+      INSTALL ${ROS_PATH})
     remake_component_add_command(
       OUTPUT ${ros_manifest} AS ${ros_manifest_target}
       COMMAND ${CMAKE_COMMAND} -P ${ros_manifest}.cmake
@@ -967,7 +1034,7 @@ macro(remake_ros_package_generate ros_name)
       ${ros_package} ${${ros_${ros_name}_target_suffix_var}})
     remake_set(ros_include_dir
       ${ros_pkg_dir}/${ros_ext}_gen/cpp/include)
-    remake_set(ros_module_dir ${ros_pkg_dir}/src/${ros_package}/${ros_ext})
+    remake_set(ros_module_dir ${ros_pkg_dir}/src/${ros_package})
 
     remake_unset(ros_${ros_name}_headers)
     remake_unset(ros_${ros_name}_modules)
@@ -978,37 +1045,48 @@ macro(remake_ros_package_generate ros_name)
 
       remake_set(ros_${ros_name}_header
         ${ros_include_dir}/${ros_package}/${ros_${ros_name}_name_we}.h)
-      remake_set(ros_cpp_command
-        "gen${ros_ext}_cpp.py ${ros_ext}/${ros_${ros_name}_name}")
-      remake_set(ros_shell_command
-        ". ${ROS_PATH}/setup.sh"
-        "${ROSRUN_EXECUTABLE} roscpp ${ros_cpp_command}")
-      string(REGEX REPLACE ";" " && " ros_shell_command "${ros_shell_command}")
+      remake_ros_command(
+        ROS_PACKAGE_PATH=${ros_pkg_dir}/..:$ROS_PACKAGE_PATH &&
+        ${ROSRUN_EXECUTABLE} roscpp gen${ros_ext}_cpp.py
+          ${ros_ext}/${ros_${ros_name}_name}
+        OUTPUT ros_${ros_name}_command)
       add_custom_command(
         OUTPUT ${ros_${ros_name}_header}
-        COMMAND sh -c "${ros_shell_command}" VERBATIM
+        COMMAND ${ros_${ros_name}_command}
         WORKING_DIRECTORY ${ros_pkg_dir}
         DEPENDS ${ros_${ros_name}}
         COMMENT "Generating ${ros_${ros_name}_name_we} ${ros_name} (C++)")
       remake_list_push(ros_${ros_name}_headers ${ros_${ros_name}_header})
 
       remake_set(ros_${ros_name}_module
-        ${ros_module_dir}/_${ros_${ros_name}_name_we}.py)
-      remake_set(ros_py_command
-        "gen${ros_ext}_py.py ${ros_ext}/${ros_${ros_name}_name}")
-      remake_set(ros_shell_command
-        "source ${ROS_PATH}/setup.sh"
-        "ROS_PACKAGE_PATH=$ROS_PACKAGE_PATH:${ros_pkg_dir}/.."
-        "${ROSRUN_EXECUTABLE} rospy ${ros_py_command}")
-      string(REGEX REPLACE ";" " && " ros_shell_command "${ros_shell_command}")
+        ${ros_module_dir}/${ros_ext}/_${ros_${ros_name}_name_we}.py)
+      remake_ros_command(
+        ROS_PACKAGE_PATH=${ros_pkg_dir}/..:$ROS_PACKAGE_PATH &&
+        ${ROSRUN_EXECUTABLE} rospy gen${ros_ext}_py.py
+          ${ros_ext}/${ros_${ros_name}_name}
+        OUTPUT ros_${ros_name}_command)
       add_custom_command(
         OUTPUT ${ros_${ros_name}_module}
-        COMMAND sh -c "${ros_shell_command}" VERBATIM
+        COMMAND ${ros_${ros_name}_command}
         WORKING_DIRECTORY ${ros_pkg_dir}
         DEPENDS ${ros_${ros_name}}
         COMMENT "Generating ${ros_${ros_name}_name_we} ${ros_name} (Python)")
       remake_list_push(ros_${ros_name}_modules ${ros_${ros_name}_module})
     endforeach(ros_${ros_name})
+
+    remake_ros_command(
+      ROS_PACKAGE_PATH=${ros_pkg_dir}/..:$ROS_PACKAGE_PATH &&
+      ${ROSRUN_EXECUTABLE} rospy gen${ros_ext}_py.py --initpy ${ros_pkg_dir}
+      OUTPUT ros_${ros_name}_command)
+    add_custom_command(
+      OUTPUT ${ros_module_dir}/__init__.py
+        ${ros_module_dir}/${ros_ext}/__init__.py
+      COMMAND ${ros_${ros_name}_command}
+      WORKING_DIRECTORY ${ros_pkg_dir}
+      DEPENDS ${ros_${ros_name}}
+      COMMENT "Finalizing ${ros_package} ${ros_name}s (Python)")
+    remake_list_push(ros_${ros_name}_modules ${ros_module_dir}/__init__.py
+      ${ros_module_dir}/${ros_ext}/__init__.py)
 
     remake_target(${ros_${ros_name}s_target}
       DEPENDS ${ros_${ros_name}_headers} ${ros_${ros_name}_modules})
@@ -1018,11 +1096,28 @@ macro(remake_ros_package_generate ros_name)
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component_add_dependencies(COMPONENT ${ros_dev_component}
       DEPENDS ${ros_${ros_name}s_target})
+    remake_component_name(ros_python_component ${ros_component}
+      ${REMAKE_PYTHON_COMPONENT_SUFFIX})
     add_dependencies(${ros_${ros_name}s_target} ${ros_manifest_target})
 
     remake_add_headers(${ros_${ros_name}_headers}
       COMPONENT ${ros_dev_component} GENERATED)
     include_directories(${ros_include_dir})
+
+    remake_ros_package_get(${ros_package} DESCRIPTION OUTPUT ros_description)
+    remake_python_package(
+      NAME ${ros_package}
+      DIRECTORY ${ros_module_dir}
+      ${ros_${ros_name}_modules} GENERATED)
+    remake_python_distribute(
+      NAME ${ros_package}
+      PACKAGES ${ros_package}
+      DESCRIPTION "${ros_description}"
+      COMPONENT ${ros_python_component})
+    remake_target_name(ros_${ros_name}s_python_target
+      ${ros_package} ${REMAKE_PYTHON_TARGET_SUFFIX})
+    add_dependencies(${ros_${ros_name}s_python_target}
+      ${ros_${ros_name}s_target})
 
     remake_ros_package_get(${ros_package} INCLUDE_DIRS OUTPUT ros_include_dirs)
     remake_list_push(ros_include_dirs ${ros_include_dir})
@@ -1144,14 +1239,17 @@ endmacro(remake_ros_package_add_executable)
 #   follows the Debian packaging conventions in separating runtime and
 #   development files. In order to satisfy build dependencies between
 #   ROS packages, one therefore has to deploy the corresponding development
-#   packages on the build system. And lastly, the macro defines two
-#   additional Debian packages named after the ReMake project. One Debian
-#   package installs the project's default component which usually contains
-#   the license file, the changelog, and similar distribution-relevant files.
-#   Another package installs the project's default development component
-#   and may or may not contain any files. Nevertheless, it will define
-#   dependencies on those development packages which do not yet depend
-#   on any other Debian package generated from the project.
+#   packages on the build system. Similarly, the Python modules are separated
+#   from the binary runtime files and may be deployed independently. And
+#   lastly, the macro defines three additional Debian packages named after
+#   the ReMake project. One Debian package installs the project's default
+#   component which usually contains the license file, the changelog, and
+#   similar distribution-relevant files. Another package installs the
+#   project's default development component and may or may not contain
+#   any files. Nevertheless, it will define dependencies on those development
+#   packages which do not yet depend on any other Debian package generated
+#   from the project. The third package installs the project's default
+#   Python component and has dependencies on all orphan Python packages.
 macro(remake_ros_pack_deb)
   remake_ros()
 
@@ -1177,10 +1275,14 @@ macro(remake_ros_pack_deb)
     remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+    remake_component_name(ros_python_component ${ros_component}
+      ${REMAKE_PYTHON_COMPONENT_SUFFIX})
     remake_var_name(ros_var ${ros_component} DESCRIPTION)
     remake_ros_package_get(${ros_package} DESCRIPTION OUTPUT ${ros_var})
     remake_var_name(ros_dev_var ${ros_dev_component} DESCRIPTION)
     remake_set(${ros_dev_var} "${${ros_var}} development headers")
+    remake_var_name(ros_python_var ${ros_python_component} DESCRIPTION)
+    remake_set(${ros_python_var} "${${ros_var}} Python modules")
     remake_var_name(ros_var ${ros_component} DEPENDS)
     remake_ros_package_get(${ros_package} RUN_DEPENDS OUTPUT ${ros_var})
     remake_var_name(ros_dev_var ${ros_dev_component} DEPENDS)
@@ -1194,9 +1296,21 @@ macro(remake_ros_pack_deb)
           ${ros_build_dep}-${REMAKE_COMPONENT_DEVEL_SUFFIX})
       endif(ros_index LESS 0)
     endforeach(ros_build_dep)
+    remake_var_name(ros_python_var ${ros_python_component} DEPENDS)
+    remake_ros_package_get(${ros_package} RUN_DEPENDS OUTPUT ros_run_deps)
+    foreach(ros_run_dep ${ros_run_deps})
+      list(FIND ros_packages ${ros_run_dep} ros_index)
+      if(ros_index LESS 0)
+        remake_list_push(${ros_python_var} ${ros_run_dep})
+      else(ros_index LESS 0)
+        remake_list_push(${ros_python_var}
+          ${ros_run_dep}-${REMAKE_PYTHON_COMPONENT_SUFFIX})
+      endif(ros_index LESS 0)
+    endforeach(ros_run_dep)
     remake_var_name(ros_var ${ros_component} MANIFEST)
     remake_set(${ros_var} ${REMAKE_ROS_PACKAGE_MANIFEST})
-    remake_list_push(ros_pkg_components ${ros_component} ${ros_dev_component})
+    remake_list_push(ros_pkg_components ${ros_component} ${ros_dev_component}
+      ${ros_python_component})
   endforeach(ros_package)
 
   foreach(ros_pkg_component ${ros_pkg_components})
@@ -1210,6 +1324,8 @@ macro(remake_ros_pack_deb)
     remake_unset(ros_pkg_depends)
     foreach(ros_dependency ${ros_depends})
       string(REGEX REPLACE "-${REMAKE_COMPONENT_DEVEL_SUFFIX}$" ""
+        ros_dep_pkg ${ros_dependency})
+      string(REGEX REPLACE "-${REMAKE_PYTHON_COMPONENT_SUFFIX}$" ""
         ros_dep_pkg ${ros_dependency})
       list(FIND ros_packages ${ros_dep_pkg} ros_index)
       if(ros_index LESS 0)
@@ -1235,6 +1351,10 @@ macro(remake_ros_pack_deb)
           remake_component_name(ros_dep_component ${ros_dep_component}
             ${REMAKE_COMPONENT_DEVEL_SUFFIX})
         endif(ros_dependency MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
+        if(ros_dependency MATCHES ".*-${REMAKE_PYTHON_COMPONENT_SUFFIX}$")
+          remake_component_name(ros_dep_component ${ros_dep_component}
+            ${REMAKE_PYTHON_COMPONENT_SUFFIX})
+        endif(ros_dependency MATCHES ".*-${REMAKE_PYTHON_COMPONENT_SUFFIX}$")
         remake_var_name(ros_var ${ros_dep_component} OTHER_DEPENDS)
         remake_set(${ros_var} ON)
 
@@ -1259,7 +1379,8 @@ macro(remake_ros_pack_deb)
     endif(NOT ros_pkg_has_depends)
   endforeach(ros_pkg_component)
 
-  remake_unset(ros_pkg_main_depends ros_pkg_main_dev_depends)
+  remake_unset(ros_pkg_main_depends ros_pkg_main_dev_depends
+    ros_pkg_main_python_depends)
   foreach(ros_pkg_component ${ros_pkg_components})
     remake_var_name(ros_var ${ros_pkg_component} OTHER_DEPENDS)
     remake_var_name(ros_dev_var ${ros_pkg_component} OTHER_DEV_DEPENDS)
@@ -1269,6 +1390,8 @@ macro(remake_ros_pack_deb)
         OUTPUT ros_pkg_filename)
       if(ros_pkg_component MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
         remake_list_push(ros_pkg_main_dev_depends ${ros_pkg_filename})
+      elseif(ros_pkg_component MATCHES ".*-${REMAKE_PYTHON_COMPONENT_SUFFIX}$")
+        remake_list_push(ros_pkg_main_python_depends ${ros_pkg_filename})
       else(ros_pkg_component MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
         remake_list_push(ros_pkg_main_depends ${ros_pkg_filename})
       endif(ros_pkg_component MATCHES ".*-${REMAKE_COMPONENT_DEVEL_SUFFIX}$")
@@ -1284,4 +1407,11 @@ macro(remake_ros_pack_deb)
     COMPONENT ${ros_dev_component}
     DESCRIPTION "development headers"
     DEPENDS ${ros_pkg_main_dev_depends})
+  remake_component_name(ros_python_component
+    ${REMAKE_DEFAULT_COMPONENT} ${REMAKE_PYTHON_COMPONENT_SUFFIX})
+  remake_component(${ros_python_component})
+  remake_pack_deb(
+    COMPONENT ${ros_python_component}
+    DESCRIPTION "Python modules"
+    DEPENDS ${ros_pkg_main_python_depends})
 endmacro(remake_ros_pack_deb)

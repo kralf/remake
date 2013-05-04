@@ -68,6 +68,11 @@ macro(remake_python)
         ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 
       if(NOT python_result)
+        if(python_destination MATCHES "^${CMAKE_INSTALL_PREFIX}/.*$")
+          string(REGEX REPLACE "^${CMAKE_INSTALL_PREFIX}/(.*)$" "\\1"
+            python_destination ${python_destination})
+        endif(python_destination MATCHES "^${CMAKE_INSTALL_PREFIX}/.*$")
+
         remake_project_set(PYTHON_MODULE_DESTINATION ${python_destination}
           CACHE PATH "Install destination of Python modules.")
       endif(NOT python_result)
@@ -260,12 +265,13 @@ macro(remake_python_distribute)
     OUTPUT ${python_built} ${python_clean}
     ${COMPONENT})
 
-  remake_project_get(PYTHON_MODULE_DESTINATION)
+  remake_component_get(${python_component} PYTHON_MODULE_DESTINATION
+    OUTPUT python_module_destination)
   foreach(python_install ${python_built})
     get_filename_component(python_destination ${python_install} PATH)
     remake_python_install(
       FILES ${CMAKE_CURRENT_BINARY_DIR}/${python_install}
-      DESTINATION ${PYTHON_MODULE_DESTINATION}/${python_destination}
+      DESTINATION ${python_module_destination}/${python_destination}
       ${COMPONENT})
   endforeach(python_install)
 
@@ -319,7 +325,9 @@ macro(remake_python_package)
   remake_python_package_name(python_default_name ${python_default_component})
   remake_set(python_name SELF DEFAULT ${python_default_name})
   remake_set(python_directory SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
-  remake_set(python_globs SELF DEFAULT *.py)
+  if(NOT python_generated)
+    remake_set(python_globs SELF DEFAULT *.py)
+  endif(NOT python_generated)
 
   remake_python()
 
@@ -442,7 +450,9 @@ macro(remake_python_add_modules)
     ${REMAKE_PYTHON_COMPONENT_SUFFIX})
   remake_python_package_name(python_default_package ${python_component})
   remake_set(python_package SELF DEFAULT ${python_default_package})
-  remake_set(python_globs SELF DEFAULT *.py)
+  if(NOT python_generated)
+    remake_set(python_globs SELF DEFAULT *.py)
+  endif(NOT python_generated)
 
   remake_python()
 

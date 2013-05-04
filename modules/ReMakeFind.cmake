@@ -19,6 +19,7 @@
 ############################################################################
 
 include(ReMakePrivate)
+include(ReMakeDebian)
 
 include(FindPkgConfig)
 
@@ -70,8 +71,9 @@ macro(remake_find_package find_package)
       remake_var_name(find_package_var ${find_package} FOUND)
     endif(find_alias)
     find_package(${find_package} ${find_args})
+
     remake_find_result(${find_package} ${${find_package}_FOUND}
-      ${${find_package_var}} TYPE package ${OPTIONAL})
+      ${${find_package_var}})
   endif(find_config)
 endmacro(remake_find_package)
 
@@ -101,20 +103,33 @@ macro(remake_find_library find_lib find_header)
   remake_var_name(find_lib_var ${find_lib} LIBRARY)
   remake_var_name(find_headers_var ${find_lib} HEADERS)
 
+  remake_set(find_shared_prefix ${CMAKE_SHARED_LIBRARY_PREFIX})
+  remake_set(find_shared_suffix ${CMAKE_SHARED_LIBRARY_SUFFIX})
+  remake_set(find_static_prefix ${CMAKE_STATIC_LIBRARY_PREFIX})
+  remake_set(find_static_suffix ${CMAKE_STATIC_LIBRARY_SUFFIX})
+
   find_library(${find_lib_var} NAMES ${find_lib} ${find_args})
 
   if(NOT ${find_lib_var})
     execute_process(COMMAND ldconfig -p
       OUTPUT_VARIABLE find_lib_ld ERROR_QUIET)
-    if(find_lib_ld MATCHES "[ ]*lib${find_lib}[.]")
-      string(REGEX MATCH "[ ]*lib${find_lib}[.][^\\\n]*"
+    if(find_lib_ld MATCHES "[ ]*${find_shared_prefix}${find_lib}[.]")
+      string(REGEX MATCH "[ ]*${find_shared_prefix}${find_lib}[.][^\\\n]*"
         find_lib_ld "${find_lib_ld}")
       string(REGEX MATCH "[^ ]+$" find_lib_ld "${find_lib_ld}")
       get_filename_component(find_lib_hint "${find_lib_ld}" PATH)
 
       find_library(${find_lib_var} NAMES ${find_lib} HINTS ${find_lib_hint})
-    endif(find_lib_ld MATCHES "[ ]*lib${find_lib}[.]")
+    endif(find_lib_ld MATCHES "[ ]*${find_shared_prefix}${find_lib}[.]")
   endif(NOT ${find_lib_var})
+
+  remake_find_result(
+    ${find_package} ${${find_lib_var}}
+    NAME ${find_lib}
+    TYPE library
+    FILES "${find_shared_prefix}${find_lib}${find_shared_suffix}"
+      "${find_static_prefix}${find_lib}${find_static_suffix}"
+    ${OPTIONAL})
 
   if(${find_lib_var})
     remake_file_name(find_path_suffix ${find_package})
@@ -124,7 +139,11 @@ macro(remake_find_library find_lib find_header)
     remake_set(${find_headers_var})
   endif(${find_lib_var})
 
-  remake_find_result(${find_package} ${${find_headers_var}} TYPE library
+  remake_find_result(
+    ${find_package} ${${find_headers_var}}
+    NAME ${find_header}
+    TYPE header
+    FILES ${find_header}
     ${OPTIONAL})
 endmacro(remake_find_library)
 
@@ -150,7 +169,11 @@ macro(remake_find_executable find_exec)
 
   find_program(${find_exec_var} NAMES ${find_exec} ${find_args})
 
-  remake_find_result(${find_package} ${${find_exec_var}} TYPE executable
+  remake_find_result(
+    ${find_package} ${${find_exec_var}}
+    NAME ${find_exec}
+    TYPE executable
+    FILES ${find_exec}
     ${OPTIONAL})
 endmacro(remake_find_executable)
 
@@ -174,7 +197,12 @@ macro(remake_find_file find_file)
 
   find_path(${find_path_var} NAMES ${find_file} ${find_args})
 
-  remake_find_result(${find_package} ${${find_path_var}} TYPE file ${OPTIONAL})
+  remake_find_result(
+    ${find_package} ${${find_path_var}}
+    NAME ${find_file}
+    TYPE file
+    FILES ${find_file}
+    ${OPTIONAL})
 endmacro(remake_find_file)
 
 ### \brief Evaluate the result of a find operation.
@@ -182,29 +210,71 @@ endmacro(remake_find_file)
 #   It gets invoked by the specific find macros defined in this module
 #   and should not be called directly from a CMakeLists.txt file. The macro's
 #   main purpose is to emit a message on the result of the find operation and
-#   to set the ${NAME}_FOUND cache variable.
-#   \required[value] name The name of the object that was to be found.
+#   to set the ${PACKAGE}_FOUND cache variable.
+#   \required[value] package The name of the package supposedly containing
+#     the object that was to be found. If no object name is provided with the
+#     macro arguments, it is the package itself that was to be found.
+#   \optional[value] NAME:name The optional name of the object that was to
+#     be found. If this argument is not supplied, it is the package itself
+#     that was to be found.
 #   \required[value] TYPE:type The type of object that was to be found,
 #     defaulting to package.
+#   \optional[list] FILES:filename An optional list naming any files which
+#     may indicate the installation candidates for the sought object. In
+#     Debian Linux, each filename is passed to remake_debian_find_file()
+#     to generate a list of candidate packages in case of a negative result.
 #   \optional[option] OPTIONAL If provided, a negative result will
 #     not lead to a fatal error but to a warning message instead.
 #   \required[value] result The find result returned to the calling macro,
 #     usually depends on the macro-specific find operation.
-macro(remake_find_result find_name)
-  remake_arguments(PREFIX find_ VAR TYPE OPTION OPTIONAL ARGN result ${ARGN})
+macro(remake_find_result find_package)
+  remake_arguments(PREFIX find_ VAR TYPE VAR NAME LIST FILES OPTION OPTIONAL
+    ARGN result ${ARGN})
   remake_set(find_type SELF DEFAULT package)
-  remake_var_name(find_result_var ${find_name} FOUND)
+  remake_var_name(find_result_var ${find_package} FOUND)
+
+  if(find_name)
+    remake_set(find_description
+      "Found ${find_package} ${find_type} ${find_name}.")
+  else(find_name)
+    remake_set(find_description
+      "Found ${find_type} ${find_package}.")
+  endif(find_name)
 
   if(find_result)
-    remake_set(${find_result_var} ON CACHE BOOL
-      "Found ${find_type} ${find_name}." FORCE)
+    remake_set(${find_result_var} ON CACHE BOOL ${find_description} FORCE)
   else(find_result)
-    remake_set(${find_result_var} OFF CACHE BOOL
-      "Found ${find_type} ${find_name}." FORCE)
+    remake_set(${find_result_var} OFF CACHE BOOL ${find_description} FORCE)
+  
+    if(find_name)
+      remake_set(find_message
+        "Missing ${find_package} ${find_type} ${find_name}!")
+    else(find_name)
+      remake_set(find_message "Missing ${find_type} ${find_package}!")
+    endif(find_name)
+
+    remake_unset(find_candidates)
+    if(find_files)
+      if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        foreach(find_file ${find_files})
+          remake_debian_find_file(${find_file} OUTPUT find_candidate)
+          remake_list_push(find_candidates ${find_candidate})
+        endforeach(find_file)
+      endif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    endif(find_files)
+    if(find_candidates)
+      list(REMOVE_DUPLICATES find_candidates)
+      string(REGEX REPLACE ";" ", " find_candidates "${find_candidates}")
+      remake_set(find_message
+        "${find_message}\nInstallation candidate(s): ${find_candidates}")
+    else(find_candidates)
+      remake_set(find_message "${find_message}\nNo installation candidates.")
+    endif(find_candidates)
+
     if(find_optional)
-      message(STATUS "Warning: Missing ${find_type} ${find_name}!")
+      message(STATUS "Warning: ${find_message}")
     else(find_optional)
-      message(FATAL_ERROR "Missing ${find_type} ${find_name}!")
+      message(FATAL_ERROR "${find_message}")
     endif(find_optional)
   endif(find_result)
 endmacro(remake_find_result)

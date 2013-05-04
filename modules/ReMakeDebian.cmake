@@ -201,6 +201,7 @@ macro(remake_debian_find_package debian_specifier)
         OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 
       if(NOT debian_result)
+        string(REGEX REPLACE "\n" ";" debian_packages ${debian_packages})
         foreach(debian_package ${debian_packages})
           string(REGEX REPLACE "^([^:]+):.*$" "\\1" debian_package
             ${debian_package})
@@ -210,3 +211,37 @@ macro(remake_debian_find_package debian_specifier)
     endif(NOT ${debian_find_output} AND debian_find_contains)
   endif(DPKG_QUERY_FOUND)
 endmacro(remake_debian_find_package)
+
+### \brief Find the Debian package containing a file.
+#   This macro employs the Debian apt-file tool in order to find the Debian
+#   package containing a file which may or may not be installed on the build
+#   system.
+#   \required[value] pattern An expression matching the name of the file
+#     to be found. This expression is passed as search pattern to apt-file.
+#   \required[value] OUTPUT:variable The name of an output list variable
+#     which will be assigned all packages containing the file.
+macro(remake_debian_find_file debian_pattern)
+  remake_arguments(PREFIX debian_find_ VAR OUTPUT ${ARGN})
+  remake_unset(${debian_find_output})
+
+  if(NOT APT_FILE_EXECUTABLE)
+    find_program(APT_FILE_EXECUTABLE apt-file)
+  endif(NOT APT_FILE_EXECUTABLE)
+
+  if(APT_FILE_EXECUTABLE)
+    execute_process(
+      COMMAND ${APT_FILE_EXECUTABLE} search ${debian_pattern}
+      OUTPUT_VARIABLE debian_packages
+      RESULT_VARIABLE debian_result
+      OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+
+    if(NOT debian_result)
+      string(REGEX REPLACE "\n" ";" debian_packages ${debian_packages})
+      foreach(debian_package ${debian_packages})
+        string(REGEX REPLACE "^([^:]+):.*$" "\\1" debian_package
+          ${debian_package})
+        remake_list_push(${debian_find_output} ${debian_package})
+      endforeach(debian_package)
+    endif(NOT debian_result)
+  endif(APT_FILE_EXECUTABLE)
+endmacro(remake_debian_find_file)

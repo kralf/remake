@@ -1,3 +1,13 @@
+remake (1:0.6.0-180) lucid; urgency=low
+
+  * Finalized conceptual parts of ReMakeROS modules:
+    + Integrated Python modules generated for ROS packages with the
+      remake_ros_pack_deb() packaging macro
+    + Tested for ROS "fuerte" under lucid
+  * Increased minor version
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 04 May 2013 17:43:00 +0100
+
 remake (1:0.5.4-179) lucid; urgency=low
 
   * Finished revision of ReMakePython module:
