@@ -1286,6 +1286,7 @@ macro(remake_ros_pack_deb)
     remake_var_name(ros_var ${ros_component} DEPENDS)
     remake_ros_package_get(${ros_package} RUN_DEPENDS OUTPUT ${ros_var})
     remake_var_name(ros_dev_var ${ros_dev_component} DEPENDS)
+    remake_set(${ros_dev_var} ${ros_component})
     remake_ros_package_get(${ros_package} BUILD_DEPENDS OUTPUT ros_build_deps)
     foreach(ros_build_dep ${ros_build_deps})
       list(FIND ros_packages ${ros_build_dep} ros_index)
@@ -1297,6 +1298,7 @@ macro(remake_ros_pack_deb)
       endif(ros_index LESS 0)
     endforeach(ros_build_dep)
     remake_var_name(ros_python_var ${ros_python_component} DEPENDS)
+    remake_set(${ros_python_var} ${ros_component})
     remake_ros_package_get(${ros_package} RUN_DEPENDS OUTPUT ros_run_deps)
     foreach(ros_run_dep ${ros_run_deps})
       list(FIND ros_packages ${ros_run_dep} ros_index)
@@ -1398,6 +1400,8 @@ macro(remake_ros_pack_deb)
     endif(NOT ${ros_var})
   endforeach(ros_pkg_component)
 
+  remake_component_get(${REMAKE_DEFAULT_COMPONENT} FILENAME
+    OUTPUT ros_pkg_main)
   remake_pack_deb(
     DEPENDS ${ros_pkg_main_depends})
   remake_component_name(ros_dev_component
@@ -1406,12 +1410,12 @@ macro(remake_ros_pack_deb)
   remake_pack_deb(
     COMPONENT ${ros_dev_component}
     DESCRIPTION "development headers"
-    DEPENDS ${ros_pkg_main_dev_depends})
+    DEPENDS ${ros_pkg_main} ${ros_pkg_main_dev_depends})
   remake_component_name(ros_python_component
     ${REMAKE_DEFAULT_COMPONENT} ${REMAKE_PYTHON_COMPONENT_SUFFIX})
   remake_component(${ros_python_component})
   remake_pack_deb(
     COMPONENT ${ros_python_component}
     DESCRIPTION "Python modules"
-    DEPENDS ${ros_pkg_main_python_depends})
+    DEPENDS ${ros_pkg_main} ${ros_pkg_main_python_depends})
 endmacro(remake_ros_pack_deb)

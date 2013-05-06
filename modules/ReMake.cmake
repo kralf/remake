@@ -407,8 +407,8 @@ endmacro(remake_add_executables)
 #     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}. In
 #     addtion, for each header the install destination will be appended by its
 #     relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
-#   \optional[value] INSTALL:dirname The directory that shall be passed
-#     as the headers' install destination, defaults to the component's
+#   \optional[value] INSTALL:dirname The optional directory that shall be
+#     passed as the headers' install destination relative to the component's
 #     ${HEADER_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(), defaults to
@@ -429,10 +429,13 @@ macro(remake_add_headers)
 
   remake_component(${remake_component})
   remake_component_get(${remake_component} HEADER_DESTINATION DESTINATION)
-  remake_set(remake_install SELF DEFAULT ${HEADER_DESTINATION})
-  if(NOT IS_ABSOLUTE ${remake_install})
-    remake_set(remake_install ${HEADER_DESTINATION}/${remake_install})
-  endif(NOT IS_ABSOLUTE ${remake_install})
+  if(remake_install)
+    if(NOT IS_ABSOLUTE ${remake_install})
+      remake_set(remake_install ${HEADER_DESTINATION}/${remake_install})
+    endif(NOT IS_ABSOLUTE ${remake_install})
+  else(remake_install)
+    remake_set(remake_install ${HEADER_DESTINATION})
+  endif(remake_install)
 
   if(remake_recurse)
     remake_file_glob(

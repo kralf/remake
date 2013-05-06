@@ -1,4 +1,14 @@
-remake (1:0.6.0-180) lucid; urgency=low
+remake (1:0.6.1-180) lucid; urgency=low
+
+  * Fixes:
+    + Added package dependencies to remake_ros_pack_deb()
+    + Fixed implementation and documentatio of remake_add_headers()
+      to ensure correct behavior of the INSTALL argument
+  * Increased patch version
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 06 May 2013 10:00:00 +0100
+
+remake (1:0.6-180) lucid; urgency=low
 
   * Finalized conceptual parts of ReMakeROS modules:
     + Integrated Python modules generated for ROS packages with the
