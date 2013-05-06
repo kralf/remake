@@ -1,8 +1,14 @@
-remake (1:0.6.1-180) lucid; urgency=low
+remake (1:0.6.1-182) lucid; urgency=low
+
+  * Existing ReMakeROS macros adapted tested for ROS "groovy"
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 06 May 2013 16:32:00 +0100
+
+remake (1:0.6.1-181) lucid; urgency=low
 
   * Fixes:
-    + Added package dependencies to remake_ros_pack_deb()
-    + Fixed implementation and documentatio of remake_add_headers()
+    + Added default package dependencies to remake_ros_pack_deb()
+    + Fixed implementation and documentation of remake_add_headers()
       to ensure correct behavior of the INSTALL argument
   * Increased patch version
 
