@@ -1,3 +1,9 @@
+remake (1:0.6.1-185) lucid; urgency=low
+
+  * Added missing manifest dependencies in remake_ros_package_generate()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 May 2013 23:33:00 +0100
+
 remake (1:0.6.1-184) lucid; urgency=low
 
   * Fixed remake_find_package() to obey the OPTIONAL option

@@ -492,7 +492,7 @@ macro(remake_ros_stack_add_dependencies ros_name)
         list(REMOVE_DUPLICATES ros_run_deps)
       endif(ros_run_deps)
       remake_ros_stack_set(${ros_name} RUN_DEPENDS ${ros_run_deps}
-        CACHE INTERAL "Runtime dependencies of ROS stack ${ros_name}.")
+        CACHE INTERNAL "Runtime dependencies of ROS stack ${ros_name}.")
     endif(ros_depends)
 
     if(ros_deploys)
@@ -1005,7 +1005,7 @@ macro(remake_ros_package_add_dependencies ros_name)
         list(REMOVE_DUPLICATES ros_build_deps)
       endif(ros_build_deps)
       remake_ros_package_set(${ros_name} BUILD_DEPENDS ${ros_build_deps}
-        CACHE INTERAL "Build dependencies of ROS package ${ros_name}.")
+        CACHE INTERNAL "Build dependencies of ROS package ${ros_name}.")
       if(ros_link_libraries)
         list(REMOVE_DUPLICATES ros_link_libraries)
       endif(ros_link_libraries)
@@ -1036,7 +1036,7 @@ macro(remake_ros_package_add_dependencies ros_name)
       endif(ros_extra_build_deps)
       remake_ros_package_set(${ros_name} EXTRA_BUILD_DEPENDS
         ${ros_extra_build_deps}
-        CACHE INTERAL "Extra build dependencies of ROS package ${ros_name}.")
+        CACHE INTERNAL "Extra build dependencies of ROS package ${ros_name}.")
     endif(ros_extra_build_depends)
 
     if(ros_run_depends)
@@ -1060,7 +1060,7 @@ macro(remake_ros_package_add_dependencies ros_name)
         list(REMOVE_DUPLICATES ros_run_deps)
       endif(ros_run_deps)
       remake_ros_package_set(${ros_name} RUN_DEPENDS ${ros_run_deps}
-        CACHE INTERAL "Runtime dependencies of ROS package ${ros_name}.")
+        CACHE INTERNAL "Runtime dependencies of ROS package ${ros_name}.")
     endif(ros_run_depends)
 
     if(ros_extra_run_depends)
@@ -1085,8 +1085,8 @@ macro(remake_ros_package_add_dependencies ros_name)
         list(REMOVE_DUPLICATES ros_extra_run_deps)
       endif(ros_extra_run_deps)
       remake_ros_package_set(${ros_name} EXTRA_RUN_DEPENDS
-        ${ros_extra_run_deps}
-        CACHE INTERAL "Extra runtime dependencies of ROS package ${ros_name}.")
+        ${ros_extra_run_deps} CACHE INTERNAL
+        "Extra runtime dependencies of ROS package ${ros_name}.")
     endif(ros_extra_run_depends)
   else(NOT ros_index LESS 0)
     remake_ros_stack_add_dependencies(${ros_name} ${DEPENDS})
@@ -1128,7 +1128,7 @@ macro(remake_ros_package_generate ros_name)
   remake_find_executable(rosrun PATHS "${ROS_PATH}/bin")
 
   if(ROSRUN_FOUND AND ros_${ros_name}s)
-    remake_target_name(ros_manifest_target
+    remake_target_name(ros_manifest_targets
       ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
     remake_var_name(ros_${ros_name}_target_suffix_var
       REMAKE_ROS_PACKAGE ${ros_name}s TARGET_SUFFIX)
@@ -1137,6 +1137,17 @@ macro(remake_ros_package_generate ros_name)
     remake_set(ros_include_dir
       ${ros_pkg_dir}/${ros_ext}_gen/cpp/include)
     remake_set(ros_module_dir ${ros_pkg_dir}/src/${ros_package})
+
+    remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
+    remake_ros_package_get(${ros_package} BUILD_DEPENDS OUTPUT ros_depends)
+    foreach(ros_dependency ${ros_depends})
+      list(FIND ros_packages ${ros_dependency} ros_index)
+      if(NOT ros_index LESS 0)
+        remake_target_name(ros_manifest_target
+          ${ros_dependency} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+        remake_list_push(ros_manifest_targets ${ros_manifest_target})
+      endif(NOT ros_index LESS 0)
+    endforeach(ros_dependency)
 
     remake_unset(ros_${ros_name}_headers)
     remake_unset(ros_${ros_name}_modules)
@@ -1200,7 +1211,7 @@ macro(remake_ros_package_generate ros_name)
       DEPENDS ${ros_${ros_name}s_target})
     remake_component_name(ros_python_component ${ros_component}
       ${REMAKE_PYTHON_COMPONENT_SUFFIX})
-    add_dependencies(${ros_${ros_name}s_target} ${ros_manifest_target})
+    add_dependencies(${ros_${ros_name}s_target} ${ros_manifest_targets})
 
     remake_add_headers(${ros_${ros_name}_headers}
       COMPONENT ${ros_dev_component} GENERATED)
