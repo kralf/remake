@@ -55,8 +55,8 @@ endif(NOT DEFINED REMAKE_FIND_CMAKE)
 #   \optional[option] OPTIONAL If provided, this option is passed on to
 #     remake_find_result().
 macro(remake_find_package find_package)
-  remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS ARGN args
-    OPTION OPTIONAL ${ARGN})
+  remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS OPTION OPTIONAL
+    ARGN args ${ARGN})
 
   if(find_config)
     remake_var_name(find_package_var ${find_package})
@@ -73,7 +73,7 @@ macro(remake_find_package find_package)
     find_package(${find_package} ${find_args})
 
     remake_find_result(${find_package} ${${find_package}_FOUND}
-      ${${find_package_var}})
+      ${${find_package_var}} ${OPTIONAL})
   endif(find_config)
 endmacro(remake_find_package)
 

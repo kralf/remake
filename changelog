@@ -1,3 +1,9 @@
+remake (1:0.6.1-184) lucid; urgency=low
+
+  * Fixed remake_find_package() to obey the OPTIONAL option
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 May 2013 12:56:00 +0100
+
 remake (1:0.6.1-183) lucid; urgency=low
 
   * Extended gendocs script to properly document toolchain files
