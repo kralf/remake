@@ -30,8 +30,8 @@ include(ReMakeComponent)
 #
 #   It provides support for major document generators, such as Doxygen and
 #   GNU Troff.
-
-### \variable REMAKE_DOC_TYPES The list of documentation types to be 
+#
+#   \variable REMAKE_DOC_TYPES The list of documentation types to be
 #     generated.
 #   \variable REMAKE_DOC_OUTPUTS The list of document output directories,
 #     one directory for each type in ${REMAKE_DOC_TYPES}.

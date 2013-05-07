@@ -23,6 +23,9 @@ include(ReMakePrivate)
 ### \brief ReMake component macros
 #   The ReMake component module provides basic functionalities for managing
 #   component-based project structures.
+#
+#   \variable REMAKE_COMPONENT The name of the install component being
+#     active within the current CMake scope.
 
 if(NOT DEFINED REMAKE_COMPONENT_CMAKE)
   remake_set(REMAKE_COMPONENT_CMAKE ON)
@@ -107,46 +110,46 @@ macro(remake_component component_name)
           EXECUTABLE ${component_prefix}
           SCRIPT ${component_prefix})
       endif(DEFINED component_prefix)
-      if(component_install)
+      if(DEFINED component_install)
         remake_component_set(${component_name} INSTALL_PREFIX
           ${component_install} CACHE STRING
           "Install path prefix of ${component_name} component.")
-      endif(component_install)
-      if(component_library_destination)
+      endif(DEFINED component_install)
+      if(DEFINED component_library_destination)
         remake_component_set(${component_name} LIBRARY_DESTINATION
           ${component_library_destination} CACHE STRING
           "Install destination of ${component_name} component libraries.")
-      endif(component_library_destination)
-      if(component_executable_destination)
+      endif(DEFINED component_library_destination)
+      if(DEFINED component_executable_destination)
         remake_component_set(${component_name} EXECUTABLE_DESTINATION
           ${component_executable_destination} CACHE STRING
           "Install destination of ${component_name} component executables.")
-      endif(component_executable_destination)
-      if(component_plugin_destination)
+      endif(DEFINED component_executable_destination)
+      if(DEFINED component_plugin_destination)
         remake_component_set(${component_name} PLUGIN_DESTINATION
           ${component_plugin_destination} CACHE STRING
           "Install destination of ${component_name} component plugins.")
-      endif(component_plugin_destination)
-      if(component_script_destination)
+      endif(DEFINED component_plugin_destination)
+      if(DEFINED component_script_destination)
         remake_component_set(${component_name} SCRIPT_DESTINATION
           ${component_script_destination} CACHE STRING
           "Install destination of ${component_name} component scripts.")
-      endif(component_script_destination)
-      if(component_file_destination)
+      endif(DEFINED component_script_destination)
+      if(DEFINED component_file_destination)
         remake_component_set(${component_name} FILE_DESTINATION
           ${component_file_destination} CACHE STRING
           "Install destination of ${component_name} component files.")
-      endif(component_file_destination)
-      if(component_configuration_destination)
+      endif(DEFINED component_file_destination)
+      if(DEFINED component_configuration_destination)
         remake_component_set(${component_name} CONFIGURATION_DESTINATION
           ${component_configuration_destination} CACHE STRING
           "Install destination of ${component_name} component configuration files.")
-      endif(component_configuration_destination)
-      if(component_header_destination)
+      endif(DEFINED component_configuration_destination)
+      if(DEFINED component_header_destination)
         remake_component_set(${component_name} HEADER_DESTINATION
           ${component_header_destination} CACHE STRING
           "Install destination of ${component_name} component development headers.")
-      endif(component_header_destination)
+      endif(DEFINED component_header_destination)
     endif(component_default)
 
     remake_component_get(${component_name} BUILD OUTPUT component_build)
@@ -256,12 +259,17 @@ macro(remake_component_get component_name component_var)
 
     if(DEFINED ${component_output})
       if(component_destination)
-        if(NOT IS_ABSOLUTE ${component_output})
+        if(${component_output})
+          if(NOT IS_ABSOLUTE ${component_output})
+            remake_component_get(${component_name} INSTALL_PREFIX
+              OUTPUT ${component_install})
+            get_filename_component(${component_output}
+              ${component_install}/${${component_output}} ABSOLUTE)
+          endif(NOT IS_ABSOLUTE ${component_output})
+        else(${component_output})
           remake_component_get(${component_name} INSTALL_PREFIX
-            OUTPUT ${component_install})
-          get_filename_component(${component_output}
-            ${component_install}/${${component_output}} ABSOLUTE)
-        endif(NOT IS_ABSOLUTE ${component_output})
+            OUTPUT ${component_output})
+        endif(${component_output})
       endif(component_destination)
     else(DEFINED ${component_output})
       remake_project_get(${component_var} OUTPUT ${component_output}

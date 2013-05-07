@@ -325,7 +325,9 @@ macro(remake_ros_stack ros_name)
     remake_component(${ros_component}
       FILENAME ${ros_filename}
       PREFIX OFF
-      INSTALL ${ros_dest_root}/${ros_dest_dir})
+      INSTALL ${ros_dest_root}/${ros_dest_dir}
+      FILE_DESTINATION OFF
+      CONFIGURATION_DESTINATION etc)
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component(${ros_dev_component}
@@ -767,7 +769,9 @@ macro(remake_ros_package ros_name)
     remake_component(${ros_component}
       FILENAME ${ros_filename}
       PREFIX OFF
-      INSTALL ${ros_dest_root}/${ros_dest_dir})
+      INSTALL ${ros_dest_root}/${ros_dest_dir}
+      FILE_DESTINATION OFF
+      CONFIGURATION_DESTINATION etc)
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component(${ros_dev_component}

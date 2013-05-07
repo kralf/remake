@@ -28,6 +28,54 @@ include(ReMakePrivate)
 #   ReMake. They maintain the environment necessary for initializing default
 #   values throughout the modules, thus introducing convenience and
 #   conventions into ReMake's naming schemes.
+#
+#   \variable REMAKE_PROJECT_NAME The descriptive name of the project.
+#   \variable REMAKE_PROJECT_FILENAME The filename representation of the
+#     project name as used by ReMakePack, for instance.
+#   \variable REMAKE_PROJECT_EPOCH The epoch version number of the project.
+#   \variable REMAKE_PROJECT_MAJOR The major version number of the project.
+#   \variable REMAKE_PROJECT_MINOR The minor version number of the project.
+#   \variable REMAKE_PROJECT_PATCH The patch version number of the project.
+#   \variable REMAKE_PROJECT_REVISION The revision string of the project,
+#     for instance, alpha, beta, unstable, or stable.
+#   \variable REMAKE_PROJECT_VERSION The fully qualified version string
+#     of the project, concatenated from epoch, major, minor, and patch version.
+#   \variable REMAKE_PROJECT_FILENAME_VERSION The version string of the
+#     project in filename format, concatenated from major, minor, and patch
+#     version.
+#   \variable REMAKE_PROJECT_SUMMARY The short project summary.
+#   \variable REMAKE_PROJECT_ADMIN The name of the project administrator,
+#     i.e., the project author named first.
+#   \variable REMAKE_PROJECT_AUTHORS The comma-separated list of project
+#     authors.
+#   \variable REMAKE_PROJECT_CONTACT The contact to the project responsible,
+#     usually a valid e-mail address.
+#   \variable REMAKE_PROJECT_HOME The URL pointing to the project homepage,
+#     where users may find further documentation and bug tracking facilities.
+#   \variable REMAKE_PROJECT_LICENSE The license specified in the project's
+#     copyleft/copyright agreement.
+#   \variable REMAKE_PROJECT_COMPONENT The project's default install component.
+#     See ReMakeComponent for details.
+#   \variable REMAKE_PROJECT_README The name of the readme file that will be
+#     shipped with the packaged project.
+#   \variable REMAKE_PROJECT_COPYRIGHT The name of the copyright file that will
+#     be shipped with the packaged project.
+#   \variable REMAKE_PROJECT_TODO The name of the TODO file that will be
+#     shipped with the packaged project.
+#   \variable REMAKE_PROJECT_CHANGELOG The name of the changelog file that will
+#     be shipped with the packaged project.
+#   \variable REMAKE_PROJECT_BUILD_SYSTEM The name of the system building the
+#     project as indicated by ${CMAKE_SYSTEM_NAME}.
+#   \variable REMAKE_PROJECT_BUILD_ARCH The architecture of the system building
+#     the project as indicated by ${CMAKE_SYSTEM_PROCESSOR}.
+#   \variable REMAKE_PROJECT_BUILD_TYPE The type of build for the project as
+#     indicated by ${CMAKE_BUILD_TYPE}.
+#   \variable REMAKE_PROJECT_SOURCE_DIR The directory containing the project
+#     source tree.
+#   \variable REMAKE_PROJECT_CONFIGURATION_DIR The directory containing the
+#     project configuration files.
+#   \variable REMAKE_PROJECT_MODULE_DIR The directory containing the project's
+#     custom CMake modules.
 
 if(NOT DEFINED REMAKE_PROJECT_CMAKE)
   remake_set(REMAKE_PROJECT_CMAKE ON)
@@ -78,13 +126,13 @@ endif(NOT DEFINED REMAKE_PROJECT_CMAKE)
 #   \optional[value] MODULES:dir The directory containing the project's
 #     custom CMake modules, defaults to modules.
 #   \optional[value] README:file The name of the readme file that will be
-#     shipped with the project package, defaults to README.
+#     shipped with the packaged project, defaults to README.
 #   \optional[value] COPYRIGHT:file The name of the copyright file that will
-#     be shipped with the project package, defaults to copyright.
+#     be shipped with the packaged project, defaults to copyright.
 #   \optional[value] TODO:file The name of the TODO file that will
 #     be shipped with the project package, defaults to TODO.
 #   \optional[value] CHANGELOG:file The optional name of the changelog
-#     file that will be shipped with the project package, defaulting to
+#     file that will be shipped with the packaged project, defaulting to
 #     changelog. Note that if the changelog file does not exist, the macro
 #     will attempt to define a target that automatically creates the
 #     changelog from the project's Subversion or Git log. See ReMakeSVN
@@ -435,10 +483,14 @@ macro(remake_project_get project_var)
   remake_set(project_output SELF DEFAULT ${project_var})
 
   if(project_destination)
-    if(NOT IS_ABSOLUTE ${project_global})
-      get_filename_component(project_global
-        ${CMAKE_INSTALL_PREFIX}/${project_global} ABSOLUTE)
-    endif(NOT IS_ABSOLUTE ${project_global})
+    if(project_global)
+      if(NOT IS_ABSOLUTE ${project_global})
+        get_filename_component(project_global
+          ${CMAKE_INSTALL_PREFIX}/${project_global} ABSOLUTE)
+      endif(NOT IS_ABSOLUTE ${project_global})
+    else(project_global)
+      remake_set(project_global ${CMAKE_INSTALL_PREFIX})
+    endif(project_global)
   endif(project_destination)
 
   remake_set(${project_output} ${project_global})

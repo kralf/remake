@@ -1,3 +1,15 @@
+remake (1:0.6.1-183) lucid; urgency=low
+
+  * Extended gendocs script to properly document toolchain files
+  * Added documentation to ReMakeRaspbian and ReMakeAndroid toolchain
+    files
+  * Bug fixes:
+    + Fixed remake_add_configurations() and remake_add_files() to obtain
+      proper behavior of INSTALL argument for component-specific
+      destinations
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 May 2013 10:57:00 +0100
+
 remake (1:0.6.1-182) lucid; urgency=low
 
   * Existing ReMakeROS macros adapted tested for ROS "groovy"

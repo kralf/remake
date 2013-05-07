@@ -72,6 +72,7 @@ sub print_help {
 sub read_source {
   my $source_name = shift;
   my $module = shift;
+  my $usage = shift;
   my $variables = shift;
   my $macros = shift;
   my $references = shift;
@@ -117,6 +118,10 @@ sub read_source {
 
           if ($directive =~ /$module_pattern/) {
             $$module{name} = $arguments;
+          }
+
+          if ($directive =~ /$usage_pattern/) {
+            $$usage = $arguments;
           }
 
           if ($directive =~ /$brief_pattern/) {
@@ -219,6 +224,7 @@ sub read_source {
 sub generate_man {
   my $man_name = shift;
   my $module = shift;
+  my $usage = shift;
   my $variables = shift;
   my $macros = shift;
   my $references = shift;
@@ -237,12 +243,20 @@ sub generate_man {
   }
   $$man .= join(", ", @macro_names);
   if ($$module{brief}) {
-    $$man .= " - $$module{brief}";
+    if (@macro_names) {
+      $$man .= " - ";
+    }
+    $$man .= "$$module{brief}";
   }
   $$man .= "\n";
 
   $$man .= ".SH SYNOPSIS\n";
-  $$man .= ".BR \"include($$module{name})\"\n";
+  if ($$usage ne "") {
+    $$man .= ".BR \"$$usage\"\n";
+  }
+  else {
+    $$man .= ".BR \"include($$module{name})\"\n";
+  }
   $$man .= ".sp\n";
   for my $macro (@$macros) {
     my $macro_signature;
@@ -294,18 +308,26 @@ sub generate_man {
   }
 
   if (@$variables) {
-    $$man3 .= ".SH VARIABLES\n";
+    $$man .= ".SH VARIABLES\n";
     for my $variable (@$variables) {
       $$man .= ".TP\n";
       $$man .= ".B \"$variable->{name}\"\n";
+      $$man .= ".RS\n";
   
       if ($variable->{description}) {
-        $$man .= "$variable->{description}\n";
+        $description = $variable->{description};
+        $description =~ s/\*\s*"([^"]*)"\s*/\n.TP\n.I \1\n/g;
+        $description =~ s/\*\s*([^\s]*)\s*/\n.TP\n.I \1\n/g;
+        $$man .= "$description\n";
       }
+
+      $$man .= ".RE\n";
     }
   }
 
-  $$man .= ".SH MACROS\n";
+  if (@$macros) {
+    $$man .= ".SH MACROS\n";
+  }
   for my $macro (@$macros) {
     $$man .= ".TP\n";
     $$man .= ".BI \"$macro->{name}($macro->{signature})\"\n";
@@ -398,6 +420,7 @@ sub generate_man {
 
 sub find_source {
   my %module;
+  my $usage;
   my @variables;
   my @macros;
   my %references;
@@ -408,7 +431,8 @@ sub find_source {
   return unless basename($source_name) =~ /$find_pattern/;
 
   print_stderr "$generator: Parsing ".basename($source_name)."\n";
-  read_source($source_name, \%module, \@variables, \@macros, \%references);
+  read_source($source_name, \%module, \$usage, \@variables, \@macros,
+    \%references);
   print_stderr "$generator: - $module{name}: ".@macros." macro(s), ".
     keys(%references)." reference(s)\n";
 
@@ -427,7 +451,8 @@ sub find_source {
   my $man;
   print_stderr "$generator: - $module{name}: Generating ".
     "$man_name($man_extension)\n";
-  generate_man($man_name, \%module, \@variables, \@macros, \%references, \$man);
+  generate_man($man_name, \%module, \$usage, \@variables, \@macros,
+    \%references, \$man);
 
   if ($doc_type =~ /man/) {
     my $doc_name = "man${man_extension}/$man_name.$man_extension.gz";

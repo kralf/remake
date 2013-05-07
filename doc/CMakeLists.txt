@@ -8,5 +8,6 @@ if(PERL_FOUND AND GZIP_FOUND AND GROFF_FOUND)
     ${REMAKE_PROJECT_SOURCE_DIR}/bin/gendocs -q -c ${docs_config}
       -t %TYPE% -o %OUTPUT% %INPUT%
     INPUT ${REMAKE_PROJECT_MODULE_DIR}/ReMake*.cmake
+      ${CMAKE_SOURCE_DIR}/toolchains/ReMake*.cmake
     TYPES man ascii utf8 html ps)
 endif(PERL_FOUND AND GZIP_FOUND AND GROFF_FOUND)

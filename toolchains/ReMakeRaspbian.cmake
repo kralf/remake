@@ -23,6 +23,8 @@
 #   environment for armv6k architectures such as the Raspberry Pi.
 #   It requires the Linaro tools and binaries to be installed in
 #   the standard location.
+#
+#   \usage cmake -DCMAKE_TOOLCHAIN_FILE=ReMakeRaspbian <CMAKE_SOURCE_DIR>
 
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_VERSION 1)

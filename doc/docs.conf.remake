@@ -23,6 +23,7 @@ $directive_pattern = '^\\\([^\s]+)\s+(.*)\s*$';
 
 $module_pattern = 'module';
 $brief_pattern = 'brief';
+$usage_pattern = 'usage';
 $variable_pattern = 'variable';
 $variable_arguments_pattern = '\s*([\w\$\{\}]*)\s+(.*)\s*';
 $required_pattern = 'required';
