@@ -438,13 +438,17 @@ sub find_source {
 
   my $man_name = lc($project_name);
   if ($module{name} =~ /$name_pattern/) {
-    $man_name .= "_".lc($1);
+    $man_component = $1;
+    $man_component =~ s/([a-z])([A-Z])/\1_\2/g;
+    $man_name .= "_".lc($man_component);
   }
 
   foreach $reference_key (keys %references) {
     if ($reference_key =~ /$name_pattern/) {
-      $references{$reference_key} = lc($project_name)."_".lc($1).
-        "($man_extension)";
+      $reference_component = $1;
+      $reference_component =~ s/([a-z])([A-Z])/\1_\2/g;
+      $references{$reference_key} =
+        lc($project_name)."_".lc($reference_component)."($man_extension)";
     }
   }
   

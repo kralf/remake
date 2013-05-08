@@ -24,6 +24,8 @@ include(ReMakePrivate)
 #   The ReMake component module provides basic functionalities for managing
 #   component-based project structures.
 #
+#   \variable REMAKE_DEFAULT_COMPONENT The name of the default install
+#     component.
 #   \variable REMAKE_COMPONENT The name of the install component being
 #     active within the current CMake scope.
 
@@ -91,6 +93,9 @@ macro(remake_component component_name)
   if(component_index LESS 0)
     remake_project_set(COMPONENTS ${component_components} ${component_name}
       CACHE INTERNAL "Install components defined by the project.")
+
+    remake_component_unset(${component_name} LIBRARIES CACHE)
+    
     if(component_default)
       remake_set(REMAKE_DEFAULT_COMPONENT ${component_name})
       remake_component_set(${component_name} BUILD ON CACHE INTERNAL
@@ -223,6 +228,28 @@ macro(remake_component_set component_name component_var)
     message(FATAL_ERROR "Component ${component_name} undefined!")
   endif(component_index GREATER -1)
 endmacro(remake_component_set)
+
+### \brief Undefine the value of a ReMake component variable.
+#   This macro undefines a component variable which has been defined by
+#   remake_component_set(). The variable name is automatically prefixed
+#   with an upper-case conversion of the component name. Additional
+#   arguments are passed on to remake_project_unset().
+#   \required[value] variable The name of the component variable to be
+#     undefined.
+#   \optional[list] arg The arguments to be passed on to
+#     remake_project_unset(). See ReMakeProject for details.
+macro(remake_component_unset component_name component_var)
+  remake_project_get(COMPONENTS OUTPUT component_components)
+  list(FIND component_components ${component_name} component_index)
+
+  if(component_index GREATER -1)
+    remake_var_name(component_global_var
+      ${component_name} COMPONENT ${component_var})
+    remake_project_unset(${component_global_var} ${ARGN})
+  else(component_index GREATER -1)
+    message(FATAL_ERROR "Component ${component_name} undefined!")
+  endif(component_index GREATER -1)
+endmacro(remake_component_unset)
 
 ### \brief Retrieve the value of a ReMake component variable.
 #   This macro retrieves a component variable matching the ReMake
@@ -497,13 +524,27 @@ macro(remake_component_install)
       endif(component_install_dest)
     endif(DEFINED component_install_dest)
 
+    if("${component_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;LIBRARY.*$")
+      string(REGEX REPLACE "^.*TARGETS;([^A-Z]+).*;LIBRARY.*$" "\\1"
+        component_targets "${component_args}")
+      remake_component_get(${component_name} LIBRARIES
+        OUTPUT component_libraries)
+      foreach(component_target ${component_targets})
+        get_target_property(component_library ${component_target}
+          OUTPUT_NAME)
+        remake_list_push(component_libraries ${component_library})
+      endforeach(component_target)
+      remake_component_set(${component_name} LIBRARIES ${component_libraries}
+        CACHE INTERNAL "List of ${component_name} component libraries.")
+    endif("${component_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;LIBRARY.*$")
+
     if(component_install_dest)
       install(${component_args}
         DESTINATION ${component_install_dest}
         COMPONENT ${component_name})
     else(component_install_dest)
       install(${component_args}
-      COMPONENT ${component_name})
+        COMPONENT ${component_name})
     endif(component_install_dest)
   endif(component_build)
 endmacro(remake_component_install)

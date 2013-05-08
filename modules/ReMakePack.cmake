@@ -64,8 +64,12 @@ endif(NOT DEFINED REMAKE_PACK_CMAKE)
 #   \optional[value] COMPONENT:component The name of the install
 #     component to generate the binary package from, defaults to
 #     ${REMAKE_DEFAULT_COMPONENT}.
+#   \optional[value] DESCRIPTION:string An optional description of the
+#     install component that is appended to the project summary when
+#     generating the package description.
 macro(remake_pack_binary pack_generator)
-  remake_arguments(PREFIX pack_ VAR NAME VAR VERSION VAR COMPONENT ${ARGN})
+  remake_arguments(PREFIX pack_ VAR NAME VAR VERSION VAR COMPONENT
+    VAR DESCRIPTION ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)
@@ -222,7 +226,7 @@ endmacro(remake_pack_source)
 #     ${REMAKE_DEFAULT_COMPONENT} results in an empty suffix.
 #   \optional[value] DESCRIPTION:string An optional description of the
 #     install component that is appended to the project summary when
-#     generating the package description.
+#     generating the Debian package description.
 #   \optional[list] DEPENDS:pkg An optional list of mandatory package
 #     dependencies that are matched and inscribed into the package manifest.
 #     The format of a dependency should comply to Debian conventions, meaning
@@ -249,7 +253,8 @@ endmacro(remake_pack_source)
 #     postrm to be included in the Debian package's control section.
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT VAR DESCRIPTION
-    LIST DEPENDS LIST RECOMMENDS LIST EXTRA ARGN depends ${ARGN})
+    LIST DEPENDS LIST RECOMMENDS LIST EXTRA VAR PKG_CONFIG ARGN depends
+    ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)

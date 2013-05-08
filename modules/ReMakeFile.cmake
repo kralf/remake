@@ -434,10 +434,10 @@ endmacro(remake_file_read)
 #     in the list of strings to be appended as an individual line.
 #   \optional[value] FROM:variable The name of a variable holding the content
 #     to be written. Passing file content by reference makes the macro
-#     ignore all additional string values and is particularly useful in the
-#     presence of escape characters. Whereas value passing generally causes
-#     CMake to resolve escape sequences, reference passing does not suffer
-#     from such modifications.
+#     ignore all additional string values and the LINES option, and is
+#     particularly useful in the presence of escape characters. Whereas
+#     value passing generally causes CMake to resolve escape sequences,
+#     reference passing does not suffer from such modifications.
 #   \optional[list] string The list of strings to be appended to the file.
 macro(remake_file_write file_name)
   remake_arguments(PREFIX file_ OPTION TOPLEVEL OPTION LINES VAR FROM
