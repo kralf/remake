@@ -1,3 +1,13 @@
+remake (1:0.6.2-187) lucid; urgency=low
+
+  * Bug fixes:
+    + Fixed handling of REVERSE_DEPENDS default argument in
+      remake_ros_package()
+    + Fixed addition of EXTRA_CFLAGS and EXTRA_LIBS (formerly CFLAGS
+      and LIBS) in remake_pkg_config_generate()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 14 May 2013 08:54:00 +0100
+
 remake (1:0.6.2-186) lucid; urgency=low
 
   * New features:

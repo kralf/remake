@@ -652,7 +652,11 @@ endmacro(remake_ros_find_package)
 #     stack the ROS package reversly depends on. If the META option is not
 #     provided, the default name of the meta-package or stack is inferred by
 #     converting ${REMAKE_COMPONENT} into a ROS-compliant package or stack
-#     name.
+#     name. To indicate that the ROS package does not reversely depend on
+#     any other ROS meta-package or stack, the special value OFF may be
+#     passed. In particular, if the component name equals
+#     ${REMAKE_DEFAULT_COMPONENT}, the default value of this argument will
+#     resolve to OFF.
 #   \optional[option] META If provided, this option entails definition
 #     of a ROS meta-package or stack. Such meta-packages or stacks should
 #     not contain any build targets, but may depend on other ROS packages
@@ -672,8 +676,12 @@ macro(remake_ros_package ros_name)
     remake_set(ros_run_depends SELF DEFAULT roscpp rospy)
     if(NOT ros_meta)
       remake_set(ros_build_depends SELF DEFAULT roscpp rospy)
-      string(REGEX REPLACE "-" "_" ros_default_reverse_depends
-        ${REMAKE_COMPONENT})
+      if(NOT REMAKE_COMPONENT STREQUAL REMAKE_DEFAULT_COMPONENT)
+        string(REGEX REPLACE "-" "_" ros_default_reverse_depends
+          ${REMAKE_COMPONENT})
+      else(NOT REMAKE_COMPONENT STREQUAL REMAKE_DEFAULT_COMPONENT)
+        remake_set(ros_default_reverse_depends OFF)
+      endif(NOT REMAKE_COMPONENT STREQUAL REMAKE_DEFAULT_COMPONENT)
       remake_set(ros_reverse_depends SELF DEFAULT
         ${ros_default_reverse_depends})
     endif(NOT ros_meta)

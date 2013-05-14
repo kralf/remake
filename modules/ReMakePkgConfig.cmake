@@ -80,16 +80,16 @@ endmacro(remake_pkg_config)
 #     dependencies to be listed in the corresponding field of the
 #     pkg-config file. Note that, for each requirement, a pkg-config file
 #     with the same name must exist in the search path of pkg-config.
-#   \optional[list] CFLAGS:flag An optional list of compiler flags to
+#   \optional[list] EXTRA_CFLAGS:flag An optional list of compiler flags to
 #     be appended to the default flag for including the components
 #     header destination.
-#   \optional[list] LIBS:flag An optional list of linker flags to
+#   \optional[list] EXTRA_LIBS:flag An optional list of linker flags to
 #     be appended to the default flags. These include the linker flag
 #     for searching the component's library destination and the flags
 #     for linking against all libraries being installed by the component.
 macro(remake_pkg_config_generate)
   remake_arguments(PREFIX pkg_config_ VAR COMPONENT VAR NAME VAR DESCRIPTION
-    LIST REQUIRES LIST CFLAGS LIST LIBS ${ARGN})
+    LIST REQUIRES LIST EXTRA_CFLAGS LIST EXTRA_LIBS ${ARGN})
   remake_set(pkg_config_component SELF DEFAULT ${REMAKE_COMPONENT})
   if(${pkg_config_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
     remake_set(pkg_config_name SELF DEFAULT "${REMAKE_PROJECT_NAME}")
@@ -144,17 +144,24 @@ macro(remake_pkg_config_generate)
   endif(pkg_config_description)
   remake_file_write(${pkg_config_file} LINES
     "Version: ${REMAKE_PROJECT_FILENAME_VERSION}")
+  remake_set(pkg_config_cflags ${pkg_config_extra_cflags})
+  if(pkg_config_cflags)
+    string(REGEX REPLACE ";" " " pkg_config_cflags "${pkg_config_cflags}")
+  endif(pkg_config_cflags)
   remake_file_write(${pkg_config_file} LINES
     "Cflags: -I\\\\\\\${includedir} ${pkg_config_cflags}")
   remake_component_get(${pkg_config_component} LIBRARIES
     OUTPUT pkg_config_libraries)
-  remake_list_push(pkg_config_libraries ${pkg_config_libs})
   if(pkg_config_libraries)
-    string(REGEX REPLACE ";" " -l" pkg_config_libraries
+    string(REGEX REPLACE ";" " ;-l" pkg_config_libs
       "-l${pkg_config_libraries}")
   endif(pkg_config_libraries)
+  remake_list_push(pkg_config_libs ${pkg_config_extra_libs})
+  if(pkg_config_libs)
+    string(REGEX REPLACE ";" " " pkg_config_libs "${pkg_config_libs}")
+  endif(pkg_config_libs)
   remake_file_write(${pkg_config_file} LINES
-    "Libs: -L\\\\\\\${libdir} ${pkg_config_libraries}")
+    "Libs: -L\\\\\\\${libdir} ${pkg_config_libs}")
 
   if(pkg_config_requires)
     remake_unset(pkg_config_reqs)
