@@ -1346,6 +1346,64 @@ macro(remake_ros_package_add_executable ros_name)
   endif(ros_depends)
 endmacro(remake_ros_package_add_executable)
 
+### \brief Add a library to a ROS package.
+#   This macro adds a library target to an already defined ROS package.
+#   Its primary advantage over remake_add_library() is the automated
+#   resolution of dependencies on ROS messages or services generated
+#   by the enlisted ROS packages. Moreover, the macro will add all ROS
+#   libraries which need to be linked into the library target from the
+#   build dependencies defined for its ROS package.
+#   \required[value] name The name of the library target to be defined.
+#   \optional[value] PACKAGE:package The name of the already defined ROS
+#     package which will be assigned the library, defaulting to the
+#     package name conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] arg The list of additional arguments to be passed on to
+#     remake_add_library(). Note that this list should not contain
+#     a COMPONENT specifier as the component name will be inferred from the
+#     ROS package name. See ReMake for details.
+macro(remake_ros_package_add_library ros_name)
+  remake_arguments(PREFIX ros_ VAR PACKAGE LIST SOURCES ARGN args ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+
+  remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
+  remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
+  remake_ros_package_get(${ros_package} BUILD_DEPENDS OUTPUT ros_build_deps)
+  remake_ros_package_get(${ros_package} LINK_LIBRARIES OUTPUT ros_link_libs)
+
+  remake_unset(ros_generated ros_depends)
+  foreach(ros_dependency ${ros_package} ${ros_build_deps})
+    list(FIND ros_packages ${ros_dependency} ros_index)
+
+    if(NOT ros_index LESS 0)
+      remake_target_name(ros_messages_target
+        ${ros_dependency} ${REMAKE_ROS_PACKAGE_MESSAGES_TARGET_SUFFIX})
+      remake_target_name(ros_services_target
+        ${ros_dependency} ${REMAKE_ROS_PACKAGE_SERVICES_TARGET_SUFFIX})
+
+      if(TARGET ${ros_messages_target})
+        remake_list_push(ros_depends ${ros_messages_target})
+      endif(TARGET ${ros_messages_target})
+      if(TARGET ${ros_services_target})
+        remake_list_push(ros_depends ${ros_services_target})
+      endif(TARGET ${ros_services_target})
+    endif(NOT ros_index LESS 0)
+  endforeach(ros_dependency)
+
+  if(ros_depends)
+    remake_add_library(
+      ${ros_name} ${ros_args}
+      DEPENDS ${ros_depends}
+      LINK ${ros_link_libs}
+      COMPONENT ${ros_component})
+  else(ros_depends)
+    remake_add_library(
+      ${ros_name} ${ros_args}
+      LINK ${ros_link_libs}
+      COMPONENT ${ros_component})
+  endif(ros_depends)
+endmacro(remake_ros_package_add_executable)
+
 ### \brief Generate binary Debian packages from a ReMakeROS project.
 #   This macro configures package generation for a ReMakeROS project
 #   using the ReMakePack module. It acquires all the information necessary

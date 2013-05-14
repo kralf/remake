@@ -1,3 +1,11 @@
+remake (1:0.6.2-188) lucid; urgency=low
+
+  * New features:
+    + Added remake_ros_package_add_library() macro to ReMakeROS
+    + Added GENERATED and DEPENDS arguments to remake_add_library()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 14 May 2013 12:20:00 +0100
+
 remake (1:0.6.2-187) lucid; urgency=low
 
   * Bug fixes:

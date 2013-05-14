@@ -90,16 +90,22 @@ macro(remake_add_modules)
   endforeach(remake_module)
 endmacro(remake_add_modules)
 
-### \brief Add a shared library target.
-#   This macro automatically defines build rules for a shared library
-#   target from a list of glob expressions. In addition, the macro takes a
-#   list of libraries that are linked into the library target. Also, the
-#   library source directory is automatically added to the include path,
-#   thus allowing for the library headers to be found from subdirectories.
-#   \required[value] name The name of the shared library target to be defined.
+### \brief Add a library target.
+#   This macro automatically defines build rules for a library target from
+#   a list of glob expressions. In addition, the macro takes a list of
+#   libraries that are linked into the library target. Also, the library
+#   source directory is automatically added to the include path, thus
+#   allowing for the library headers to be found from subdirectories.
+#   \required[value] name The name of the library target to be defined.
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the library sources, defaulting to *.c
 #     and *.cpp.
+#   \optional[list] GENERATED:file An optional list of filenames referring
+#     to generated source files. Note that, if the files will not be generated
+#     within the same CMake scope, a corresponding generator top-level target
+#     should be provided through the DEPENDS argument.
+#   \optional[list] DEPENDS:target An optional list of top-level targets the
+#     library target depends on.
 #   \optional[value] TYPE:type The type of the library target to be created,
 #     defaulting to SHARED. See the CMake documentation for a list of valid
 #     library types.
@@ -118,10 +124,11 @@ endmacro(remake_add_modules)
 #   \optional[value] SUFFIX:suffix An optional library name suffix, forced
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
-#     shared library target.
+#     library target.
 macro(remake_add_library remake_name)
-  remake_arguments(PREFIX remake_ VAR TYPE OPTION RECURSE VAR INSTALL
-    VAR COMPONENT VAR PREFIX VAR SUFFIX ARGN globs LIST LINK ${ARGN})
+  remake_arguments(PREFIX remake_ LIST GENERATED LIST DEPENDS VAR TYPE
+    OPTION RECURSE VAR INSTALL VAR COMPONENT VAR PREFIX VAR SUFFIX ARGN
+    globs LIST LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_set(remake_type SELF DEFAULT SHARED)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
@@ -168,12 +175,20 @@ macro(remake_add_library remake_name)
   remake_component_build(
     LIBRARY ${remake_name}${remake_suffix}
     ${remake_type} ${remake_sources} ${remake_target_sources}
+      ${remake_generated}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
     ${LINK}
     COMPONENT ${remake_component})
+  if(remake_generated)
+    set_source_files_properties(${remake_generated} PROPERTIES GENERATED ON)
+  endif(remake_generated)
+
   if(remake_target_depends)
     add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
   endif(remake_target_depends)
+  if(remake_depends)
+    add_dependencies(${remake_name}${remake_suffix} ${remake_depends})
+  endif(remake_depends)
   remake_component_install(
     TARGETS ${remake_name}${remake_suffix}
     LIBRARY DESTINATION ${remake_install}
@@ -193,7 +208,7 @@ endmacro(remake_add_library)
 #     within the same CMake scope, a corresponding generator top-level target
 #     should be provided through the DEPENDS argument.
 #   \optional[list] DEPENDS:target An optional list of top-level targets the
-#     library target depends on.
+#     plugin library target depends on.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). If the component
 #     does not yet exist in the project, it will be defined by calling
