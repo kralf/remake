@@ -1402,7 +1402,7 @@ macro(remake_ros_package_add_library ros_name)
       LINK ${ros_link_libs}
       COMPONENT ${ros_component})
   endif(ros_depends)
-endmacro(remake_ros_package_add_executable)
+endmacro(remake_ros_package_add_library)
 
 ### \brief Generate binary Debian packages from a ReMakeROS project.
 #   This macro configures package generation for a ReMakeROS project

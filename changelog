@@ -1,3 +1,10 @@
+remake (1:0.6.2-189) lucid; urgency=low
+
+  * Bug fixes:
+    + Fixed remake_ros_package_add_library() syntax 
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 14 May 2013 12:21:00 +0100
+
 remake (1:0.6.2-188) lucid; urgency=low
 
   * New features:
