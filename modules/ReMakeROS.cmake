@@ -348,7 +348,7 @@ macro(remake_ros_stack ros_name)
       COMPONENT ${ros_component})
     remake_component_install(
       FILES ${ros_manifest}
-      DESTINATION OFF
+      DESTINATION ${ros_dest_root}
       COMPONENT ${ros_component})
     if(NOT TARGET ${REMAKE_ROS_ALL_MANIFESTS_TARGET})
       remake_target(${REMAKE_ROS_ALL_MANIFESTS_TARGET})
@@ -801,7 +801,7 @@ macro(remake_ros_package ros_name)
       COMPONENT ${ros_component})
     remake_component_install(
       FILES ${ros_manifest}
-      DESTINATION OFF
+      DESTINATION ${ros_dest_root}
       COMPONENT ${ros_component})
     if(NOT TARGET ${REMAKE_ROS_ALL_MANIFESTS_TARGET})
       remake_target(${REMAKE_ROS_ALL_MANIFESTS_TARGET})
@@ -1265,9 +1265,10 @@ macro(remake_ros_package_generate ros_name)
       CACHE INTERNAL "Include directories of ROS package ${ros_package}.")
   endif(ROSRUN_FOUND AND ros_${ros_name}s)
 
+  remake_component_get(${ros_component} FILE_DESTINATION OUTPUT ros_dest)
   remake_component_install(
     FILES ${ros_${ros_name}s}
-    DESTINATION ${ros_ext}
+    DESTINATION ${ros_dest}/${ros_ext}
     COMPONENT ${ros_component})
 endmacro(remake_ros_package_generate)
 

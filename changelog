@@ -1,3 +1,12 @@
+remake (1:0.6.2-192) lucid; urgency=low
+
+  * Bug fixes:
+    + Corrected manifest and messages/services install destinations in
+      remake_ros_stack(), remake_ros_package(), and
+      remake_ros_package_generate()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 16 May 2013 14:56:00 +0100
+
 remake (1:0.6.2-191) lucid; urgency=low
 
   * Bug fixes:
