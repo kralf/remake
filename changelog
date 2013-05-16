@@ -1,3 +1,15 @@
+remake (1:0.6.2-190) lucid; urgency=low
+
+  * Bug fixes:
+    + remake_git_revision() now provides a revision number for
+      ${CMAKE_SOURCE_DIR}, allowing for multi-project repositories
+      to generate valid patch versions
+    + remake_ros_package_add_messages() and remake_ros_package_add_services()
+      complemented with remake_ros_package_add_generated() to fix target
+      conflicts and correctly generate the Python distribution
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 16 May 2013 07:47:00 +0100
+
 remake (1:0.6.2-189) lucid; urgency=low
 
   * Bug fixes:

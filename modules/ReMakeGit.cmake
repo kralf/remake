@@ -72,7 +72,7 @@ macro(remake_git_revision git_var)
 
     if(git_toplevel)
       execute_process(
-        COMMAND ${GIT_EXECUTABLE} rev-list HEAD
+        COMMAND ${GIT_EXECUTABLE} rev-list HEAD ${CMAKE_SOURCE_DIR}
         WORKING_DIRECTORY ${git_toplevel}
         RESULT_VARIABLE git_result
         OUTPUT_VARIABLE git_list)
@@ -124,13 +124,14 @@ macro(remake_git_log git_file)
     remake_file(git_head ${REMAKE_GIT_DIR}/head)
     add_custom_command(
       OUTPUT ${git_head}
-      COMMAND ${GIT_EXECUTABLE} rev-list HEAD > ${git_head} VERBATIM
+      COMMAND ${GIT_EXECUTABLE} rev-list HEAD
+        ${CMAKE_SOURCE_DIR} > ${git_head} VERBATIM
       WORKING_DIRECTORY ${git_toplevel}
       DEPENDS ${git_toplevel}/.git/HEAD
       COMMENT "Retrieving Git head commit")
     remake_component_add_command(
       OUTPUT ${git_absolute} AS ${git_target}
-      COMMAND ${GIT_EXECUTABLE} log > ${git_absolute}
+      COMMAND ${GIT_EXECUTABLE} log ${CMAKE_SOURCE_DIR} > ${git_absolute}
       WORKING_DIRECTORY ${git_toplevel}
       DEPENDS ${git_head}
       COMMENT "Retrieving Git log messages"
