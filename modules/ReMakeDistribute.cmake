@@ -47,9 +47,9 @@ endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 #   then build from the sources by calling 'dpkg-buildpackage -S'. Note
 #   that the distribution may define multiple binaries, one for each Debian
 #   package defined by remake_pack_deb().
-#   \optional[value] DISTRIBUTION:distribution The name of the distribution
-#     for which the packages should be built, defaults to the output of
-#     lsb_release. This parameter is used for prefixing the version
+#   \optional[value] DISTRIBUTION:distribution The name of the Debian
+#     distribution for which the packages should be built, defaults to the
+#     output of lsb_release. This parameter is used for prefixing the version
 #     specified in the changelog file. Consult the archive maintainers for
 #     valid distribution names.
 #   \optional[value] ALIAS:alias An optional alias for the distribution name,

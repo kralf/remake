@@ -321,7 +321,10 @@ macro(remake_pack_deb)
     remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
 
-    remake_pack_binary(DEB COMPONENT ${pack_component} NAME ${pack_name})
+    remake_pack_binary(DEB
+      COMPONENT ${pack_component}
+      NAME ${pack_name}
+      ${DESCRIPTION})
 
     remake_target_name(pack_target ${pack_prefix}
       ${REMAKE_PACK_BINARY_TARGET_SUFFIX})
