@@ -657,7 +657,7 @@ macro(remake_file_configure)
         get_cmake_property(file_conf_globals VARIABLES)
         string(REGEX MATCHALL "\\\${[a-zA-Z_]*}" file_conf_vars
           ${file_conf_content})
-        list(REMOVE_DUPLICATES file_conf_vars)
+        remake_list_remove_duplicates(file_conf_vars)
 
         foreach(file_conf_var ${file_conf_vars})
           string(REGEX REPLACE "\\\${([a-zA-Z_]*)}" "\\1" file_conf_var

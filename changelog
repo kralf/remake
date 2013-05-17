@@ -1,3 +1,16 @@
+remake (1:0.6.2-193) lucid; urgency=low
+
+  * Several bug fixes in ReMakeROS:
+    + macro cleanups
+    + remake_ros_package_generate() now adds additional target dependencies,
+      make with multiple processes does not fail anymore
+    + remake_package_add_library/executable() sets target link flags
+      from libs-only-other reported by rospack (untested)
+    + remake_ros_pack_deb() does not create unnecessary packages,
+      therefore checks the newly implemented component variable EMPTY
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 17 May 2013 12:40:00 +0100
+
 remake (1:0.6.2-192) lucid; urgency=low
 
   * Bug fixes:

@@ -211,3 +211,16 @@ macro(remake_list_string list_name list_var)
     remake_list_push(${list_var} ${list_ouput})
   endforeach()
 endmacro(remake_list_string)
+
+### \brief Remove duplicate list elements.
+#   This macro employs CMake's list() to remove duplicate elements from the
+#   specified list. As opposed to the native CMake implementation, it
+#   does however check if the list is empty prior to calling list(). See
+#   the CMake documentation for details.
+#   \required[value] list The name of the list to remove all duplicate
+#     elements from.
+macro(remake_list_remove_duplicates list_name)
+  if(${list_name})
+    list(REMOVE_DUPLICATES ${list_name})
+  endif(${list_name})
+endmacro(remake_list_remove_duplicates)

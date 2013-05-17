@@ -264,7 +264,7 @@ macro(remake_find_result find_package)
         endif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
       endif(find_files)
       if(find_candidates)
-        list(REMOVE_DUPLICATES find_candidates)
+        remake_list_remove_duplicates(find_candidates)
         string(REGEX REPLACE ";" ", " find_candidates "${find_candidates}")
         remake_set(find_message
           "${find_message}\nInstallation candidate(s): ${find_candidates}")

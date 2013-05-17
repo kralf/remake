@@ -98,9 +98,13 @@ macro(remake_component component_name)
     
     if(component_default)
       remake_set(REMAKE_DEFAULT_COMPONENT ${component_name})
+      remake_component_set(${component_name} EMPTY ON CACHE INTERNAL
+        "Flag indicating ${component_name} component is empty.")
       remake_component_set(${component_name} BUILD ON CACHE INTERNAL
         "Build ${component_name} component.")
     else(component_default)
+      remake_component_set(${component_name} EMPTY ON CACHE INTERNAL
+        "Flag indicating ${component_name} component is empty.")
       remake_component_set(${component_name} BUILD ON CACHE BOOL
         "Build ${component_name} component.")
       if(component_filename)
@@ -537,6 +541,12 @@ macro(remake_component_install)
       remake_component_set(${component_name} LIBRARIES ${component_libraries}
         CACHE INTERNAL "List of ${component_name} component libraries.")
     endif("${component_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;LIBRARY.*$")
+
+    remake_component_get(${component_name} EMPTY OUTPUT component_empty)
+    if(component_empty)
+      remake_component_set(${component_name} EMPTY OFF CACHE INTERNAL
+        "Flag indicating ${component_name} component is empty.")
+    endif(component_empty)
 
     if(component_install_dest)
       install(${component_args}
