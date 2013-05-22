@@ -1417,7 +1417,7 @@ macro(remake_ros_package_add_executable ros_name)
 
   if(ros_link_flags)
     set_target_properties(${ros_name} PROPERTIES LINK_FLAGS
-      "${ros_link_flags}")
+      "${ros_link_flags}" INSTALL_RPATH_USE_LINK_PATH ON)
   endif(ros_link_flags)
 endmacro(remake_ros_package_add_executable)
 
@@ -1478,7 +1478,7 @@ macro(remake_ros_package_add_library ros_name)
 
   if(ros_link_flags)
     set_target_properties(${ros_name} PROPERTIES LINK_FLAGS
-      "${ros_link_flags}")
+      "${ros_link_flags}" INSTALL_RPATH_USE_LINK_PATH ON)
   endif(ros_link_flags)
 endmacro(remake_ros_package_add_library)
 

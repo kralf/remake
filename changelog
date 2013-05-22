@@ -1,3 +1,11 @@
+remake (1:0.6.2-194) lucid; urgency=low
+
+  * Added INSTALL_RPATH_USE_LINK_PATH property to targets defined through
+    remake_ros_package_add_executable() and remake_ros_package_add_library()
+    for rpath settings to take effect after installation
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 22 May 2013 10:56:00 +0100
+
 remake (1:0.6.2-193) lucid; urgency=low
 
   * Several bug fixes in ReMakeROS:
