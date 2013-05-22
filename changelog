@@ -1,3 +1,10 @@
+remake (1:0.6.2-195) lucid; urgency=low
+
+  * Fixed bug in remake_ros_package_add_dependencies() which would cause
+    internal build dependencies to remain unset
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 22 May 2013 17:17:00 +0100
+
 remake (1:0.6.2-194) lucid; urgency=low
 
   * Added INSTALL_RPATH_USE_LINK_PATH property to targets defined through

@@ -1011,12 +1011,12 @@ macro(remake_ros_package_add_dependencies ros_name)
           endif(${ros_library_dirs_var})
           remake_list_push(ros_link_flags ${${ros_link_flags_var}})
           remake_list_push(ros_build_deps_ext ${ros_dependency})
-          remake_list_push(ros_build_deps_ext ${ros_dependency})
         else(ros_index LESS 0)
           remake_ros_package_get(${ros_dependency} INCLUDE_DIRS
             OUTPUT ros_include_dirs)
           include_directories(${ros_include_dirs})
           remake_list_push(${ros_link_flags_var} ${ros_dependency})
+          remake_list_push(ros_build_deps_int ${ros_dependency})
         endif(ros_index LESS 0)
 
         if(${ROS_DISTRIBUTION} STRLESS groovy)
