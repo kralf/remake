@@ -1766,7 +1766,7 @@ macro(remake_ros_distribute_deb)
 
   remake_unset(ros_build_deps)
   foreach(ros_build_dep ${ros_dependencies})
-    remake_var_name(ros_var ROS ${ros_run_dep} PATH)
+    remake_var_name(ros_var ROS ${ros_build_dep} PATH)
     remake_set(ros_manifest ${${ros_var}}/${REMAKE_ROS_PACKAGE_MANIFEST})
 
     string(REGEX REPLACE "_" "-" ros_build_dep ${ros_build_dep})
