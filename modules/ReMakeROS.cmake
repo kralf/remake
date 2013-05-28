@@ -1743,7 +1743,7 @@ endmacro(remake_ros_pack_deb)
 #   \optional[list] arg An optional list of additional arguments which shall
 #     be passed to remake_distribute_deb().
 macro(remake_ros_distribute_deb)
-  remake_arguments(PREFIX distribute_ VAR DISTRIBUTION ARGN args ${ARGN})
+  remake_arguments(PREFIX ros_ VAR DISTRIBUTION ARGN args ${ARGN})
   execute_process(COMMAND lsb_release -c -s
     OUTPUT_VARIABLE ros_release OUTPUT_STRIP_TRAILING_WHITESPACE)
   remake_set(ros_distribution SELF DEFAULT ${ros_release})

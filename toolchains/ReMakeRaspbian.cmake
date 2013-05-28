@@ -20,9 +20,9 @@
 
 ### \brief ReMake Raspbian toolchain file
 #   The ReMake Raspbian toolchain file configures the cross-build
-#   environment for armv6k architectures such as the Raspberry Pi.
-#   It requires the Linaro tools and binaries to be installed in
-#   the standard location.
+#   environment for armv6 architectures such as the Raspberry Pi.
+#   It requires the cross-compile toolchain and binaries to be installed
+#   in the standard multi-arch locations.
 #
 #   \usage cmake -DCMAKE_TOOLCHAIN_FILE=ReMakeRaspbian <CMAKE_SOURCE_DIR>
 
@@ -30,8 +30,8 @@ set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_PROCESSOR armv6k)
 
-set(CMAKE_C_COMPILER arm-linux-gnueabihf-gcc-4.7)
-set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++-4.7)
+set(CMAKE_C_COMPILER arm-linux-gnueabihf-gcc)
+set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++)
 
 set(CMAKE_C_FLAGS "-marm -march=armv6 -mfpu=vfp -mfloat-abi=hard"
   CACHE STRING "Flags used by the compiler during all build types.")

@@ -1,6 +1,6 @@
 ############################################################################
-#    Copyright (c) 2010-2011 by Ethan Rublee                               #
-#    Copyright (c) 2011-2013 by Andrey Kamaev                              #
+#    Copyright (C) 2010-2011 by Ethan Rublee                               #
+#    Copyright (C) 2011-2013 by Andrey Kamaev                              #
 #    Copyright (C) 2013 by Ralf Kaestner                                   #
 #    ralf.kaestner@gmail.com                                               #
 #                                                                          #
