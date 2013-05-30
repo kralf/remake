@@ -44,7 +44,11 @@ endif(NOT DEFINED REMAKE_FIND_CMAKE)
 #   \optional[option] CONFIG If present, this option causes the macro to
 #     call CMake's pkg_check_modules() instead of find_package(). With no
 #     additional arguments provided, the package name is passed as
-#     module name to pkg_check_modules().
+#     module name to pkg_check_modules(). Note that, when cross-compiling,
+#     the default pkg-config system root directory and search directory may
+#     be overridden by the toolchain variables
+#     ${REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR} and
+#     ${REMAKE_FIND_PKG_CONFIG_LIBRARY_DIR}, respectively.
 #   \optional[value] ALIAS:alias An optional package alias that is used for
 #     evaluating if ${ALIAS}_FOUND is set to TRUE. The alias has to be
 #     provided in cases where the package name differs from the variable
@@ -57,24 +61,41 @@ endif(NOT DEFINED REMAKE_FIND_CMAKE)
 macro(remake_find_package find_package)
   remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS OPTION OPTIONAL
     ARGN args ${ARGN})
+  remake_var_name(find_package_var ${find_package} FOUND)
 
-  if(find_config)
-    remake_var_name(find_package_var ${find_package})
-    remake_set(find_args SELF DEFAULT ${find_package})
-    pkg_check_modules(${find_package_var} ${find_args})
-    remake_find_result(${find_package} ${${find_package_var}_FOUND}
-      TYPE package ${OPTIONAL})
-  else(find_config)
-    if(find_alias)
-      remake_var_name(find_package_var ${find_alias} FOUND)
-    else(find_alias)
-      remake_var_name(find_package_var ${find_package} FOUND)
-    endif(find_alias)
-    find_package(${find_package} ${find_args})
+  if(NOT ${find_package_var})
+    if(find_config)
+      remake_var_name(find_package_var ${find_package})
+      remake_set(find_args SELF DEFAULT ${find_package})
 
-    remake_find_result(${find_package} ${${find_package}_FOUND}
-      ${${find_package_var}} ${OPTIONAL})
-  endif(find_config)
+      if(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR)
+        remake_set(ENV{PKG_CONFIG_SYSROOT_DIR}
+          ${REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR})
+      endif(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR)
+      if(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
+        string(REGEX REPLACE ";" ":" PKG_CONFIG_PATH
+          "${REMAKE_FIND_PKG_CONFIG_DIR}")
+        remake_set(ENV{PKG_CONFIG_PATH} ${PKG_CONFIG_PATH})
+        string(REGEX REPLACE ";" ":" PKG_CONFIG_LIBDIR
+          "${REMAKE_FIND_PKG_CONFIG_DIR}")
+        remake_set(ENV{PKG_CONFIG_LIBDIR} ${PKG_CONFIG_LIBDIR})
+      endif(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
+
+      pkg_check_modules(${find_package_var} ${find_args})
+      remake_find_result(${find_package} ${${find_package_var}_FOUND}
+        TYPE package ${OPTIONAL})
+    else(find_config)
+      if(find_alias)
+        remake_var_name(find_package_var ${find_alias} FOUND)
+      else(find_alias)
+        remake_var_name(find_package_var ${find_package} FOUND)
+      endif(find_alias)
+      find_package(${find_package} ${find_args})
+
+      remake_find_result(${find_package} ${${find_package}_FOUND}
+        ${${find_package_var}} ${OPTIONAL})
+    endif(find_config)
+  endif(NOT ${find_package_var})
 endmacro(remake_find_package)
 
 ### \brief Find a library and it's header file.

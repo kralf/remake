@@ -1,3 +1,17 @@
+remake (1:0.6.2-198) lucid; urgency=low
+
+  * Revised Raspbian toolchain
+  * Added FORCE_LINK argument to remake_add_library(), allowing to
+    link with the --no-as-needed linker flag set
+  * Fixed remake_debug() to correctly display environment variables
+  * Extended remake_find_package() to obey toolchain file settings
+    for the pkg-config system root and search directories
+  * Changed remake_ros() behavior for non-existing directories in the
+    ROS_PACKAGE_PATH (now generating a warning instead of a fatal error)
+  * Added FORCE_CONSISTENCY option to remake_distribute_deb()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 30 May 2013 09:54:00 +0100
+
 remake (1:0.6.2-197) lucid; urgency=low
 
   * Fixed another bug in remake_ros_distribute_deb() (missing build

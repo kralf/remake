@@ -104,10 +104,16 @@ endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 #   \optional[list] EXCLUDE:pattern An optional list of patterns passed to
 #     remake_pack_source_archive(), matching additional files or directories
 #     in the source tree which shall not be distributed.
+#   \optional[option] FORCE_CONSISTENCY With this option being present, the
+#     macro will not validate consistency of the changelog file against the
+#     project settings. Note that use of the option is thus strongly
+#     discouraged, except in rare cases where the changelog content needs
+#     to be adapted during the run of CMake.
 macro(remake_distribute_deb)
-  remake_arguments(PREFIX distribute_ VAR DISTRIBUTION VAR ALIAS VAR SECTION
-    VAR ARCH VAR PRIORITY VAR CHANGELOG VAR URGENCY VAR COMPATIBILITY
-    LIST DEPENDS LIST PASS LIST DEFINE VAR UPLOAD LIST EXCLUDE ${ARGN})
+  remake_arguments(PREFIX distribute_ VAR DISTRIBUTION VAR ALIAS
+    VAR SECTION VAR ARCH VAR PRIORITY VAR CHANGELOG VAR URGENCY
+    VAR COMPATIBILITY LIST DEPENDS LIST PASS LIST DEFINE VAR UPLOAD
+    LIST EXCLUDE OPTION FORCE_CONSISTENCY ${ARGN})
   remake_set(distribute_section SELF DEFAULT misc)
   remake_set(distribute_arch SELF DEFAULT any)
   remake_set(distribute_priority SELF DEFAULT extra)
@@ -131,11 +137,13 @@ macro(remake_distribute_deb)
   remake_set(distribute_parameters ${REMAKE_PROJECT_FILENAME}
     "(${REMAKE_PROJECT_VERSION})" "urgency=${distribute_urgency}")
 
-  if(NOT "${distribute_changelog_parameters}" STREQUAL
+  if(NOT distribute_force_consistency)
+    if(NOT "${distribute_changelog_parameters}" STREQUAL
+        "${distribute_parameters}")
+      message(FATAL_ERROR "Changelog not consistent with the project settings!")
+    endif(NOT "${distribute_changelog_parameters}" STREQUAL
       "${distribute_parameters}")
-    message(FATAL_ERROR "Changelog not consistent with the project settings!")
-  endif(NOT "${distribute_changelog_parameters}" STREQUAL
-    "${distribute_parameters}")
+  endif(NOT distribute_force_consistency)
 
   remake_set(distribute_version
     "${REMAKE_PROJECT_VERSION}~${distribute_alias}")

@@ -125,10 +125,17 @@ endmacro(remake_add_modules)
 #     to ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 #   \optional[list] LINK:lib The list of libraries to be linked into the
 #     library target.
+#   \optional[list] FORCE_LINK:lib The list of libraries to be linked into
+#     the library target with the --no-as-needed linker flag set. The
+#     conventional change in GCC 4.7 gave rise to this special argument
+#     which enforces recursive linking of seemingly unneeded libraries into
+#     executable targets, although no explicit use of the linked libraries'
+#     symbols is made. The argument may thus be useful in cases where the
+#     prototype pattern intentionally hides symbol usage from the compiler.
 macro(remake_add_library remake_name)
   remake_arguments(PREFIX remake_ LIST GENERATED LIST DEPENDS VAR TYPE
     OPTION RECURSE VAR INSTALL VAR COMPONENT VAR PREFIX VAR SUFFIX ARGN
-    globs LIST LINK ${ARGN})
+    globs LIST LINK LIST FORCE_LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_set(remake_type SELF DEFAULT SHARED)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
@@ -148,9 +155,8 @@ macro(remake_add_library remake_name)
   if(REMAKE_BRANCH_BUILD)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
     remake_branch_link(remake_link TARGET ${remake_name} ${remake_link})
-    if(remake_link)
-      remake_set(LINK LINK ${remake_link})
-    endif(remake_link)
+    remake_branch_link(remake_force_link TARGET ${remake_name}
+      ${remake_force_link})
     remake_branch_add_targets(${remake_name})
   endif(REMAKE_BRANCH_BUILD)
 
@@ -172,12 +178,16 @@ macro(remake_add_library remake_name)
     remake_define(PLUGINS QUOTED "${CMAKE_INSTALL_PREFIX}/${remake_plugins}")
   endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
 
+  if(remake_force_link)
+    remake_list_push(remake_link -Wl,-no-as-needed ${remake_force_link})
+  endif(remake_force_link)
+
   remake_component_build(
     LIBRARY ${remake_name}${remake_suffix}
     ${remake_type} ${remake_sources} ${remake_target_sources}
       ${remake_generated}
     OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
-    ${LINK}
+    LINK ${remake_link}
     COMPONENT ${remake_component})
   if(remake_generated)
     set_source_files_properties(${remake_generated} PROPERTIES GENERATED ON)

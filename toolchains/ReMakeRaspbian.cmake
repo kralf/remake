@@ -25,10 +25,29 @@
 #   in the standard multi-arch locations.
 #
 #   \usage cmake -DCMAKE_TOOLCHAIN_FILE=ReMakeRaspbian <CMAKE_SOURCE_DIR>
+#
+#   The ReMake Raspbian toolchain may be used to build against foreign
+#   chroot jails which have been installed via debootstrap. Therefore, the
+#   variable ${RASPBIAN_ROOT} should be pointed to the root directory of
+#   the jail.
+#
+#   \variable RASPBIAN_ROOT The path to the chroot jail containing the
+#     foreign Raspbian (or compatible) binaries. Can be set as environment
+#     variable or at first CMake run.
+
+if(ENV{RASPBIAN_ROOT})
+  set(RASPBIAN_ROOT $ENV{RASPBIAN_ROOT})
+endif(ENV{RASPBIAN_ROOT})
+
+if(RASPBIAN_ROOT)
+  set(RASPBIAN_ROOT "${RASPBIAN_ROOT}" CACHE INTERNAL
+    "Path to the chroot jail containing the Raspbian binaries.")
+endif(RASPBIAN_ROOT)
+set(RASPBIAN_LLVM_TRIPLET arm-linux-gnueabihf)
 
 set(CMAKE_SYSTEM_NAME Linux)
 set(CMAKE_SYSTEM_VERSION 1)
-set(CMAKE_SYSTEM_PROCESSOR armv6k)
+set(CMAKE_SYSTEM_PROCESSOR armv6)
 
 set(CMAKE_C_COMPILER arm-linux-gnueabihf-gcc)
 set(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++)
@@ -38,10 +57,53 @@ set(CMAKE_C_FLAGS "-marm -march=armv6 -mfpu=vfp -mfloat-abi=hard"
 set(CMAKE_CXX_FLAGS "-marm -march=armv6 -mfpu=vfp -mfloat-abi=hard"
   CACHE STRING "Flags used by the compiler during all build types.")
 
-set(CMAKE_FIND_ROOT_PATH /usr/arm-linux-gnueabihf)
-
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
-set(REMAKE_PACK_DEBIAN_ARCHITECTURE armhf)
+if(RASPBIAN_ROOT)
+  set(CMAKE_FIND_ROOT_PATH ${RASPBIAN_ROOT})
+  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+
+  set(REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR ${RASPBIAN_ROOT}
+    CACHE INTERNAL "The pkg-config system root directory.")
+  set(REMAKE_FIND_PKG_CONFIG_DIR
+    ${RASPBIAN_ROOT}/usr/lib/pkgconfig
+    ${RASPBIAN_ROOT}/usr/lib/${RASPBIAN_LLVM_TRIPLET}/pkgconfig
+    CACHE INTERNAL "The pkg-config search directory.")
+
+  set(RASPBIAN_INCLUDE_DIRECTORIES
+    /usr/${RASPBIAN_LLVM_TRIPLET}/include
+    ${RASPBIAN_ROOT}/usr/include)
+  set(RASPBIAN_LINK_DIRECTORIES
+    ${RASPBIAN_ROOT}/lib
+    ${RASPBIAN_ROOT}/usr/lib
+    ${RASPBIAN_ROOT}/lib/${RASPBIAN_LLVM_TRIPLET}
+    ${RASPBIAN_ROOT}/usr/lib/${RASPBIAN_LLVM_TRIPLET})
+
+  set(CMAKE_EXE_LINKER_FLAGS "-L/usr/${RASPBIAN_LLVM_TRIPLET}/lib")
+  set(CMAKE_EXE_LINKER_FLAGS
+    "${CMAKE_EXE_LINKER_FLAGS} -Wl,-allow-shlib-undefined")
+  string(REGEX REPLACE ";" ",-rpath-link=" RASPBIAN_RPATH
+    "-Wl,-rpath-link=${RASPBIAN_LINK_DIRECTORIES}")
+  set(CMAKE_EXE_LINKER_FLAGS
+    "${CMAKE_EXE_LINKER_FLAGS} ${RASPBIAN_RPATH}")
+  set(CMAKE_MODULE_LINKER_FLAGS "-L/usr/${RASPBIAN_LLVM_TRIPLET}/lib")
+  set(CMAKE_SHARED_LINKER_FLAGS "-L/usr/${RASPBIAN_LLVM_TRIPLET}/lib")
+
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}"
+    CACHE STRING "Flags used by the linker.")
+  set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}"
+    CACHE STRING "Flags used by the linker during the creation of dll's.")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}"
+    CACHE STRING "Flags used by the linker during the creation of modules.")
+
+  include_directories(SYSTEM ${RASPBIAN_INCLUDE_DIRECTORIES})
+  link_directories(${RASPBIAN_LINK_DIRECTORIES})
+else(RASPBIAN_ROOT)
+  set(CMAKE_FIND_ROOT_PATH /usr/${RASPBIAN_LLVM_TRIPLET})
+  set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+  set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+endif(RASPBIAN_ROOT)
+
+set(REMAKE_PACK_DEBIAN_ARCHITECTURE armhf
+  CACHE INTERNAL "The architecture used for creating Debian packages.")
