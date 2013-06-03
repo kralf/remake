@@ -500,6 +500,9 @@ endmacro(remake_add_headers)
 #   a list of glob expressions.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the scripts.
+#   \optional[value] INSTALL:dirname The optional directory that shall be
+#     passed as the scripts' install destination relative to the component's
+#     ${SCRIPT_DESTINATION}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_install(). If the component
 #     does not yet exist in the project, it will be defined by calling
@@ -512,15 +515,21 @@ endmacro(remake_add_headers)
 #     to the script names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_scripts)
-  remake_arguments(PREFIX remake_ VAR COMPONENT VAR PREFIX VAR SUFFIX
-    ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR PREFIX
+    VAR SUFFIX ARGN globs ${ARGN})
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
   remake_component(${remake_component})
+  remake_component_get(${remake_component} SCRIPT_DESTINATION DESTINATION)
+  if(remake_install)
+    if(NOT IS_ABSOLUTE ${remake_install})
+      remake_set(remake_install ${SCRIPT_DESTINATION}/${remake_install})
+    endif(NOT IS_ABSOLUTE ${remake_install})
+  else(remake_install)
+    remake_set(remake_install ${SCRIPT_DESTINATION})
+  endif(remake_install)
   remake_component_get(${remake_component} SCRIPT_PREFIX
     OUTPUT remake_script_prefix)
-  remake_component_get(${remake_component} SCRIPT_DESTINATION
-    OUTPUT remake_script_install)
   if(NOT DEFINED remake_prefix)
     remake_set(remake_prefix ${remake_script_prefix})
   endif(NOT DEFINED remake_prefix)
@@ -538,7 +547,7 @@ macro(remake_add_scripts)
       ${remake_script} ${remake_suffix} STRIP)
     remake_component_install(
       PROGRAMS ${remake_script}
-      DESTINATION ${remake_script_install}
+      DESTINATION ${remake_install}
       RENAME ${remake_prefix}${remake_script_suffixed}
       COMPONENT ${remake_component})
   endforeach(remake_script)

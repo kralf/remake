@@ -1,3 +1,9 @@
+remake (1:0.6.2-199) lucid; urgency=low
+
+  * Added INSTALL argument to remake_add_scripts()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 03 Jun 2013 16:38:00 +0100
+
 remake (1:0.6.2-198) lucid; urgency=low
 
   * Revised Raspbian toolchain
