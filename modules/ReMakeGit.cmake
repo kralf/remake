@@ -42,11 +42,10 @@ endif(NOT DEFINED REMAKE_GIT_CMAKE)
 #   \required[value] variable The name of a variable to be assigned the
 #     revision number.
 macro(remake_git_revision git_var)
-  if(DEFINED GIT_REVISION)
-    remake_set(git_revision ${GIT_REVISION})
-  else(DEFINED GIT_REVISION)
+  remake_project_get(GIT_REVISION OUTPUT git_revision)
+  if(NOT DEFINED git_revision)
     remake_set(git_revision 0)
-  endif(DEFINED GIT_REVISION)
+  endif(NOT DEFINED git_revision)
 
   remake_project_set(GIT_REVISION ${git_revision} CACHE STRING
     "Git revision of project sources.")
@@ -82,8 +81,10 @@ macro(remake_git_revision git_var)
         string(REGEX REPLACE ";$" "" git_list "${git_list}")
         list(LENGTH git_list git_length)
 
-        remake_project_set(GIT_REVISION ${git_length}
-          CACHE STRING "Git revision of project sources." FORCE)
+        if(git_length)
+          remake_project_set(GIT_REVISION ${git_length}
+            CACHE STRING "Git revision of project sources." FORCE)
+        endif(git_length)
       endif(${git_result} EQUAL 0)
     endif(git_toplevel)
   endif(GIT_FOUND)

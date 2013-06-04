@@ -1,3 +1,12 @@
+remake (1:0.6.2-200) lucid; urgency=low
+
+  * Fixed bug in remake_git_revision() which would cause the GIT_REVISION
+    project variable passed from the command-line to be overridden when
+    building in the distribution directories
+  * Fixed the prospectively same issue in remake_svn_revision()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 03 Jun 2013 16:38:00 +0100
+
 remake (1:0.6.2-199) lucid; urgency=low
 
   * Added INSTALL argument to remake_add_scripts()

@@ -41,11 +41,10 @@ endif(NOT DEFINED REMAKE_SVN_CMAKE)
 #   \required[value] variable The name of a variable to be assigned the
 #     revision number.
 macro(remake_svn_revision svn_var)
-  if(DEFINED SUBVERSION_REVISION)
-    remake_set(svn_revision ${SUBVERSION_REVISION})
-  else(DEFINED SUBVERSION_REVISION)
+  remake_project_get(SUBVERSION_REVISION OUTPUT svn_revision)
+  if(NOT DEFINED svn_revision)
     remake_set(svn_revision 0)
-  endif(DEFINED SUBVERSION_REVISION)
+  endif(NOT DEFINED svn_revision)
 
   remake_project_set(SUBVERSION_REVISION ${svn_revision} CACHE STRING
     "Subversion revision of project sources.")
@@ -60,8 +59,11 @@ macro(remake_svn_revision svn_var)
       if(${svn_result} EQUAL 0)
         string(REGEX REPLACE ".*Revision: ([0-9]*).*" "\\1"
           svn_revision ${svn_info})
-        remake_project_set(SUBVERSION_REVISION ${svn_revision}
-          CACHE STRING "Subversion revision of project sources." FORCE)
+
+        if(svn_revision)
+          remake_project_set(SUBVERSION_REVISION ${svn_revision}
+            CACHE STRING "Subversion revision of project sources." FORCE)
+        endif(svn_revision)
       endif(${svn_result} EQUAL 0)
     endif(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/.svn)
   endif(SUBVERSION_FOUND)
