@@ -1,3 +1,11 @@
+remake (1:0.6.2-201) lucid; urgency=low
+
+  * Fixed distribution alias naming in remake_ros_distribute_deb()
+    (hyphens would be interpreted to lead-in the Debian revision if
+    used as prefix to the version string)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 04 Jun 2013 18:23:00 +0100
+
 remake (1:0.6.2-200) lucid; urgency=low
 
   * Fixed bug in remake_git_revision() which would cause the GIT_REVISION
@@ -5,7 +13,7 @@ remake (1:0.6.2-200) lucid; urgency=low
     building in the distribution directories
   * Fixed the prospectively same issue in remake_svn_revision()
 
- -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 03 Jun 2013 16:38:00 +0100
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 04 Jun 2013 10:00:00 +0100
 
 remake (1:0.6.2-199) lucid; urgency=low
 

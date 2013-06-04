@@ -1779,7 +1779,7 @@ macro(remake_ros_distribute_deb)
 
   remake_distribute_deb(
     DISTRIBUTION ${ros_distribution}
-    ALIAS ${ros_distribution}-${ROS_DISTRIBUTION}
+    ALIAS ${ros_distribution}+${ROS_DISTRIBUTION}
     DEPENDS ${ros_build_deps} ${ros_extra_build_deps}
     PASS CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH
       ROS_DISTRIBUTION
