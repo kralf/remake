@@ -1,3 +1,15 @@
+remake (1:0.6.2-202) lucid; urgency=low
+
+  * New features:
+    + Added missing dependency control fields to remake_pack_deb()
+      (may not be considered by CPack, though)
+  * Bug fixes:
+    + Added top-level debian directory to list of source package
+      exclusions in remake_distribute_deb() (may interfere with the
+      distribution's debian directory)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 05 Jun 2013 13:18:00 +0100
+
 remake (1:0.6.2-201) lucid; urgency=low
 
   * Fixed distribution alias naming in remake_ros_distribute_deb()

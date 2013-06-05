@@ -238,6 +238,20 @@ endmacro(remake_pack_source)
 #     with ${REMAKE_PROJECT_VERSION}. In the second case, the dependency
 #     may be passed as regular expression. Failure to match such expression
 #     will result in a fatal error.
+#   \optional[list] PREDEPENDS:pkg An optional list of mandatory package
+#     dependencies that are matched and inscribed into the package manifest.
+#     Pre-dependencies are similar to regular dependencies, except that the
+#     packaging system will be told to complete the installation of these
+#     packages before attempting to install the defined package. The format
+#     of a pre-dependency should comply to Debian conventions, meaning
+#     that an entry is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
+#     requires each pre-dependency to match against another binary package
+#     defined in a previous call to remake_pack_deb() or an installed
+#     package reported by dpkg on the build system. In the first case,
+#     the version of the pre-dependency should be omitted as it will be
+#     equated with ${REMAKE_PROJECT_VERSION}. In the second case, the
+#     pre-dependency may be passed as regular expression. Failure to match
+#     such expression will result in a fatal error.
 #   \optional[list] RECOMMENDS:pkg An optional list of recommended packages
 #     that are directly inscribed into the package manifest. The format of a
 #     recommendation should comply to Debian conventions, meaning that
@@ -247,14 +261,51 @@ endmacro(remake_pack_source)
 #     previous call to remake_pack_deb(). Therefore, a recommendation
 #     should generally be precise. As this is often difficult when
 #     attempting to build binary packages for several distributions, use
-#     of the DEPENDS argument is strongly encouraged.
+#     of the DEPENDS argument is strongly encouraged. Note that recommended
+#     packages would generally be installed together with the defined package
+#     in all but unusual cases.
+#   \optional[list] SUGGESTS:pkg An optional list of suggested packages
+#     that are directly inscribed into the package manifest. The format of a
+#     suggestion should comply to Debian conventions, meaning that
+#     an entry is of the form ${PACKAGE} [(>= ${VERSION})]. Suggested packages
+#     are not matched against the names of packages installed on the build
+#     system or defined in a previous call to remake_pack_deb(). They may
+#     perhaps enhance the usefulness of the defined package, but not installing
+#     is perfectly reasonable.
+#   \optional[list] ENHANCES:pkg An optional list of packages that are
+#     directly inscribed into the package manifest and meant to be enhanced
+#     by the defined package. The format of an enhancement should comply to
+#     Debian conventions and thus be of the form ${PACKAGE} [(>= ${VERSION})].
+#     Enhanced packages are not matched against the names of packages installed
+#     on the build system. They declare the opposite relationship to suggested
+#     packages.
+#   \optional[list] BREAKS:pkg An optional list of packages that are
+#     directly inscribed into the package manifest and suspected to be broken
+#     by the defined package. The format of a break should comply to Debian
+#     conventions and thus be of the form ${PACKAGE} [(>= ${VERSION})].
+#   \optional[list] CONFLICTS:pkg An optional list of packages that are
+#     directly inscribed into the package manifest and suspected to conflict
+#     with the defined package. The format of a conflict should comply to
+#     Debian conventions and thus be of the form ${PACKAGE} [(>= ${VERSION})].
+#     Conflicting packages generally pose stronger restrictions on package
+#     handling than breaks.
+#   \optional[list] REPLACES:pkg An optional list of packages that are
+#     directly inscribed into the package manifest and suspected to contain
+#     files which may be overwritten by the defined package. The format of a
+#     replacement should comply to Debian conventions and thus be of the form
+#     ${PACKAGE} [(>= ${VERSION})].
+#   \optional[list] PROVIDES:pkg An optional list of virtual packages that are
+#     directly inscribed into the package manifest. The mentioning of a virtual
+#     package should comply to Debian conventions and thus only contain the
+#     virtual package's name.
 #   \optional[list] EXTRA:glob An optional list of glob expressions matching
 #     extra control information files such as preinst, postinst, prerm, and
 #     postrm to be included in the Debian package's control section.
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT VAR DESCRIPTION
-    LIST DEPENDS LIST RECOMMENDS LIST EXTRA VAR PKG_CONFIG ARGN depends
-    ${ARGN})
+    LIST DEPENDS LIST PREDEPENDS LIST RECOMMENDS LIST SUGGESTS LIST ENHANCES 
+    LIST BREAKS LIST CONFLICTS LIST REPLACES LIST PROVIDES LIST EXTRA
+    ARGN depends ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)
@@ -278,45 +329,58 @@ macro(remake_pack_deb)
     remake_file_name(pack_file ${pack_name} ${REMAKE_PROJECT_FILENAME_VERSION}
       ${pack_arch})
 
-    remake_unset(pack_binary_deps)
+    remake_unset(pack_binary_deps pack_binary_predeps)
     remake_unset(pack_component_deps)
     remake_unset(pack_deb_packages)
-    foreach(pack_dependency ${pack_depends})
-      remake_debian_resolve_package("${pack_dependency}"
-        OUTPUT pack_component_dep)
+    remake_unset(pack_binary_prefix)
+    foreach(pack_dependency ${pack_depends} / ${pack_predepends})
+      if(NOT pack_dependency STREQUAL "/")
+        remake_debian_resolve_package("${pack_dependency}"
+          OUTPUT pack_component_dep)
 
-      if(pack_component_dep)
-        remake_list_push(pack_component_deps ${pack_component_dep})
-        remake_component_get(${pack_component_dep} FILENAME
-          OUTPUT pack_name_dep)
-        remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
-        remake_debian_compose_package(${pack_name_dep}
-          VERSION ${pack_version_dep} OUTPUT pack_dependency)
-      else(pack_component_dep)
-        remake_debian_find_package("${pack_dependency}" OUTPUT pack_deb_found)
+        if(pack_component_dep)
+          remake_list_push(pack_component_deps ${pack_component_dep})
+          remake_component_get(${pack_component_dep} FILENAME
+            OUTPUT pack_name_dep)
+          remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
+          remake_debian_compose_package(${pack_name_dep}
+            VERSION ${pack_version_dep} OUTPUT pack_dependency)
+        else(pack_component_dep)
+          remake_debian_find_package("${pack_dependency}" OUTPUT pack_deb_found)
 
-        list(LENGTH pack_deb_found pack_deb_length)
-        if(NOT pack_deb_length)
-          remake_set(pack_deb_message
-            "No package on build system matches dependency")
-          message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
-        elseif(pack_deb_length GREATER 1)
-          remake_set(pack_deb_message
-            "Multiple packages on build system match dependency")
-          message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
-        else(NOT pack_deb_length)
-          remake_set(pack_dependency ${pack_deb_found})
-        endif(NOT pack_deb_length)
-      endif(pack_component_dep)
+          list(LENGTH pack_deb_found pack_deb_length)
+          if(NOT pack_deb_length)
+            remake_set(pack_deb_message
+              "No package on build system matches dependency")
+            message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
+          elseif(pack_deb_length GREATER 1)
+            remake_set(pack_deb_message
+              "Multiple packages on build system match dependency")
+            message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
+          else(NOT pack_deb_length)
+            remake_set(pack_dependency ${pack_deb_found})
+          endif(NOT pack_deb_length)
+        endif(pack_component_dep)
 
-      remake_list_push(pack_binary_deps ${pack_dependency})
+        remake_list_push(pack_binary_${pack_binary_prefix}deps
+          ${pack_dependency})
+      else(NOT pack_dependency STREQUAL "/")
+        remake_set(pack_binary_prefix "pre")
+      endif(NOT pack_dependency STREQUAL "/")
     endforeach(pack_dependency)
 
     string(REPLACE ";" ", " pack_binary_deps "${pack_binary_deps}")
     string(REPLACE ";" ", " pack_recommends "${pack_recommends}")
     remake_file_glob(pack_extra ${pack_extra})
     remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_binary_deps})
+    remake_set(CPACK_DEBIAN_PACKAGE_PREDEPENDS ${pack_binary_predeps})
     remake_set(CPACK_DEBIAN_PACKAGE_RECOMMENDS ${pack_recommends})
+    remake_set(CPACK_DEBIAN_PACKAGE_SUGGESTS ${pack_suggests})
+    remake_set(CPACK_DEBIAN_PACKAGE_ENHANCES ${pack_enhances})
+    remake_set(CPACK_DEBIAN_PACKAGE_BREAKS ${pack_breaks})
+    remake_set(CPACK_DEBIAN_PACKAGE_CONFLICTS ${pack_conflicts})
+    remake_set(CPACK_DEBIAN_PACKAGE_REPLACES ${pack_replaces})
+    remake_set(CPACK_DEBIAN_PACKAGE_PROVIDES ${pack_provides})
     remake_set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA ${pack_extra})
     remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
     remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})

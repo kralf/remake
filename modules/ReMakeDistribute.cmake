@@ -103,7 +103,9 @@ endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 #     for valid host formats.
 #   \optional[list] EXCLUDE:pattern An optional list of patterns passed to
 #     remake_pack_source_archive(), matching additional files or directories
-#     in the source tree which shall not be distributed.
+#     in the source tree which shall not be distributed. By default,
+#     the list contains /debian/ to prevent possible conflicts with the
+#     distribution's debian directory.
 #   \optional[option] FORCE_CONSISTENCY With this option being present, the
 #     macro will not validate consistency of the changelog file against the
 #     project settings. Note that use of the option is thus strongly
@@ -126,7 +128,7 @@ macro(remake_distribute_deb)
   remake_set(distribute_compatibility SELF DEFAULT 7)
   remake_set(distribute_pass SELF
     DEFAULT CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH)
-  remake_set(distribute_exclude ${EXCLUDE})
+  remake_set(distribute_exclude SELF DEFAULT /debian/)
 
   remake_file_read(distribute_changelog_content ${distribute_changelog})
   string(REGEX REPLACE "([^\\\n]+).*" "\\1" distribute_changelog_header
@@ -255,20 +257,57 @@ macro(remake_distribute_deb)
         endforeach(distribute_dependency)
       endif(CPACK_DEBIAN_PACKAGE_DEPENDS)
 
-      string(REPLACE ";" ", " distribute_binary_depends
-        "${distribute_binary_depends}")
+      remake_unset(distribute_binary_predepends)
+      if(CPACK_DEBIAN_PACKAGE_PREDEPENDS)
+        string(REGEX REPLACE "[,][ ]*" ";" distribute_dependencies
+          ${CPACK_DEBIAN_PACKAGE_PREDEPENDS})
+
+        foreach(distribute_dependency ${distribute_dependencies})
+          remake_debian_resolve_package("${distribute_dependency}"
+            OUTPUT distribute_component_dep)
+
+          if(distribute_component_dep)
+            remake_debian_decompose_package("${distribute_dependency}"
+              OUTPUT_NAME distribute_name_dep
+              OUTPUT_VERSION distribute_version_dep)
+
+            remake_set(distribute_version_dep
+              "${distribute_version_dep}~${distribute_alias}")
+            remake_set(distribute_dependency
+              "${distribute_name_dep} (${distribute_version_dep})")
+          endif(distribute_component_dep)
+          remake_list_push(distribute_binary_predepends
+            ${distribute_dependency})
+        endforeach(distribute_dependency)
+      endif(CPACK_DEBIAN_PACKAGE_PREDEPENDS)
+
+      remake_set(distribute_control_common
+        "Recommends: ${CPACK_DEBIAN_PACKAGE_RECOMMENDS}"
+        "Suggests: ${CPACK_DEBIAN_PACKAGE_SUGGESTS}"
+        "Enhances: ${CPACK_DEBIAN_PACKAGE_ENHANCES}"
+        "Breaks: ${CPACK_DEBIAN_PACKAGE_BREAKS}"
+        "Conflicts: ${CPACK_DEBIAN_PACKAGE_CONFLICTS}"
+        "Replaces: ${CPACK_DEBIAN_PACKAGE_REPLACES}"
+        "Provides: ${CPACK_DEBIAN_PACKAGE_PROVIDES}"
+        "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
+
       remake_list_push(distribute_control_source
         "\nPackage: ${CPACK_PACKAGE_NAME}"
         "Architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}"
         "Depends: # Determined by build system"
-        "Recommends: ${CPACK_DEBIAN_PACKAGE_RECOMMENDS}"
-        "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
+        "Pre-Depends: # Determined by build system"
+        ${distribute_control_common})
+      string(REPLACE ";" ", " distribute_binary_depends
+        "${distribute_binary_depends}")
+      string(REPLACE ";" ", " distribute_binary_predepends
+        "${distribute_binary_predepends}")
       remake_list_push(distribute_control_release
         "\nPackage: ${CPACK_PACKAGE_NAME}"
         "Architecture: ${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}"
         "Depends: ${distribute_binary_depends}"
-        "Recommends: ${CPACK_DEBIAN_PACKAGE_RECOMMENDS}"
-        "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
+        "Pre-Depends: ${distribute_binary_predepends}"
+        ${distribute_control_common})
+
       remake_set(distribute_rule "\tDESTDIR=debian/${CPACK_PACKAGE_NAME}")
       remake_set(distribute_rule
         "${distribute_rule} cmake -DCOMPONENT=${distribute_component}")
@@ -315,7 +354,7 @@ macro(remake_distribute_deb)
       endif(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
     endif(${distribute_alias} STREQUAL ${RELEASE_DISTRIBUTION})
 
-    remake_pack_source_archive(GENERATOR TGZ ${distribute_exclude})
+    remake_pack_source_archive(GENERATOR TGZ EXCLUDE ${distribute_exclude})
     add_dependencies(${distribute_target} ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
     if(distribute_release_build)
