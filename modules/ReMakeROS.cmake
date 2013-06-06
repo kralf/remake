@@ -1173,6 +1173,10 @@ macro(remake_ros_package_generate ros_name)
   remake_find_executable(rosrun PATHS "${ROS_PATH}/bin")
 
   if(ROSRUN_FOUND AND ros_${ros_name}s)
+    remake_ros_package_add_dependencies(
+      ${ros_package}
+      BUILD_DEPENDS rosbash)
+
     remake_target_name(ros_manifest_targets
       ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
     remake_var_name(ros_${ros_name}_target_suffix_var
@@ -1776,6 +1780,8 @@ macro(remake_ros_distribute_deb)
 
     remake_list_push(ros_build_deps ${ros_build_dep})
   endforeach(ros_build_dep)
+
+  remake_list_remove_duplicates(ros_build_deps)
 
   remake_distribute_deb(
     DISTRIBUTION ${ros_distribution}

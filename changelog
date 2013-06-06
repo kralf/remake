@@ -1,3 +1,11 @@
+remake (1:0.6.2-204) lucid; urgency=low
+
+  * Modified remake_ros_package_generate() to include rosbash in the
+    build dependencies of the corresponding package (rosrun was
+    reported as missing when building on the PPA)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Jun 2013 20:10:00 +0100
+
 remake (1:0.6.2-203) lucid; urgency=low
 
   * Bug fixes:
