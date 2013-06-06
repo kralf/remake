@@ -281,14 +281,28 @@ macro(remake_distribute_deb)
         endforeach(distribute_dependency)
       endif(CPACK_DEBIAN_PACKAGE_PREDEPENDS)
 
+      string(REPLACE ";" ", " distribute_recommends
+        "${CPACK_DEBIAN_PACKAGE_RECOMMENDS}")
+      string(REPLACE ";" ", " distribute_suggests
+        "${CPACK_DEBIAN_PACKAGE_SUGGESTS}")
+      string(REPLACE ";" ", " distribute_enhances
+        "${CPACK_DEBIAN_PACKAGE_ENHANCES}")
+      string(REPLACE ";" ", " distribute_breaks
+        "${CPACK_DEBIAN_PACKAGE_BREAKS}")
+      string(REPLACE ";" ", " distribute_conflicts
+        "${CPACK_DEBIAN_PACKAGE_CONFLICTS}")
+      string(REPLACE ";" ", " distribute_replaces
+        "${CPACK_DEBIAN_PACKAGE_REPLACES}")
+      string(REPLACE ";" ", " distribute_provides
+        "${CPACK_DEBIAN_PACKAGE_PROVIDES}")
       remake_set(distribute_control_common
-        "Recommends: ${CPACK_DEBIAN_PACKAGE_RECOMMENDS}"
-        "Suggests: ${CPACK_DEBIAN_PACKAGE_SUGGESTS}"
-        "Enhances: ${CPACK_DEBIAN_PACKAGE_ENHANCES}"
-        "Breaks: ${CPACK_DEBIAN_PACKAGE_BREAKS}"
-        "Conflicts: ${CPACK_DEBIAN_PACKAGE_CONFLICTS}"
-        "Replaces: ${CPACK_DEBIAN_PACKAGE_REPLACES}"
-        "Provides: ${CPACK_DEBIAN_PACKAGE_PROVIDES}"
+        "Recommends: ${distribute_recommends}"
+        "Suggests: ${distribute_suggests}"
+        "Enhances: ${distribute_enhances}"
+        "Breaks: ${distribute_breaks}"
+        "Conflicts: ${distribute_conflicts}"
+        "Replaces: ${distribute_replaces}"
+        "Provides: ${distribute_provides}"
         "Description: ${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
 
       remake_list_push(distribute_control_source

@@ -1,3 +1,11 @@
+remake (1:0.6.2-203) lucid; urgency=low
+
+  * Bug fixes:
+    + Fixed remake_distribute_deb() to correctly enumerate packages
+      in control fields (comma instead of newline)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Jun 2013 10:41:00 +0100
+
 remake (1:0.6.2-202) lucid; urgency=low
 
   * New features:
