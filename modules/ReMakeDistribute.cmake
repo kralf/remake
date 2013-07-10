@@ -48,10 +48,10 @@ endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 #   that the distribution may define multiple binaries, one for each Debian
 #   package defined by remake_pack_deb().
 #   \optional[value] DISTRIBUTION:distribution The name of the Debian
-#     distribution for which the packages should be built, defaults to the
-#     output of lsb_release. This parameter is used for prefixing the version
-#     specified in the changelog file. Consult the archive maintainers for
-#     valid distribution names.
+#     distribution for which the packages should be built, defaults to
+#     ${REMAKE_DEBIAN_CODENAME}. This parameter is used for prefixing the
+#     version specified in the changelog file. Consult the archive maintainers
+#     for valid distribution names.
 #   \optional[value] ALIAS:alias An optional alias for the distribution name,
 #     defaulting to the actual name of the distribution. An alias can be
 #     used to distinguish build configurations for the same distribution,
@@ -120,9 +120,7 @@ macro(remake_distribute_deb)
   remake_set(distribute_arch SELF DEFAULT any)
   remake_set(distribute_priority SELF DEFAULT extra)
   remake_set(distribute_changelog SELF DEFAULT ${REMAKE_PROJECT_CHANGELOG})
-  execute_process(COMMAND lsb_release -c -s
-    OUTPUT_VARIABLE distribute_release OUTPUT_STRIP_TRAILING_WHITESPACE)
-  remake_set(distribute_distribution SELF DEFAULT ${distribute_release})
+  remake_set(distribute_distribution SELF DEFAULT ${REMAKE_DEBIAN_CODENAME})
   remake_set(distribute_alias SELF DEFAULT ${distribute_distribution})
   remake_set(distribute_urgency SELF DEFAULT low)
   remake_set(distribute_compatibility SELF DEFAULT 7)
@@ -183,11 +181,8 @@ macro(remake_distribute_deb)
       "debhelper (>= ${distribute_compatibility})" cmake)
     string(REGEX REPLACE ";" ", " distribute_depends "${distribute_depends}")
 
-    remake_project_set(RELEASE_DISTRIBUTION ${distribute_release} CACHE STRING
-      "Name of the distribution on release build system.")
-    remake_var_name(distribute_var ${REMAKE_PROJECT_NAME} RELEASE_DISTRIBUTION)
     remake_set(distribute_definitions
-      "-D${distribute_var}=${distribute_alias}")
+      "-DREMAKE_DEBIAN_CODENAME=${distribute_alias}")
     foreach(distribute_var ${distribute_pass})
       remake_set(distribute_definitions
         "${distribute_definitions} -D${distribute_var}=${${distribute_var}}")
@@ -322,12 +317,19 @@ macro(remake_distribute_deb)
         "Pre-Depends: ${distribute_binary_predepends}"
         ${distribute_control_common})
 
-      remake_set(distribute_rule "\tDESTDIR=debian/${CPACK_PACKAGE_NAME}")
-      remake_set(distribute_rule
-        "${distribute_rule} cmake -DCOMPONENT=${distribute_component}")
-      remake_set(distribute_rule
-        "${distribute_rule} -P ${distribute_install}/cmake_install.cmake")
-      remake_list_push(distribute_rules "${distribute_rule}")
+      list(LENGTH CPACK_INSTALL_CMAKE_PROJECTS distribute_install_length)
+      remake_set(distribute_install_index 2)
+      while(${distribute_install_index} LESS ${distribute_install_length})
+        list(GET CPACK_INSTALL_CMAKE_PROJECTS ${distribute_install_index}
+          distribute_extra_component)
+        remake_set(distribute_rule "\tDESTDIR=debian/${CPACK_PACKAGE_NAME}")
+        remake_set(distribute_rule
+          "${distribute_rule} cmake -DCOMPONENT=${distribute_extra_component}")
+        remake_set(distribute_rule
+          "${distribute_rule} -P ${distribute_install}/cmake_install.cmake")
+        remake_list_push(distribute_rules "${distribute_rule}")
+        math(EXPR distribute_install_index "${distribute_install_index}+4")
+      endwhile(${distribute_install_index} LESS ${distribute_install_length})
 
       remake_unset(distribute_extra_names)
       foreach(distribute_extra ${CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA})
@@ -357,16 +359,15 @@ macro(remake_distribute_deb)
       ${CMAKE_BINARY_DIR}/debian/${distribute_build_dir})
     remake_file_mkdir(${distribute_build_path})
 
-    remake_project_get(RELEASE_DISTRIBUTION)
-    remake_unset(distribute_release_build)
-    if(${distribute_alias} STREQUAL ${RELEASE_DISTRIBUTION})
+    remake_unset(distribute_release_build OFF)
+    if(${distribute_alias} STREQUAL ${REMAKE_DEBIAN_CODENAME})
       if(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
         remake_file_create(${CMAKE_SOURCE_DIR}/debian/control)
         remake_file_write(${CMAKE_SOURCE_DIR}/debian/control
           LINES ${distribute_control_release})
         remake_set(distribute_release_build ON)
       endif(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
-    endif(${distribute_alias} STREQUAL ${RELEASE_DISTRIBUTION})
+    endif(${distribute_alias} STREQUAL ${REMAKE_DEBIAN_CODENAME})
 
     remake_pack_source_archive(GENERATOR TGZ EXCLUDE ${distribute_exclude})
     add_dependencies(${distribute_target} ${REMAKE_PACK_ALL_SOURCE_TARGET})

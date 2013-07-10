@@ -19,7 +19,6 @@
 ############################################################################
 
 include(ReMakePrivate)
-include(ReMakeDebian)
 
 include(FindPkgConfig)
 
@@ -269,7 +268,7 @@ macro(remake_find_result find_package)
   
     if(find_name)
       remake_set(find_message
-        "Missing ${find_package} ${find_type} ${find_name}!")
+        "Missing ${find_type} ${find_name}!")
     else(find_name)
       remake_set(find_message "Missing ${find_type} ${find_package}!")
     endif(find_name)

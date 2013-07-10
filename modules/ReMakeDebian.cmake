@@ -20,14 +20,92 @@
 
 include(ReMakePrivate)
 include(ReMakeComponent)
+include(ReMakeFind)
 
 ### \brief ReMake Debian macros
 #   The ReMake Debian macros provide abstracted access to Debian-specific
 #   build system facilities.
+#
+#   \variable REMAKE_DEBIAN_FOUND Indicates if ReMake believes to run in a
+#     Debian-compliant build environment.
+#   \variable REMAKE_DEBIAN_ARCHITECTURE The name of the system architecture
+#     as reported by the Debian package management. When cross-compiling,
+#     it should be initialized in the toolchain file.
+#   \variable REMAKE_DEBIAN_ID The distributor's ID of the build system's 
+#     Debian distribution.
+#   \variable REMAKE_DEBIAN_CODENAME The code name of the build system's 
+#     Debian distribution.
+#   \variable REMAKE_DEBIAN_RELEASE The release number of the build system's 
+#     Debian distribution.
 
 if(NOT DEFINED REMAKE_DEBIAN_CMAKE)
   remake_set(REMAKE_DEBIAN_CMAKE ON)
   remake_unset(REMAKE_DEBIAN_PACKAGES)
+  remake_unset(REMAKE_DEBIAN_ID)
+  remake_unset(REMAKE_DEBIAN_CODENAME)
+  remake_unset(REMAKE_DEBIAN_RELEASE)
+  
+  if(NOT DEFINED REMAKE_DEBIAN_FOUND)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      remake_find_executable(dpkg OPTIONAL QUIET)
+      if(DPKG_FOUND)
+        remake_set(REMAKE_DEBIAN_FOUND ON)
+        
+        execute_process(
+          COMMAND ${DPKG_EXECUTABLE} --print-architecture
+          RESULT_VARIABLE debian_result
+          OUTPUT_VARIABLE debian_arch
+          OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+        if(NOT debian_result)
+          remake_set(REMAKE_DEBIAN_ARCHITECTURE ${debian_arch})
+        endif(NOT debian_result)
+      else(DPKG_FOUND)
+        remake_set(REMAKE_DEBIAN_FOUND OFF)
+      endif(DPKG_FOUND)
+    else(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      remake_set(REMAKE_DEBIAN_FOUND OFF)
+    endif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+
+    if(REMAKE_DEBIAN_FOUND)
+      remake_find_executable(lsb_release OPTIONAL QUIET)
+      if(LSB_RELEASE_FOUND)
+        execute_process(
+          COMMAND ${LSB_RELEASE_EXECUTABLE} -i -s
+          OUTPUT_VARIABLE REMAKE_DEBIAN_ID
+          OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+        execute_process(
+          COMMAND ${LSB_RELEASE_EXECUTABLE} -c -s
+          OUTPUT_VARIABLE REMAKE_DEBIAN_CODENAME
+          OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+        execute_process(
+          COMMAND ${LSB_RELEASE_EXECUTABLE} -r -s
+          OUTPUT_VARIABLE REMAKE_DEBIAN_RELEASE
+          OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+      endif(LSB_RELEASE_FOUND)
+    endif(REMAKE_DEBIAN_FOUND)
+    
+    remake_set(REMAKE_DEBIAN_FOUND ${REMAKE_DEBIAN_FOUND}
+      CACHE BOOL "Build system is a Debian derivate.")
+    remake_set(REMAKE_DEBIAN_ARCHITECTURE ${REMAKE_DEBIAN_ARCHITECTURE}
+      CACHE STRING "Architecture reported by the Debian package management.")
+    remake_set(REMAKE_DEBIAN_ID ${REMAKE_DEBIAN_ID}
+      CACHE STRING "Distributor's ID of the Debian distribution.")
+    remake_set(REMAKE_DEBIAN_CODENAME ${REMAKE_DEBIAN_CODENAME}
+      CACHE STRING "Code name of the Debian distribution.")
+    remake_set(REMAKE_DEBIAN_RELEASE ${REMAKE_DEBIAN_RELEASE}
+      CACHE STRING "Release number of the Debian distribution.")
+      
+    if(REMAKE_DEBIAN_FOUND)
+      if(REMAKE_DEBIAN_ID)
+        remake_set(debian_description
+          "${REMAKE_DEBIAN_ID} ${REMAKE_DEBIAN_RELEASE}")
+        message(STATUS
+          "The build system is Debian (${debian_description})")
+      else(REMAKE_DEBIAN_ID)
+        message(STATUS "The build system is an unknown Debian derivate")
+      endif(REMAKE_DEBIAN_ID)
+    endif(REMAKE_DEBIAN_FOUND)
+  endif(NOT DEFINED REMAKE_DEBIAN_FOUND)
 endif(NOT DEFINED REMAKE_DEBIAN_CMAKE)
 
 ### \brief Compose a Debian-compliant package relationship specifier.
@@ -161,17 +239,16 @@ macro(remake_debian_find_package debian_specifier)
     OUTPUT_NAME debian_name OUTPUT_VERSION debian_version)
 
   foreach(debian_package ${REMAKE_DEBIAN_PACKAGES})
-    if("${debian_package}" MATCHES "^${debian_name}[\t].*$")
-      string(REGEX REPLACE "^(${debian_name})[\t].*$"
+    if("${debian_package}" MATCHES
+      "^${debian_name}[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t].*$")
+      string(REGEX REPLACE
+        "^(${debian_name})[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t].*$"
         "\\1" debian_package_name ${debian_package})
-      string(REGEX REPLACE "^${debian_name}[\t](.*)$"
+      string(REGEX REPLACE
+        "^${debian_name}[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t](.*)$"
         "\\1" debian_package_version ${debian_package})
 
       if(debian_version)
-        if(NOT DPKG_FOUND)
-          remake_find_executable(dpkg QUIET OPTIONAL)
-        endif(NOT DPKG_FOUND)
-
         if(DPKG_FOUND)
           string(REPLACE " " ";" debian_version_args ${debian_version})
           execute_process(
@@ -189,7 +266,8 @@ macro(remake_debian_find_package debian_specifier)
       else(debian_version)
         remake_list_push(${debian_find_output} ${debian_package_name})
       endif(debian_version)
-    endif("${debian_package}" MATCHES "^${debian_name}[\t].*$")
+    endif("${debian_package}" MATCHES
+      "^${debian_name}[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t].*$")
   endforeach(debian_package)
 
   if(DPKG_QUERY_FOUND)

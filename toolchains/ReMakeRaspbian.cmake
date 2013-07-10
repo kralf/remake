@@ -67,6 +67,7 @@ if(RASPBIAN_ROOT)
   set(REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR ${RASPBIAN_ROOT}
     CACHE INTERNAL "The pkg-config system root directory.")
   set(REMAKE_FIND_PKG_CONFIG_DIR
+    ${RASPBIAN_ROOT}/usr/share/pkgconfig
     ${RASPBIAN_ROOT}/usr/lib/pkgconfig
     ${RASPBIAN_ROOT}/usr/lib/${RASPBIAN_LLVM_TRIPLET}/pkgconfig
     CACHE INTERNAL "The pkg-config search directory.")
@@ -105,5 +106,5 @@ else(RASPBIAN_ROOT)
   set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
 endif(RASPBIAN_ROOT)
 
-set(REMAKE_PACK_DEBIAN_ARCHITECTURE armhf
-  CACHE INTERNAL "The architecture used for creating Debian packages.")
+set(REMAKE_DEBIAN_ARCHITECTURE armhf
+  CACHE STRING "The architecture reported by the Debian management.")

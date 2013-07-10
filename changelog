@@ -1,3 +1,14 @@
+remake (1:0.6.2-205) lucid; urgency=low
+
+  * Added EXTRA_COMPONENTS argument to remake_pack() and remake_pack_deb()
+    to allow for multi-component packaging
+  * Extended ReMakeDebian module by build system determination
+  * Made use of ReMakeDebian cache variables in ReMakePack, ReMakeDistribute,
+    and the ReMakeRaspbian toolchain
+  * Revised message output of remake_find_result()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 10 Jul 2013 11:06:00 +0100
+
 remake (1:0.6.2-204) lucid; urgency=low
 
   * Modified remake_ros_package_generate() to include rosbash in the

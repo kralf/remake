@@ -64,12 +64,15 @@ endif(NOT DEFINED REMAKE_PACK_CMAKE)
 #   \optional[value] COMPONENT:component The name of the install
 #     component to generate the binary package from, defaults to
 #     ${REMAKE_DEFAULT_COMPONENT}.
+#   \optional[list] EXTRA_COMPONENTS:component An optional list of
+#     additional install components to generate the binary package
+#     from.
 #   \optional[value] DESCRIPTION:string An optional description of the
 #     install component that is appended to the project summary when
 #     generating the package description.
 macro(remake_pack_binary pack_generator)
   remake_arguments(PREFIX pack_ VAR NAME VAR VERSION VAR COMPONENT
-    VAR DESCRIPTION ${ARGN})
+    LIST EXTRA_COMPONENTS VAR DESCRIPTION ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)
@@ -98,6 +101,10 @@ macro(remake_pack_binary pack_generator)
     remake_set(CPACK_GENERATOR ${pack_generator})
     remake_set(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR}
       ${REMAKE_PROJECT_NAME} ${pack_component} /)
+    foreach(pack_extra_component ${pack_extra_components})
+      remake_list_push(CPACK_INSTALL_CMAKE_PROJECTS ${CMAKE_BINARY_DIR}
+        ${REMAKE_PROJECT_NAME} ${pack_extra_component} /)
+    endforeach(pack_extra_component)
     remake_set(CPACK_SET_DESTDIR TRUE)
 
     remake_set(CPACK_PACKAGE_NAME ${pack_name})
@@ -113,10 +120,24 @@ macro(remake_pack_binary pack_generator)
       "${REMAKE_PROJECT_ADMIN} <${REMAKE_PROJECT_CONTACT}>")
 
     if(${pack_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
-      message(STATUS "Binary package: ${pack_name} (${pack_generator})")
+      if(pack_extra_components)
+        string(REGEX REPLACE ";" ", " pack_components
+          "${pack_extra_components}")
+        message(STATUS "Binary package: ${pack_name}, "
+          "using component(s) ${pack_components} (${pack_generator})")
+      else(pack_extra_components)
+        message(STATUS "Binary package: ${pack_name} (${pack_generator})")
+      endif(pack_extra_components)
     else(${pack_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
-      message(STATUS "Binary package: ${pack_name}, "
-        "using component ${pack_component} (${pack_generator})")
+      if(pack_extra_components)
+        string(REGEX REPLACE ";" ", " pack_components
+          "${pack_component};${pack_extra_components}")
+        message(STATUS "Binary package: ${pack_name}, "
+          "using component(s) ${pack_components} (${pack_generator})")
+      else(pack_extra_components)
+        message(STATUS "Binary package: ${pack_name}, "
+          "using component ${pack_component} (${pack_generator})")
+      endif(pack_extra_components)
     endif(${pack_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
 
     remake_unset(CPack_CMake_INCLUDED)
@@ -214,16 +235,16 @@ endmacro(remake_pack_source)
 #   targets. Project-internal dependencies between these targets are
 #   automatically resolved. Also, the macro provides automated resolution of
 #   dependencies on packages installed on the build system.
-#   \optional[value] ARCH:architecture The package architecture that is
-#     inscribed into the package manifest, defaults to the local system
-#     architecture as returned by 'dpkg --print-architecture'. When
-#     cross-compiling, the default may be overridden by the toolchain
-#     variable ${REMAKE_PACK_DEBIAN_ARCHITECTURE}.
+#   \optional[value] ARCH:architecture The package architecture that
+#     is inscribed into the package manifest, defaults to
+#     ${REMAKE_DEBIAN_ARCHITECTURE}.
 #   \optional[value] COMPONENT:component The name of the install component to
 #     generate the Debian package from, defaults to ${REMAKE_DEFAULT_COMPONENT}.
 #     Note that following Debian conventions, the component name is used as
 #     suffix to the package name. However, a component name matching
 #     ${REMAKE_DEFAULT_COMPONENT} results in an empty suffix.
+#   \optional[list] EXTRA_COMPONENTS:component An optional list of additional
+#     install components to generate the Debian package from.
 #   \optional[value] DESCRIPTION:string An optional description of the
 #     install component that is appended to the project summary when
 #     generating the Debian package description.
@@ -302,11 +323,12 @@ endmacro(remake_pack_source)
 #     extra control information files such as preinst, postinst, prerm, and
 #     postrm to be included in the Debian package's control section.
 macro(remake_pack_deb)
-  remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT VAR DESCRIPTION
-    LIST DEPENDS LIST PREDEPENDS LIST RECOMMENDS LIST SUGGESTS LIST ENHANCES 
-    LIST BREAKS LIST CONFLICTS LIST REPLACES LIST PROVIDES LIST EXTRA
-    ARGN depends ${ARGN})
+  remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT LIST EXTRA_COMPONENTS
+    VAR DESCRIPTION LIST DEPENDS LIST PREDEPENDS LIST RECOMMENDS LIST SUGGESTS
+    LIST ENHANCES LIST BREAKS LIST CONFLICTS LIST REPLACES LIST PROVIDES
+    LIST EXTRA ARGN depends ${ARGN})
   remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
+  remake_set(pack_arch SELF DEFAULT ${REMAKE_DEBIAN_ARCHITECTURE})
 
   remake_component_get(${pack_component} BUILD OUTPUT pack_build)
   if(pack_build)
@@ -316,14 +338,6 @@ macro(remake_pack_deb)
     if(NOT TARGET ${REMAKE_PACK_UNINSTALL_ALL_TARGET})
       remake_target(${REMAKE_PACK_UNINSTALL_ALL_TARGET})
     endif(NOT TARGET ${REMAKE_PACK_UNINSTALL_ALL_TARGET})
-
-    if(CMAKE_CROSSCOMPILING AND REMAKE_PACK_DEBIAN_ARCHITECTURE)
-      remake_set(pack_arch SELF DEFAULT ${REMAKE_PACK_DEBIAN_ARCHITECTURE})
-    else(CMAKE_CROSSCOMPILING AND REMAKE_PACK_DEBIAN_ARCHITECTURE)
-      execute_process(COMMAND dpkg --print-architecture
-        OUTPUT_VARIABLE pack_deb_arch OUTPUT_STRIP_TRAILING_WHITESPACE)
-      remake_set(pack_arch SELF DEFAULT ${pack_deb_arch})
-    endif(CMAKE_CROSSCOMPILING AND REMAKE_PACK_DEBIAN_ARCHITECTURE)
 
     remake_component_get(${pack_component} FILENAME OUTPUT pack_name)
     remake_file_name(pack_file ${pack_name} ${REMAKE_PROJECT_FILENAME_VERSION}
@@ -387,6 +401,7 @@ macro(remake_pack_deb)
 
     remake_pack_binary(DEB
       COMPONENT ${pack_component}
+      ${EXTRA_COMPONENTS}
       NAME ${pack_name}
       ${DESCRIPTION})
 
@@ -395,7 +410,7 @@ macro(remake_pack_deb)
     remake_target_name(pack_install_target ${pack_prefix}
       ${REMAKE_PACK_INSTALL_TARGET_SUFFIX})
     remake_target(${pack_install_target}
-      COMMAND sudo dpkg --install ${pack_file}.deb
+      COMMAND sudo ${DPKG_EXECUTABLE} --install ${pack_file}.deb
       COMMENT "Installing ${pack_name} package")
     add_dependencies(${pack_install_target} ${pack_target})
     add_dependencies(${REMAKE_PACK_INSTALL_ALL_TARGET} ${pack_install_target})
@@ -403,7 +418,7 @@ macro(remake_pack_deb)
     remake_target_name(pack_uninstall_target ${pack_prefix}
       ${REMAKE_PACK_UNINSTALL_TARGET_SUFFIX})
     remake_target(${pack_uninstall_target}
-      COMMAND sudo dpkg --remove ${pack_name}
+      COMMAND sudo ${DPKG_EXECUTABLE} --remove ${pack_name}
       COMMENT "Uninstalling ${pack_name} package")
     add_dependencies(${REMAKE_PACK_UNINSTALL_ALL_TARGET}
       ${pack_uninstall_target})
