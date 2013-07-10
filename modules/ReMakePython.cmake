@@ -472,16 +472,17 @@ macro(remake_python_add_modules)
 
   remake_unset(python_modules)
   foreach(python_mod_src ${python_mod_sources})
-    if(python_mod_src MATCHES ^${python_pkg_dir}/.*)
-      string(REGEX REPLACE "^${python_pkg_dir}/" "" python_module
+    string(REPLACE "+" "\\+" python_pkg_dir_escaped ${python_pkg_dir})
+    if(python_mod_src MATCHES "^${python_pkg_dir_escaped}/.*")
+      string(REGEX REPLACE "^${python_pkg_dir_escaped}/" "" python_module
         ${python_mod_src})
       string(REGEX REPLACE ".py$" "" python_module ${python_module})
       string(REPLACE "/" "." python_module ${python_module})
       remake_list_push(python_modules ${python_module})
-    else(python_mod_src MATCHES ^${python_pkg_dir}/.*)
+    else(python_mod_src MATCHES "^${python_pkg_dir_escaped}/.*")
       message(FATAL_ERROR
         "Python modules must be located below the package path!")
-    endif(python_mod_src MATCHES ^${python_pkg_dir}/.*)
+    endif(python_mod_src MATCHES "^${python_pkg_dir_escaped}/.*")
   endforeach(python_mod_src)
   remake_python_package_set(${python_package} MODULES ${python_modules}
     APPEND CACHE INTERNAL "Modules of Python package ${python_package}.")

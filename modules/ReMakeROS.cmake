@@ -1557,27 +1557,21 @@ endmacro(remake_ros_package_add_library)
 #   This macro configures package generation for a ReMakeROS project
 #   using the ReMakePack module. It acquires all the information necessary
 #   from the defined ROS packages, meta-packages, or stacks. For each
-#   of them, Debian package generators will be defined. The macro generally
-#   breaks with the conventional ROS packaging strategies. Firstly, it
+#   of them, Debian package generators will be defined. The macro breaks
+#   with some of the conventional ROS packaging strategies. Firstly, it
 #   defines Debian packages for non-meta ROS packages instead of including
 #   these non-meta packages in a Debian package of the reversely dependent
 #   ROS meta package or stack. It however installs dependencies between
 #   the Debian packages such as to ensure the correct deployment of all ROS
 #   packages belonging to a ROS meta-package or stack. Secondly, the macro
-#   follows the Debian packaging conventions in separating runtime and
-#   development files. In order to satisfy build dependencies between
-#   ROS packages, one therefore has to deploy the corresponding development
-#   packages on the build system. Similarly, the Python modules are separated
-#   from the binary runtime files and may be deployed independently. And
-#   lastly, the macro defines three additional Debian packages named after
-#   the ReMake project. One Debian package installs the project's default
-#   component which usually contains the license file, the changelog, and
-#   similar distribution-relevant files. Another package installs the
-#   project's default development component and may or may not contain
-#   any files. Nevertheless, it will define dependencies on those development
-#   packages which do not yet depend on any other Debian package generated
-#   from the project. The third package installs the project's default
-#   Python component and has dependencies on all orphan Python packages.
+#   defines an additional Debian packages named after the ReMake project.
+#   This package installs the project's default component which usually
+#   contains the license file, the changelog, and similar distribution-relevant
+#   files. The macro does however follow the ROS packaging conventions in
+#   not separating runtime and development files. It combines all install
+#   components associated with a ROS package into one monolithic Debian
+#   package for that ROS package. Thus, the development headers and Python 
+#   modules may be deployed together with the runtime.
 macro(remake_ros_pack_deb)
   remake_ros()
 
@@ -1634,8 +1628,7 @@ macro(remake_ros_pack_deb)
     remake_list_push(ros_pkg_components ${ros_component})
   endforeach(ros_package)
 
-  remake_unset(ros_pkg_main_deps ros_pkg_main_dev_deps
-    ros_pkg_main_python_deps)
+  remake_unset(ros_pkg_main_deps)
   foreach(ros_pkg_component ${ros_pkg_components})
     remake_var_name(ros_var ${ros_pkg_component} INTERNAL_BUILD_DEPENDS)
     remake_set(ros_build_deps_int FROM ${ros_var})
@@ -1645,156 +1638,78 @@ macro(remake_ros_pack_deb)
     remake_set(ros_run_deps_int FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} EXTERNAL_RUN_DEPENDS)
     remake_set(ros_run_deps_ext FROM ${ros_var})
-    remake_var_name(ros_var ${ros_pkg_component} EXTRA_BUILD_DEPENDS)
-    remake_set(ros_pkg_dev_deps FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} EXTRA_RUN_DEPENDS)
     remake_set(ros_pkg_deps FROM ${ros_var})
+    remake_var_name(ros_var ${ros_pkg_component} EXTRA_BUILD_DEPENDS)
+    remake_list_push(ros_pkg_deps ${${ros_var}})
     remake_var_name(ros_var ${ros_pkg_component} DESCRIPTION)
     remake_set(ros_pkg_description FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} META)
     remake_set(ros_pkg_meta FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} MANIFEST)
     remake_set(ros_pkg_manifest FROM ${ros_var})
-    remake_unset(ros_pkg_python_deps)
 
-    foreach(ros_run_dep_int ${ros_run_deps_int})
-      remake_ros_package_get(${ros_run_dep_int} COMPONENT
+    foreach(ros_dep_int ${ros_run_deps_int} ${ros_build_dep_int})
+      remake_ros_package_get(${ros_dep_int} COMPONENT
         OUTPUT ros_dep_component)
       remake_component_get(${ros_dep_component} FILENAME
         OUTPUT ros_dep_filename)
       remake_list_push(ros_pkg_deps ${ros_dep_filename})
+    endforeach(ros_dep_int)
 
-      remake_component_name(ros_dep_python_component ${ros_dep_component}
-        ${REMAKE_PYTHON_COMPONENT_SUFFIX})
-      remake_component_get(${ros_dep_python_component} EMPTY
-        OUTPUT ros_dep_python_component_empty)
-
-      if(NOT ros_dep_python_component_empty)
-        remake_component_get(${ros_dep_python_component} FILENAME
-          OUTPUT ros_dep_python_filename)
-        remake_list_push(ros_pkg_python_deps ${ros_dep_python_filename})
-      endif(NOT ros_dep_python_component_empty)
-    endforeach(ros_run_dep_int)
-
-    foreach(ros_run_dep_ext ${ros_run_deps_ext})
-      remake_var_name(ros_var ROS ${ros_run_dep_ext} PATH)
+    foreach(ros_dep_ext ${ros_run_deps_ext} ${ros_build_deps_ext})
+      remake_var_name(ros_var ROS ${ros_dep_ext} PATH)
       remake_set(ros_manifest ${${ros_var}}/${ros_pkg_manifest})
 
-      string(REGEX REPLACE "_" "-" ros_run_dep_ext ${ros_run_dep_ext})
+      string(REGEX REPLACE "_" "-" ros_dep_ext ${ros_dep_ext})
       remake_debian_find_package(
-        ros-${ROS_DISTRIBUTION}-${ros_run_dep_ext}
+        ros-${ROS_DISTRIBUTION}-${ros_dep_ext}
         CONTAINS ${ros_manifest}
-        OUTPUT ros_run_dep_ext)
-
-      remake_list_push(ros_pkg_deps ${ros_run_dep_ext})
-      remake_list_push(ros_pkg_python_deps ${ros_run_dep_ext})
-    endforeach(ros_run_dep_ext)
-
-    foreach(ros_build_dep_int ${ros_build_deps_int})
-      remake_ros_package_get(${ros_build_dep_int} COMPONENT
-        OUTPUT ros_dep_component)
-      remake_component_name(ros_dep_dev_component ${ros_dep_component}
-        ${REMAKE_COMPONENT_DEVEL_SUFFIX})
-      remake_component_get(${ros_dep_dev_component} EMPTY
-        OUTPUT ros_dep_dev_component_empty)
-
-      if(NOT ros_dep_dev_component_empty)
-        remake_component_get(${ros_dep_dev_component} FILENAME
-          OUTPUT ros_dep_dev_filename)
-        remake_list_push(ros_pkg_dev_deps ${ros_dep_dev_filename})
-      endif(NOT ros_dep_dev_component_empty)
-    endforeach(ros_build_dep_int)
-
-    foreach(ros_build_dep_ext ${ros_build_deps_ext})
-      remake_var_name(ros_var ROS ${ros_build_dep_ext} PATH)
-      remake_set(ros_manifest ${${ros_var}}/${ros_pkg_manifest})
-
-      string(REGEX REPLACE "_" "-" ros_build_dep_ext ${ros_build_dep_ext})
-      remake_debian_find_package(
-        ros-${ROS_DISTRIBUTION}-${ros_build_dep_ext}
-        CONTAINS ${ros_manifest}
-        OUTPUT ros_build_dep_ext)
-
-      remake_list_push(ros_pkg_dev_deps ${ros_build_dep_ext})
-    endforeach(ros_build_dep_ext)
-
-    remake_list_remove_duplicates(ros_pkg_deps)
-    remake_pack_deb(
-      COMPONENT ${ros_pkg_component}
-      DESCRIPTION "${ros_pkg_description}"
-      DEPENDS ${ros_pkg_deps})
-    remake_component_get(${ros_pkg_component} FILENAME
-      OUTPUT ros_pkg_filename)
-    remake_list_push(ros_pkg_main_deps ${ros_pkg_filename})
+        OUTPUT ros_dep_ext)
+      remake_list_push(ros_pkg_deps ${ros_dep_ext})
+    endforeach(ros_dep_ext)
 
     remake_component_name(ros_pkg_python_component ${ros_pkg_component}
       ${REMAKE_PYTHON_COMPONENT_SUFFIX})
-    if(ros_pkg_meta)
-      if(ros_pkg_python_deps)
-        remake_set(ros_pkg_python_component_empty OFF)
-      else(ros_pkg_python_deps)
-        remake_set(ros_pkg_python_component_empty ON)
-      endif(ros_pkg_python_deps)
-    else(ros_pkg_meta)
-      remake_component_get(${ros_pkg_python_component} EMPTY OUTPUT
-        ros_pkg_python_component_empty)
-    endif(ros_pkg_meta)
-    if(NOT ros_pkg_python_component_empty)
-      remake_list_remove_duplicates(ros_pkg_python_deps)
-      remake_pack_deb(
-        COMPONENT ${ros_pkg_python_component}
-        DESCRIPTION "${ros_pkg_description} Python modules"
-        DEPENDS ${ros_pkg_filename} ${ros_pkg_python_deps})
-      remake_component_get(${ros_pkg_python_component} FILENAME
-        OUTPUT ros_pkg_python_filename)
-      remake_list_push(ros_pkg_main_python_deps ${ros_pkg_python_filename})
-    endif(NOT ros_pkg_python_component_empty)
-
     remake_component_name(ros_pkg_dev_component ${ros_pkg_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     if(ros_pkg_meta)
-      if(ros_pkg_dev_deps)
-        remake_set(ros_pkg_dev_component_empty OFF)
-      else(ros_pkg_dev_deps)
-        remake_set(ros_pkg_dev_component_empty ON)
-      endif(ros_pkg_dev_deps)
+      remake_set(ros_pkg_python_component_empty ON)
+      remake_set(ros_pkg_dev_component_empty ON)
     else(ros_pkg_meta)
+      remake_component_get(${ros_pkg_python_component} EMPTY OUTPUT
+        ros_pkg_python_component_empty)
       remake_component_get(${ros_pkg_dev_component} EMPTY OUTPUT
         ros_pkg_dev_component_empty)
     endif(ros_pkg_meta)
+    
+    remake_unset(ros_pkg_extra_components)
+    if(NOT ros_pkg_python_component_empty)
+      remake_list_push(ros_pkg_extra_components ${ros_pkg_python_component})
+    endif(NOT ros_pkg_python_component_empty)
     if(NOT ros_pkg_dev_component_empty)
-      remake_list_remove_duplicates(ros_pkg_dev_deps)
-      remake_pack_deb(
-        COMPONENT ${ros_pkg_dev_component}
-        DESCRIPTION "${ros_pkg_description} development headers"
-        DEPENDS ${ros_pkg_filename} ${ros_pkg_dev_deps})
-      remake_component_get(${ros_pkg_dev_component} FILENAME
-        OUTPUT ros_pkg_dev_filename)
-      remake_list_push(ros_pkg_main_dev_deps ${ros_pkg_dev_filename})
+      remake_list_push(ros_pkg_extra_components ${ros_pkg_dev_component})
     endif(NOT ros_pkg_dev_component_empty)
+    
+    remake_list_remove_duplicates(ros_pkg_deps)
+    if(ros_pkg_extra_components)
+      remake_pack_deb(
+        COMPONENT ${ros_pkg_component}
+        EXTRA_COMPONENTS ${ros_pkg_extra_components}
+        DESCRIPTION "${ros_pkg_description}"
+        DEPENDS ${ros_pkg_deps})
+    else(ros_pkg_extra_components)
+      remake_pack_deb(
+        COMPONENT ${ros_pkg_component}
+        DESCRIPTION "${ros_pkg_description}"
+        DEPENDS ${ros_pkg_deps})
+    endif(ros_pkg_extra_components)
+    remake_component_get(${ros_pkg_component} FILENAME
+      OUTPUT ros_pkg_filename)
+    remake_list_push(ros_pkg_main_deps ${ros_pkg_filename})
   endforeach(ros_pkg_component)
 
   remake_pack_deb(DEPENDS ${ros_pkg_main_deps})
-  remake_component_get(${REMAKE_DEFAULT_COMPONENT} FILENAME
-    OUTPUT ros_pkg_main_filename)
-  if(ros_pkg_main_python_deps)
-    remake_component_name(ros_python_component
-      ${REMAKE_DEFAULT_COMPONENT} ${REMAKE_PYTHON_COMPONENT_SUFFIX})
-    remake_component(${ros_python_component})
-    remake_pack_deb(
-      COMPONENT ${ros_python_component}
-      DESCRIPTION "Python modules"
-      DEPENDS ${ros_pkg_main_filename} ${ros_pkg_main_python_deps})
-  endif(ros_pkg_main_python_deps)
-  if(ros_pkg_main_dev_deps)
-    remake_component_name(ros_dev_component
-      ${REMAKE_DEFAULT_COMPONENT} ${REMAKE_COMPONENT_DEVEL_SUFFIX})
-    remake_component(${ros_dev_component})
-    remake_pack_deb(
-      COMPONENT ${ros_dev_component}
-      DESCRIPTION "development headers"
-      DEPENDS ${ros_pkg_main_filename} ${ros_pkg_main_dev_deps})
-  endif(ros_pkg_main_dev_deps)
 endmacro(remake_ros_pack_deb)
 
 ### \brief Distribute a ReMakeROS project according to the Debian standards.

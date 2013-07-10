@@ -240,13 +240,13 @@ macro(remake_debian_find_package debian_specifier)
 
   foreach(debian_package ${REMAKE_DEBIAN_PACKAGES})
     if("${debian_package}" MATCHES
-      "^${debian_name}[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t].*$")
+      "^${debian_name}(:${REMAKE_DEBIAN_ARCHITECTURE})?[\t].*$")
       string(REGEX REPLACE
-        "^(${debian_name})[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t].*$"
+        "^(${debian_name})(:${REMAKE_DEBIAN_ARCHITECTURE})?[\t].*$"
         "\\1" debian_package_name ${debian_package})
       string(REGEX REPLACE
-        "^${debian_name}[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t](.*)$"
-        "\\1" debian_package_version ${debian_package})
+        "^${debian_name}(:${REMAKE_DEBIAN_ARCHITECTURE})?[\t](.*)$"
+        "\\2" debian_package_version ${debian_package})
 
       if(debian_version)
         if(DPKG_FOUND)
@@ -267,7 +267,7 @@ macro(remake_debian_find_package debian_specifier)
         remake_list_push(${debian_find_output} ${debian_package_name})
       endif(debian_version)
     endif("${debian_package}" MATCHES
-      "^${debian_name}[:${REMAKE_DEBIAN_ARCHITECTURE}]*[\t].*$")
+      "^${debian_name}(:${REMAKE_DEBIAN_ARCHITECTURE})?[\t].*$")
   endforeach(debian_package)
 
   if(DPKG_QUERY_FOUND)

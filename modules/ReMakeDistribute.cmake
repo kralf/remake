@@ -181,8 +181,10 @@ macro(remake_distribute_deb)
       "debhelper (>= ${distribute_compatibility})" cmake)
     string(REGEX REPLACE ";" ", " distribute_depends "${distribute_depends}")
 
+    remake_set(REMAKE_DISTRIBUTE_ALIAS ${REMAKE_DEBIAN_CODENAME}
+      CACHE STRING "Name of the distribution on release build system.")
     remake_set(distribute_definitions
-      "-DREMAKE_DEBIAN_CODENAME=${distribute_alias}")
+      "-DREMAKE_DISTRIBUTE_ALIAS=${distribute_alias}")
     foreach(distribute_var ${distribute_pass})
       remake_set(distribute_definitions
         "${distribute_definitions} -D${distribute_var}=${${distribute_var}}")
@@ -360,14 +362,14 @@ macro(remake_distribute_deb)
     remake_file_mkdir(${distribute_build_path})
 
     remake_unset(distribute_release_build OFF)
-    if(${distribute_alias} STREQUAL ${REMAKE_DEBIAN_CODENAME})
+    if(${distribute_alias} STREQUAL ${REMAKE_DISTRIBUTE_ALIAS})
       if(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
         remake_file_create(${CMAKE_SOURCE_DIR}/debian/control)
         remake_file_write(${CMAKE_SOURCE_DIR}/debian/control
           LINES ${distribute_control_release})
         remake_set(distribute_release_build ON)
       endif(EXISTS ${CMAKE_SOURCE_DIR}/debian/control)
-    endif(${distribute_alias} STREQUAL ${REMAKE_DEBIAN_CODENAME})
+    endif(${distribute_alias} STREQUAL ${REMAKE_DISTRIBUTE_ALIAS})
 
     remake_pack_source_archive(GENERATOR TGZ EXCLUDE ${distribute_exclude})
     add_dependencies(${distribute_target} ${REMAKE_PACK_ALL_SOURCE_TARGET})

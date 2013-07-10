@@ -133,7 +133,7 @@ macro(remake_pack_binary pack_generator)
         string(REGEX REPLACE ";" ", " pack_components
           "${pack_component};${pack_extra_components}")
         message(STATUS "Binary package: ${pack_name}, "
-          "using component(s) ${pack_components} (${pack_generator})")
+          "using components ${pack_components} (${pack_generator})")
       else(pack_extra_components)
         message(STATUS "Binary package: ${pack_name}, "
           "using component ${pack_component} (${pack_generator})")

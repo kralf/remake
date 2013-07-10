@@ -262,7 +262,7 @@ macro(remake_file_glob file_var)
     if(IS_DIRECTORY ${file_glob})
       get_filename_component(file_glob_absolute ${file_glob} ABSOLUTE)
       remake_list_replace(file_working_globs ${file_glob}
-        REPLACE ${file_glob_absolute})
+        REPLACE ${file_glob_absolute} VERBATIM)
     endif(IS_DIRECTORY ${file_glob})
   endforeach(file_glob)
 
@@ -338,7 +338,7 @@ macro(remake_file_glob file_var)
       file(RELATIVE_PATH file_name_relative ${file_working_directory}
         ${file_name})
       remake_list_replace(${file_var} ${file_name}
-        REPLACE ${file_name_relative})
+        REPLACE ${file_name_relative} VERBATIM)
     endforeach(file_name)
   endif(file_relative)
 endmacro(remake_file_glob)
