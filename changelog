@@ -1,3 +1,10 @@
+remake (1:0.6.2-207) lucid; urgency=low
+
+  * Removed CMP00017 policy setting as it breaks the build for older
+    CMake versions
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 11 Jul 2013 05:51:00 +0100
+
 remake (1:0.6.2-206) lucid; urgency=low
 
   * Revised remake_ros_pack_deb() to build monolithic packages
