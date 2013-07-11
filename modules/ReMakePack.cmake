@@ -321,7 +321,9 @@ endmacro(remake_pack_source)
 #     virtual package's name.
 #   \optional[list] EXTRA:glob An optional list of glob expressions matching
 #     extra control information files such as preinst, postinst, prerm, and
-#     postrm to be included in the Debian package's control section.
+#     postrm to be included in the Debian package's control section. The macro
+#     calls remake_file_configure() to substitute variables within the files.
+#     See ReMakeFile for details.
 macro(remake_pack_deb)
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT LIST EXTRA_COMPONENTS
     VAR DESCRIPTION LIST DEPENDS LIST PREDEPENDS LIST RECOMMENDS LIST SUGGESTS
@@ -385,7 +387,7 @@ macro(remake_pack_deb)
 
     string(REPLACE ";" ", " pack_binary_deps "${pack_binary_deps}")
     string(REPLACE ";" ", " pack_recommends "${pack_recommends}")
-    remake_file_glob(pack_extra ${pack_extra})
+    remake_file_configure(${pack_extra} OUTPUT pack_extra)
     remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_binary_deps})
     remake_set(CPACK_DEBIAN_PACKAGE_PREDEPENDS ${pack_binary_predeps})
     remake_set(CPACK_DEBIAN_PACKAGE_RECOMMENDS ${pack_recommends})

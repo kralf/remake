@@ -1,4 +1,11 @@
-remake (1:0.6.2-207) lucid; urgency=low
+remake (1:0.6.2-208) lucid; urgency=low
+
+  * Extended remake_pack_deb() to perform variable substitution in files
+    passed via the EXTRA argument
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 11 Jul 2013 07:37:00 +0100
+
+ remake (1:0.6.2-207) lucid; urgency=low
 
   * Removed CMP00017 policy setting as it breaks the build for older
     CMake versions
