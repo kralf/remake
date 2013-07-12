@@ -313,13 +313,14 @@ macro(remake_debian_find_file debian_pattern)
       RESULT_VARIABLE debian_result
       OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 
-    if(NOT debian_result)
+    if(NOT debian_result AND debian_packages)
+      remake_debug(debian_packages)
       string(REGEX REPLACE "\n" ";" debian_packages ${debian_packages})
       foreach(debian_package ${debian_packages})
         string(REGEX REPLACE "^([^:]+):.*$" "\\1" debian_package
           ${debian_package})
         remake_list_push(${debian_find_output} ${debian_package})
       endforeach(debian_package)
-    endif(NOT debian_result)
+    endif(NOT debian_result AND debian_packages)
   endif(APT_FILE_EXECUTABLE)
 endmacro(remake_debian_find_file)

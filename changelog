@@ -1,3 +1,10 @@
+remake (1:0.6.2-209) lucid; urgency=low
+
+  * Small fix in remake_debian_find_file() that will suppress REGEX
+    errors if apt-file gives empty results
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 12 Jul 2013 14:10:00 +0100
+
 remake (1:0.6.2-208) lucid; urgency=low
 
   * Extended remake_pack_deb() to perform variable substitution in files
