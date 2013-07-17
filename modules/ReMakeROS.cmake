@@ -1742,7 +1742,13 @@ macro(remake_ros_distribute_deb)
     remake_ros_package_get(${ros_package} EXTERNAL_BUILD_DEPENDS
       OUTPUT ros_depends)
     remake_list_push(ros_dependencies ${ros_depends})
+    remake_ros_package_get(${ros_package} EXTERNAL_RUN_DEPENDS
+      OUTPUT ros_depends)
+    remake_list_push(ros_dependencies ${ros_depends})
     remake_ros_package_get(${ros_package} EXTRA_BUILD_DEPENDS
+      OUTPUT ros_extra_depends)
+    remake_list_push(ros_extra_build_deps ${ros_extra_depends})
+    remake_ros_package_get(${ros_package} EXTRA_RUN_DEPENDS
       OUTPUT ros_extra_depends)
     remake_list_push(ros_extra_build_deps ${ros_extra_depends})
   endforeach(ros_package)
