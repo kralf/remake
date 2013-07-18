@@ -29,6 +29,8 @@ include(ReMakeDebian)
 
 include(ReMakePrivate)
 
+include(FindPkgConfig)
+
 ### \brief ReMake ROS build macros
 #   The ReMake ROS build macros provide access to the ROS build system
 #   configuration without requirement for the ROS CMake API. Note that
@@ -556,7 +558,7 @@ endmacro(remake_ros_stack_add_dependencies)
 #   corresponding ROS package was found, the variable name conversion of
 #   ROS_${NAME}_FOUND is set to TRUE, and ROS_${NAME}_PATH,
 #   ROS_${NAME}_INCLUDE_DIRS, ROS_${NAME}_LIBRARIES, ROS_${NAME}_LIBRARY_DIRS,
-#   and ROS_${NAME}_LINK_FLAGS are initialized accordingly.
+#   and ROS_${NAME}_LDFLAGS_OTHER are initialized accordingly.
 #   \required[value] name The name of the ROS package to be discovered.
 #   \optional[option] OPTIONAL If provided, this option is passed on to
 #     remake_find_result().
@@ -577,27 +579,8 @@ macro(remake_ros_find_package ros_name)
       remake_find_executable(rospack PATHS "${ROS_PATH}/bin")
 
       remake_var_name(ros_pkg_path_var ROS ${ros_name} PATH)
-      remake_var_name(ros_pkg_include_dirs_var ROS ${ros_name} INCLUDE_DIRS)
-      remake_var_name(ros_pkg_libraries_var ROS ${ros_name} LIBRARIES)
-      remake_var_name(ros_pkg_library_dirs_var ROS ${ros_name} LIBRARY_DIRS)
-      remake_var_name(ros_pkg_link_flags_var ROS ${ros_name} LINK_FLAGS)
-
       string(REGEX REPLACE ";" ":" ros_pkg_path "${ROS_PACKAGE_PATH}")
       remake_set(ros_pkg_env ROS_PACKAGE_PATH=${ros_pkg_path})
-      if(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR)
-        remake_list_push(ros_pkg_env
-          PKG_CONFIG_SYSROOT_DIR=${REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR})
-      endif(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR)
-      if(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
-        string(REGEX REPLACE ";" ":" PKG_CONFIG_PATH
-          "${REMAKE_FIND_PKG_CONFIG_DIR};${CMAKE_FIND_ROOT_PATH}${ROS_PATH}/lib/pkgconfig")
-        remake_list_push(ros_pkg_env
-          PKG_CONFIG_PATH=${PKG_CONFIG_PATH})
-        string(REGEX REPLACE ";" ":" PKG_CONFIG_LIBDIR
-          "${REMAKE_FIND_PKG_CONFIG_DIR};${CMAKE_FIND_ROOT_PATH}${ROS_PATH}/lib/pkgconfig")
-        remake_list_push(ros_pkg_env
-          PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR})
-      endif(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
       string(REGEX REPLACE ";" " " ros_pkg_env "${ros_pkg_env}")
       
       remake_ros_command(
@@ -613,64 +596,100 @@ macro(remake_ros_find_package ros_name)
       if(ros_result)
         remake_set(${ros_pkg_path_var} ${ros_pkg_path_var}-NOTFOUND)
       else(ros_result)
-        remake_ros_command(
-          ${ros_pkg_env}
-          ${ROSPACK_EXECUTABLE} cflags-only-I ${ros_name}
-          OUTPUT ros_command)
-        execute_process(
-          COMMAND ${ros_command}
-          OUTPUT_VARIABLE ros_pkg_include_dirs
-          ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-        remake_ros_command(
-          ${ros_pkg_env}
-          ${ROSPACK_EXECUTABLE} libs-only-l ${ros_name}
-          OUTPUT ros_command)
-        execute_process(
-          COMMAND ${ros_command}
-          OUTPUT_VARIABLE ros_pkg_libraries
-          ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-        remake_ros_command(
-          ${ros_pkg_env}
-          ${ROSPACK_EXECUTABLE} libs-only-L ${ros_name}
-          OUTPUT ros_command)
-        execute_process(
-          COMMAND ${ros_command}
-          OUTPUT_VARIABLE ros_pkg_library_dirs
-          ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-        remake_ros_command(
-          ${ros_pkg_env}
-          ${ROSPACK_EXECUTABLE} libs-only-other ${ros_name}
-          OUTPUT ros_command)
-        execute_process(
-          COMMAND ${ros_command}
-          OUTPUT_VARIABLE ros_pkg_link_flags
-          ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-
-        if(ros_pkg_include_dirs)
-          string(REGEX REPLACE "[ ]+" ";" ros_pkg_include_dirs
-            ${ros_pkg_include_dirs})
-          remake_include(${${ros_include_dirs_var}})
-        endif(ros_pkg_include_dirs)
-        if(ros_pkg_libraries)
-          string(REGEX REPLACE "[ ]+" ";" ros_pkg_libraries
-            ${ros_pkg_libraries})
-        endif(ros_pkg_libraries)
-        if(ros_pkg_library_dirs)
-          string(REGEX REPLACE "[ ]+" ";" ros_pkg_library_dirs
-            ${ros_pkg_library_dirs})
-          link_directories(${ros_pkg_library_dirs})
-        endif(ros_pkg_library_dirs)
-
         remake_set(${ros_pkg_path_var} ${${ros_pkg_path_var}}
           CACHE PATH "Path to ROS package ${ros_name}.")
-        remake_set(${ros_pkg_include_dirs_var} ${ros_pkg_include_dirs}
-          CACHE INTERNAL "Include directories of ROS package ${ros_name}.")
-        remake_set(${ros_pkg_libraries_var} ${ros_pkg_libraries}
-          CACHE INTERNAL "Libraries of ROS package ${ros_name}.")
-        remake_set(${ros_pkg_library_dirs_var} ${ros_pkg_library_dirs}
-          CACHE INTERNAL "Library directories of ROS package ${ros_name}.")
-        remake_set(${ros_pkg_link_flags_var} "${ros_pkg_link_flags}"
-          CACHE INTERNAL "Linker flags of ROS package ${ros_name}.")
+          
+        if(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR)
+          remake_set(ENV{PKG_CONFIG_SYSROOT_DIR}
+            ${REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR})
+        endif(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR)
+        if(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
+          remake_set(ros_pkg_config_dirs ${REMAKE_FIND_PKG_CONFIG_DIR})
+          remake_list_push(ros_pkg_config_dirs
+            ${CMAKE_FIND_ROOT_PATH}${ROS_PATH}/lib/pkgconfig)
+        else(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
+          remake_set(ros_pkg_config_dirs ${ROS_PATH}/lib/pkgconfig)
+        endif(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
+        string(REGEX REPLACE ";" ":" PKG_CONFIG_PATH
+          "${ros_pkg_config_dirs}")
+        string(REGEX REPLACE ";" ":" PKG_CONFIG_LIBDIR
+          "${ros_pkg_config_dirs}")
+
+        remake_set(ENV{PKG_CONFIG_PATH} ${PKG_CONFIG_PATH})
+        remake_set(ENV{PKG_CONFIG_LIBDIR} ${PKG_CONFIG_LIBDIR})
+        remake_var_name(ros_pkg_prefix ROS ${ros_name})
+        pkg_check_modules(${ros_pkg_prefix} ${ros_name} QUIET)
+        remake_unset(ENV{PKG_CONFIG_PATH} ENV{PKG_CONFIG_LIBDIR})
+        
+        if(NOT ${ros_pkg_prefix}_FOUND)        
+          remake_var_name(ros_pkg_include_dirs_var ROS ${ros_name}
+            INCLUDE_DIRS)
+          remake_var_name(ros_pkg_libraries_var ROS ${ros_name} LIBRARIES)
+          remake_var_name(ros_pkg_library_dirs_var ROS ${ros_name}
+            LIBRARY_DIRS)
+          remake_var_name(ros_pkg_link_flags_var ROS ${ros_name} LDFLAGS_OTHER)
+          
+          remake_ros_command(
+            ${ros_pkg_env}
+            ${ROSPACK_EXECUTABLE} cflags-only-I ${ros_name}
+            OUTPUT ros_command)
+          execute_process(
+            COMMAND ${ros_command}
+            OUTPUT_VARIABLE ros_pkg_include_dirs
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+          remake_ros_command(
+            ${ros_pkg_env}
+            ${ROSPACK_EXECUTABLE} libs-only-l ${ros_name}
+            OUTPUT ros_command)
+          execute_process(
+            COMMAND ${ros_command}
+            OUTPUT_VARIABLE ros_pkg_libraries
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+          remake_ros_command(
+            ${ros_pkg_env}
+            ${ROSPACK_EXECUTABLE} libs-only-L ${ros_name}
+            OUTPUT ros_command)
+          execute_process(
+            COMMAND ${ros_command}
+            OUTPUT_VARIABLE ros_pkg_library_dirs
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+          remake_ros_command(
+            ${ros_pkg_env}
+            ${ROSPACK_EXECUTABLE} libs-only-other ${ros_name}
+            OUTPUT ros_command)
+          execute_process(
+            COMMAND ${ros_command}
+            OUTPUT_VARIABLE ros_pkg_link_flags
+            ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+          if(ros_pkg_include_dirs)
+            string(REGEX REPLACE "[ ]+" ";" ros_pkg_include_dirs
+              ${ros_pkg_include_dirs})
+            remake_include(${${ros_include_dirs_var}})
+          endif(ros_pkg_include_dirs)
+          if(ros_pkg_libraries)
+            string(REGEX REPLACE "[ ]+" ";" ros_pkg_libraries
+              ${ros_pkg_libraries})
+          endif(ros_pkg_libraries)
+          if(ros_pkg_library_dirs)
+            string(REGEX REPLACE "[ ]+" ";" ros_pkg_library_dirs
+              ${ros_pkg_library_dirs})
+            link_directories(${ros_pkg_library_dirs})
+          endif(ros_pkg_library_dirs)
+          if(ros_pkg_link_flags)
+            string(REGEX REPLACE "[ ]+" ";" ros_pkg_link_flags
+              ${ros_pkg_link_flags})
+          endif(ros_pkg_link_flags)
+
+          remake_set(${ros_pkg_include_dirs_var} ${ros_pkg_include_dirs}
+            CACHE INTERNAL "Include directories of ROS package ${ros_name}.")
+          remake_set(${ros_pkg_libraries_var} ${ros_pkg_libraries}
+            CACHE INTERNAL "Libraries of ROS package ${ros_name}.")
+          remake_set(${ros_pkg_library_dirs_var} ${ros_pkg_library_dirs}
+            CACHE INTERNAL "Library directories of ROS package ${ros_name}.")
+          remake_set(${ros_pkg_link_flags_var} ${ros_pkg_link_flags}
+            CACHE INTERNAL "Linker flags of ROS package ${ros_name}.")
+        endif(NOT ${ros_pkg_prefix}_FOUND)        
       endif(ros_result)
 
       remake_find_result("ROS ${ros_name}" ${${ros_pkg_path_var}}
@@ -1044,7 +1063,7 @@ macro(remake_ros_package_add_dependencies ros_name)
       remake_ros_package_get(${ros_name} EXTERNAL_BUILD_DEPENDS
         OUTPUT ros_build_deps_ext)
       remake_ros_package_get(${ros_name} LINK_LIBRARIES OUTPUT ros_link_libs)
-      remake_ros_package_get(${ros_name} LINK_FLAGS OUTPUT ros_link_flags)
+      remake_ros_package_get(${ros_name} LDFLAGS_OTHER OUTPUT ros_link_flags)
 
       remake_unset(ros_manifest_build_depends)
       foreach(ros_dependency ${ros_build_depends})
@@ -1058,7 +1077,8 @@ macro(remake_ros_package_add_dependencies ros_name)
             LIBRARIES)
           remake_var_name(ros_library_dirs_var ROS ${ros_dependency}
             LIBRARY_DIRS)
-          remake_var_name(ros_link_flags_var ROS ${ros_dependency} LINK_FLAGS)
+          remake_var_name(ros_link_flags_var ROS ${ros_dependency}
+            LDFLAGS_OTHER)
 
           if(${ros_include_dirs_var})
             remake_include(${${ros_include_dirs_var}})
@@ -1098,7 +1118,7 @@ macro(remake_ros_package_add_dependencies ros_name)
       remake_list_remove_duplicates(ros_link_libraries)
       remake_ros_package_set(${ros_name} LINK_LIBRARIES ${ros_link_libs}
         CACHE INTERNAL "Link libraries of ROS package ${ros_name}.")
-      remake_ros_package_set(${ros_name} LINK_FLAGS ${ros_link_flags}
+      remake_ros_package_set(${ros_name} LDFLAGS_OTHER ${ros_link_flags}
         CACHE INTERNAL "Linker flags of ROS package ${ros_name}.")
     endif(ros_build_depends)
 
@@ -1456,7 +1476,7 @@ macro(remake_ros_package_add_executable ros_name)
   remake_ros_package_get(${ros_package} INTERNAL_BUILD_DEPENDS
     OUTPUT ros_build_deps)
   remake_ros_package_get(${ros_package} LINK_LIBRARIES OUTPUT ros_link_libs)
-  remake_ros_package_get(${ros_package} LINK_FLAGS OUTPUT ros_link_flags)
+  remake_ros_package_get(${ros_package} LDFLAGS_OTHER OUTPUT ros_link_flags)
 
   remake_unset(ros_generated ros_depends)
   foreach(ros_dependency ${ros_package} ${ros_build_deps})
@@ -1517,7 +1537,7 @@ macro(remake_ros_package_add_library ros_name)
   remake_ros_package_get(${ros_package} INTERNAL_BUILD_DEPENDS
     OUTPUT ros_build_deps)
   remake_ros_package_get(${ros_package} LINK_LIBRARIES OUTPUT ros_link_libs)
-  remake_ros_package_get(${ros_package} LINK_FLAGS OUTPUT ros_link_flags)
+  remake_ros_package_get(${ros_package} LDFLAGS_OTHER OUTPUT ros_link_flags)
 
   remake_unset(ros_generated ros_depends)
   foreach(ros_dependency ${ros_package} ${ros_build_deps})

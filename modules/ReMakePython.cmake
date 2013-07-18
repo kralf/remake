@@ -33,14 +33,12 @@ if(NOT DEFINED REMAKE_PYTHON_CMAKE)
 
   remake_set(REMAKE_PYTHON_DIR ReMakePython)
   remake_set(REMAKE_PYTHON_DISTRIBUTION_DIR ${REMAKE_PYTHON_DIR}/distributions)
-  remake_set(REMAKE_PYTHON_PACKAGE_DIR ${REMAKE_PYTHON_DIR}/packages)
   remake_set(REMAKE_PYTHON_COMPONENT_SUFFIX python)
   remake_set(REMAKE_PYTHON_ALL_TARGET python_distributions)
   remake_set(REMAKE_PYTHON_TARGET_SUFFIX python_distribution)
   remake_set(REMAKE_PYTHON_EXT_PACKAGE extensions)
 
   remake_file_rmdir(${REMAKE_PYTHON_DISTRIBUTION_DIR} TOPLEVEL)
-  remake_file_rmdir(${REMAKE_PYTHON_PACKAGE_DIR} TOPLEVEL)
 
   remake_project_unset(PYTHON_DISTRIBUTIONS CACHE)
   remake_project_unset(PYTHON_PACKAGES CACHE)
@@ -54,10 +52,10 @@ endif(NOT DEFINED REMAKE_PYTHON_CMAKE)
 #   that the macro automatically gets invoked by the macros defined in this
 #   module. It needs not be called directly from a CMakeLists.txt file.
 macro(remake_python)
-  if(NOT PYTHON_FOUND)
-    remake_find_executable(python)
+  remake_find_executable(python)
 
-    if(PYTHON_FOUND)
+  if(PYTHON_FOUND)
+    if(NOT PYTHON_MODULE_DESTINATION)
       remake_set(python_command
         "from distutils.sysconfig import *"
         "print get_python_lib()")
@@ -76,12 +74,9 @@ macro(remake_python)
         remake_project_set(PYTHON_MODULE_DESTINATION ${python_destination}
           CACHE PATH "Install destination of Python modules.")
       endif(NOT python_result)
-    endif(PYTHON_FOUND)
-  endif(NOT PYTHON_FOUND)
-
-  if(PYTHON_FOUND)
+    endif(NOT PYTHON_MODULE_DESTINATION)
+    
     remake_file_mkdir(${REMAKE_PYTHON_DISTRIBUTION_DIR} TOPLEVEL)
-    remake_file_mkdir(${REMAKE_PYTHON_PACKAGE_DIR} TOPLEVEL)
   endif(PYTHON_FOUND)
 endmacro(remake_python)
 
@@ -339,9 +334,6 @@ macro(remake_python_package)
   remake_project_set(PYTHON_PACKAGES ${python_packages} ${python_name}
     CACHE INTERNAL "Python packages defined by the project.")
 
-  remake_file(python_pkg_conf_dir ${REMAKE_PYTHON_PACKAGE_DIR}/${python_name}
-    TOPLEVEL)
-  remake_file_mkdir(${python_pkg_conf_dir})
   remake_python_package_unset(${python_name} MODULES CACHE)
   remake_python_package_unset(${python_name} EXTENSIONS CACHE)
   remake_python_package_set(${python_name} DIRECTORY ${python_directory}

@@ -1,3 +1,14 @@
+remake (1:0.6.2-212) lucid; urgency=low
+
+  * Fixed bug in remake_python() that would prevent the Python module
+    destination to be initialized if the Python executable was searched
+    for and found earlier
+  * Revised remake_ros_find_package() to use pkg-config first, and to
+    then fall back to calling rospack (under ROS groovy, not having run
+    rosdep init/update prior to rospack leads to empty query results)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 18 Jul 2013 13:25:00 +0100
+
 remake (1:0.6.2-211) lucid; urgency=low
 
   * Added EXCLUDE argument to remake_add_directories()
