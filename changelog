@@ -1,3 +1,9 @@
+remake (1:0.6.2-211) lucid; urgency=low
+
+  * Added EXCLUDE argument to remake_add_directories()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 18 Jul 2013 06:57:00 +0100
+
 remake (1:0.6.2-210) lucid; urgency=low
 
   * Added external and extra runtime dependencies to list of build

@@ -692,6 +692,8 @@ endmacro(remake_add_files)
 #     the correct behavior of directory inclusion might be sensitive to order.
 #     In some cases, it is therefore useful to specify directories in the
 #     correct order of inclusion.
+#   \optional[list] EXCLUDE:dirname An optional list naming directories
+#     which shall be excluded from the list of directories to be added.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_switch() before
 #     subdirectory inclusion, defaults to ${REMAKE_COMPONENT}. See
@@ -699,7 +701,8 @@ endmacro(remake_add_files)
 #   \optional[value] IF:variable The name of a variable that conditions
 #     directory inclusion.
 macro(remake_add_directories)
-  remake_arguments(PREFIX remake_ VAR COMPONENT VAR IF ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ LIST EXCLUDE VAR COMPONENT VAR IF ARGN
+    globs ${ARGN})
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
   remake_set(remake_globs SELF DEFAULT *)
   
@@ -710,7 +713,7 @@ macro(remake_add_directories)
   endif(remake_if)
 
   if(remake_option)
-    remake_file_glob(remake_dirs DIRECTORIES ${remake_globs})
+    remake_file_glob(remake_dirs DIRECTORIES ${remake_globs} ${EXCLUDE})
     foreach(remake_dir ${remake_dirs})
       remake_component_switch(${remake_component}
         CURRENT remake_current_component)
