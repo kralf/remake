@@ -429,6 +429,9 @@ endmacro(remake_add_executables)
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the header files, defaulting to *.h, *.hpp,
 #     and *.tpp.
+#   \optional[list] EXCLUDE:filename An optional list of filenames which
+#     shall be excluded from the list of header files, defaulting to
+#     CMakeLists.txt.
 #   \optional[option] RECURSE If this option is given, header files will
 #     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}. In
 #     addtion, for each header the install destination will be appended by its
@@ -446,9 +449,10 @@ endmacro(remake_add_executables)
 #     during the run of CMake or the build process. Note that the option
 #     will be ignored if RECURSE is provided in the arguments.
 macro(remake_add_headers)
-  remake_arguments(PREFIX remake_ OPTION RECURSE VAR INSTALL VAR COMPONENT
-    OPTION GENERATED ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ LIST EXCLUDE OPTION RECURSE VAR INSTALL
+    VAR COMPONENT OPTION GENERATED ARGN globs ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+  remake_set(remake_exclude SELF DEFAULT CMakeLists.txt)
   remake_component_name(remake_default_component ${REMAKE_COMPONENT}
     ${REMAKE_COMPONENT_DEVEL_SUFFIX})
   remake_set(remake_component SELF DEFAULT ${remake_default_component})
@@ -466,14 +470,16 @@ macro(remake_add_headers)
   if(remake_recurse)
     remake_file_glob(
       remake_headers ${remake_globs}
-      RECURSE ${CMAKE_CURRENT_SOURCE_DIR})
+      RECURSE ${CMAKE_CURRENT_SOURCE_DIR}
+      EXCLUDE ${remake_exclude})
 
     foreach(remake_header ${remake_headers})
       if(remake_recurse)
         get_filename_component(remake_header_path ${remake_header} PATH)
         file(RELATIVE_PATH remake_header_dir ${CMAKE_CURRENT_SOURCE_DIR}
           ${remake_header_path})
-        remake_set(remake_header_install ${remake_install}/${remake_header_dir})
+        remake_set(remake_header_install
+          ${remake_install}/${remake_header_dir})
       endif(remake_recurse)
 
       remake_component_install(
@@ -485,7 +491,8 @@ macro(remake_add_headers)
     if(remake_generated)
       remake_set(remake_headers ${remake_globs})
     else(remake_generated)
-      remake_file_glob(remake_headers ${remake_globs})
+      remake_file_glob(remake_headers ${remake_globs}
+        EXCLUDE ${remake_exclude})
     endif(remake_generated)
 
     remake_component_install(
