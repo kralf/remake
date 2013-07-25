@@ -314,7 +314,6 @@ macro(remake_debian_find_file debian_pattern)
       OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
 
     if(NOT debian_result AND debian_packages)
-      remake_debug(debian_packages)
       string(REGEX REPLACE "\n" ";" debian_packages ${debian_packages})
       foreach(debian_package ${debian_packages})
         string(REGEX REPLACE "^([^:]+):.*$" "\\1" debian_package

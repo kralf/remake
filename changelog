@@ -1,3 +1,9 @@
+remake (1:0.6.2-216) lucid; urgency=low
+
+  * Removed debugging output in remake_debian_find_file()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 25 Jul 2013 13:48:00 +0100
+
 remake (1:0.6.2-215) lucid; urgency=low
 
   * Fixed author names when reading from author file in svn2debcl
