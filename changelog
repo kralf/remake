@@ -1,3 +1,9 @@
+remake (1:0.6.2-215) lucid; urgency=low
+
+  * Fixed author names when reading from author file in svn2debcl
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 25 Jul 2013 13:42:00 +0100
+
 remake (1:0.6.2-214) lucid; urgency=low
 
   * Extended svn2debcl by author file argument

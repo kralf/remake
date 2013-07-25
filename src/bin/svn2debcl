@@ -263,7 +263,7 @@ if ($cl_author_file) {
   open(file, "< $cl_author_file") or
     die("Error: $!\n");
     
-  $format = '([a-zA-Z]+)\s*=\s*[a-zA-Z ]+(<[^>]+>)';
+  $format = '([a-zA-Z]+)\s*=\s*([a-zA-Z ]+<[^>]+>)';
   while (my $line = <file>) {
     if ($line =~ /$format/) {
       $authors{$1} = $2;
