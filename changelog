@@ -1,3 +1,10 @@
+remake (1:0.6.2-217) lucid; urgency=low
+
+  * Changed remake_pkg_config_generate() to not interpret the REQUIRES
+    arguments as component names (compliance with remake_pack_deb())
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 25 Jul 2013 14:47:00 +0100
+
 remake (1:0.6.2-216) lucid; urgency=low
 
   * Removed debugging output in remake_debian_find_file()

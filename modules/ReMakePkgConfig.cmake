@@ -164,14 +164,7 @@ macro(remake_pkg_config_generate)
     "Libs: -L\\\\\\\${libdir} ${pkg_config_libs}")
 
   if(pkg_config_requires)
-    remake_unset(pkg_config_reqs)
-    foreach(pkg_config_req ${pkg_config_requires})
-      remake_component_get(${pkg_config_req} FILENAME
-        OUTPUT pkg_config_req_filename)
-      remake_list_push(pkg_config_reqs ${pkg_config_req_filename})
-    endforeach(pkg_config_req)
-
-    string(REGEX REPLACE ";" " " pkg_config_reqs "${pkg_config_reqs}")
+    string(REGEX REPLACE ";" " " pkg_config_reqs "${pkg_config_requires}")
     remake_file_write(${pkg_config_file} LINES
       "Requires: ${pkg_config_reqs}")
   endif(pkg_config_requires)
