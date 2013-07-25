@@ -41,7 +41,8 @@ my $cl_project = $opt_p;
 my $cl_version = $opt_v;
 my $cl_distribution = $opt_d;
 my $cl_urgency = $opt_u;
-my $cl_authors = $opt_a;
+my $cl_author_file = $opt_a;
+my $cl_authors = $opt_A;
 my $cl_width = $opt_w;
 my $cl_help = $opt_h;
 my $cl_quiet = $opt_q;
@@ -79,7 +80,8 @@ sub print_help {
   print_stdopt "-v VERSION", "project version [guess from repository]";
   print_stdopt "-d DISTRIBUTION", "project distribution [unstable]";
   print_stdopt "-u URGENCY", "project urgency [low]";
-  print_stdopt "-a USER1:AUTHOR1[;...]", "optional list of project authors";
+  print_stdopt "-a FILE", "optional project author file";
+  print_stdopt "-A USER1:AUTHOR1[;...]", "optional list of project authors";
   print_stdopt "-w WIDTH", "message format output width [70]";
 }
 
@@ -255,6 +257,21 @@ if ($cl_urgency) {
 }
 else {
   $project{urgency} = "low";
+}
+
+if ($cl_author_file) {
+  open(file, "< $cl_author_file") or
+    die("Error: $!\n");
+    
+  $format = '([a-zA-Z]+)\s*=\s*[a-zA-Z ]+(<[^>]+>)';
+  while (my $line = <file>) {
+    if ($line =~ /$format/) {
+      $authors{$1} = $2;
+    }
+    else {
+      die("Error: Badly formatted line in $cl_author_file!\n");
+    }
+  }
 }
 
 if ($cl_authors) {

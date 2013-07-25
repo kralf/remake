@@ -1,3 +1,9 @@
+remake (1:0.6.2-214) lucid; urgency=low
+
+  * Extended svn2debcl by author file argument
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 25 Jul 2013 13:27:00 +0100
+
 remake (1:0.6.2-213) lucid; urgency=low
 
   * Added EXCLUDE argument to remake_add_headers()
