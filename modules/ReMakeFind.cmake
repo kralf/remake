@@ -49,24 +49,30 @@ endif(NOT DEFINED REMAKE_FIND_CMAKE)
 #     ${REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR} and
 #     ${REMAKE_FIND_PKG_CONFIG_LIBRARY_DIR}, respectively.
 #   \optional[value] ALIAS:alias An optional package alias that is used for
-#     evaluating if ${ALIAS}_FOUND is set to TRUE. The alias has to be
-#     provided in cases where the package name differs from the variable
-#     prefix assumed by CMake's find_package().
+#     evaluating if the upper-case conversion of ${ALIAS}_FOUND is set to TRUE.
+#     The alias has to be provided in cases where the package name differs from
+#     the variable prefix assumed by CMake's find_package().
+#   \optional[value] RESULT_VAR:variable The optional name of the variable that
+#     will contain the result of CMake's find_package() or pkg_check_modules().
+#     This argument should be provided if the name of the result variable
+#     defined by CMake's modules is different from the upper-case conversion
+#     of ${PACKAGE}_FOUND.
 #   \optional[list] arg A list of optional arguments to be forwarded to
 #     CMake's find_package() and pkg_check_modules(), respectively. See the
 #     CMake documentation for the correct usage.
 #   \optional[option] OPTIONAL If provided, this option is passed on to
 #     remake_find_result().
 macro(remake_find_package find_package)
-  remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS OPTION OPTIONAL
-    ARGN args ${ARGN})
+  remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS VAR RESULT_VAR
+    OPTION OPTIONAL ARGN args ${ARGN})
   if(find_alias)
-    remake_var_name(find_package_var ${find_alias} FOUND)
+    remake_var_name(find_default_result_var ${find_alias} FOUND)
   else(find_alias)
-    remake_var_name(find_package_var ${find_package} FOUND)
+    remake_var_name(find_default_result_var ${find_package} FOUND)
   endif(find_alias)
+  remake_set(find_result_var SELF DEFAULT ${find_default_result_var})
 
-  if(NOT ${find_package_var})
+  if(NOT ${find_result_var})
     if(find_config)
       remake_set(find_args SELF DEFAULT ${find_package})
 
@@ -92,10 +98,10 @@ macro(remake_find_package find_package)
     else(find_config)
       find_package(${find_package} ${find_args})
     endif(find_config)
-    
-    remake_find_result(${find_package} ${${find_package_var}}
+        
+    remake_find_result(${find_package} ${${find_result_var}}
       TYPE package ${OPTIONAL})
-  endif(NOT ${find_package_var})
+  endif(NOT ${find_result_var})
 endmacro(remake_find_package)
 
 ### \brief Find a library and it's header file.

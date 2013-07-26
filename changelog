@@ -1,3 +1,11 @@
+remake (1:0.6.2-219) lucid; urgency=low
+
+  * Added RESULT_VAR argument to remake_find_package() as there seems to
+    exist no standard in naming the FOUND variables in CMake's modules
+    (e.g., FindBoost deliberately defines Boost_FOUND)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 26 Jul 2013 15:21:00 +0100
+
 remake (1:0.6.2-218) lucid; urgency=low
 
   * Restructured remake_find_package()
