@@ -60,11 +60,14 @@ endif(NOT DEFINED REMAKE_FIND_CMAKE)
 macro(remake_find_package find_package)
   remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS OPTION OPTIONAL
     ARGN args ${ARGN})
-  remake_var_name(find_package_var ${find_package} FOUND)
+  if(find_alias)
+    remake_var_name(find_package_var ${find_alias} FOUND)
+  else(find_alias)
+    remake_var_name(find_package_var ${find_package} FOUND)
+  endif(find_alias)
 
   if(NOT ${find_package_var})
     if(find_config)
-      remake_var_name(find_package_var ${find_package})
       remake_set(find_args SELF DEFAULT ${find_package})
 
       if(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_SYSROOT_DIR)
@@ -80,20 +83,18 @@ macro(remake_find_package find_package)
         remake_set(ENV{PKG_CONFIG_LIBDIR} ${PKG_CONFIG_LIBDIR})
       endif(CMAKE_CROSSCOMPILING AND REMAKE_FIND_PKG_CONFIG_DIR)
 
-      pkg_check_modules(${find_package_var} ${find_args})
-      remake_find_result(${find_package} ${${find_package_var}_FOUND}
-        TYPE package ${OPTIONAL})
-    else(find_config)
       if(find_alias)
-        remake_var_name(find_package_var ${find_alias} FOUND)
+        remake_var_name(find_prefix ${find_alias})
       else(find_alias)
-        remake_var_name(find_package_var ${find_package} FOUND)
+        remake_var_name(find_prefix ${find_package})
       endif(find_alias)
+      pkg_check_modules(${find_prefix} ${find_args})
+    else(find_config)
       find_package(${find_package} ${find_args})
-
-      remake_find_result(${find_package} ${${find_package}_FOUND}
-        ${${find_package_var}} ${OPTIONAL})
     endif(find_config)
+    
+    remake_find_result(${find_package} ${${find_package_var}}
+      TYPE package ${OPTIONAL})
   endif(NOT ${find_package_var})
 endmacro(remake_find_package)
 

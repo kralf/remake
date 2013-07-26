@@ -1,3 +1,11 @@
+remake (1:0.6.2-218) lucid; urgency=low
+
+  * Restructured remake_find_package()
+  * Changed remake_qt3() to not depend on FindKDE3, adapted
+    remake_qt3_moc() to use qt_wrap_cpp() instead of kde3_add_moc_files()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 26 Jul 2013 08:13:00 +0100
+
 remake (1:0.6.2-217) lucid; urgency=low
 
   * Changed remake_pkg_config_generate() to not interpret the REQUIRES
