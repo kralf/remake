@@ -1,3 +1,12 @@
+remake (1:0.6.2-220) lucid; urgency=low
+
+  * Added PLUGIN target type to remake_component_build() and
+    remake_component_install()
+  * Adapted remake_add_plugin() to use the PLUGIN target time, thus
+    hiding plugin libraries from the pkg-config files
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 30 Jul 2013 12:27:00 +0100
+
 remake (1:0.6.2-219) lucid; urgency=low
 
   * Added RESULT_VAR argument to remake_find_package() as there seems to

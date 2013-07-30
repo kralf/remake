@@ -381,10 +381,11 @@ endmacro(remake_component_switch)
 #   all additional arguments. The use of this macro is strongly encouraged
 #   over the CMake standard macros since it allows for special treating
 #   of component-specific rules.
-#   \required[option] LIBRARY|EXECUTABLE The type of the target to be built.
-#     Note that the macro will automatically invoke CMake's add_library() if
-#     the type corresponds to LIBRARY. Likewise, if the type resolves to
-#     EXECUTABLE, CMake's add_executable() will be called.
+#   \required[option] LIBRARY|PLUGIN|EXECUTABLE The type of the target to be
+#     built. Note that the macro will automatically invoke CMake's
+#     add_library() if the type corresponds to LIBRARY or PLUGIN. Likewise,
+#     if the type resolves to EXECUTABLE, CMake's add_executable() will be
+#     called.
 #   \required[value] target The name of the target to be defined.
 #   \optional[list] arg The arguments to be passed on to CMake's
 #     add_library() or add_executable() macro. See the CMake documentation
@@ -405,6 +406,8 @@ macro(remake_component_build component_type component_target)
   remake_component_get(${component_name} BUILD OUTPUT component_build)
   if(component_build)
     if(${component_type} STREQUAL LIBRARY)
+      add_library(${component_target} ${component_args})
+    elseif(${component_type} STREQUAL PLUGIN)
       add_library(${component_target} ${component_args})
     elseif(${component_type} STREQUAL EXECUTABLE)
       add_executable(${component_target} ${component_args})
@@ -488,7 +491,12 @@ endmacro(remake_component_add_dependencies)
 #   macro since it allows for special treatment of component-specific install
 #   parameters, such as the install prefix provided for each component.
 #   \optional[list] arg The arguments to be passed on to CMake's
-#     install() macro.
+#     install() macro. The macro thereby allows for the additional keyword
+#     PLUGIN to indicate the installation of plugin libraries. Plugins
+#     are treated as LIBRARY targets, but will not be enlisted in the
+#     component variable ${COMPONENT_NAME}_COMPONENT_LIBRARIES. See the
+#     CMake documentation for a detailed description of the install()
+#     signature.
 #   \optional[value] DESTINATION:dir The install destination which will
 #     be prefixed with the install destination defined for the component
 #     and then passed on to CMake's install() macro. The special value
@@ -534,12 +542,19 @@ macro(remake_component_install)
       remake_component_get(${component_name} LIBRARIES
         OUTPUT component_libraries)
       foreach(component_target ${component_targets})
-        get_target_property(component_library ${component_target}
-          OUTPUT_NAME)
-        remake_list_push(component_libraries ${component_library})
+        get_target_property(component_plugin ${component_target}
+          PLUGIN)
+        if(NOT component_plugin)
+          get_target_property(component_library ${component_target}
+            OUTPUT_NAME)
+          remake_list_push(component_libraries ${component_library})
+        endif(NOT component_plugin)
       endforeach(component_target)
       remake_component_set(${component_name} LIBRARIES ${component_libraries}
         CACHE INTERNAL "List of ${component_name} component libraries.")
+    elseif("${component_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;PLUGIN.*$")
+      string(REGEX REPLACE "^(.*TARGETS;[^A-Z]+.*);PLUGIN(.*)$"
+        "\\1;LIBRARY\\2" component_args "${component_args}")
     endif("${component_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;LIBRARY.*$")
 
     remake_component_get(${component_name} EMPTY OUTPUT component_empty)
