@@ -577,6 +577,13 @@ endmacro(remake_add_scripts)
 #   remake_file_configure() prior to the install stage.
 #   \required[list] glob A list of glob expressions that are resolved in
 #     order to find the configuration file templates.
+#   \optional[option] RECURSE If this option is given, configuration targets
+#     will be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}.
+#     In addtion, for each file the install destination will be appended by
+#     its relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[list] EXCLUDE:filename An optional list of file names
+#     that shall be excluded from the list of configuration targets,
+#     defaulting to CMakeLists.txt.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
 #     as the configuration files' install destination, defaults to the
 #     component's ${CONFIGURATION_DESTINATION}.
@@ -588,8 +595,9 @@ endmacro(remake_add_scripts)
 #     to the configuration file names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_configurations)
-  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR SUFFIX
-    ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ OPTION RECURSE LIST EXCLUDE VAR INSTALL
+    VAR COMPONENT VAR SUFFIX ARGN globs ${ARGN})
+  remake_set(remake_exclude SELF DEFAULT CMakeLists.txt)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
   remake_component(${remake_component})
@@ -607,17 +615,32 @@ macro(remake_add_configurations)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
   endif(REMAKE_BRANCH_BUILD)
 
-  remake_file_configure(${remake_globs} OUTPUT remake_configs)
+  if(remake_recurse)
+    remake_file_glob(
+      remake_configs ${remake_globs}
+      RECURSE ${CMAKE_CURRENT_SOURCE_DIR}
+      EXCLUDE ${remake_exclude})
+  else(remake_recurse)
+    remake_file_glob(
+      remake_configs ${remake_globs}
+      EXCLUDE ${remake_exclude})
+    remake_set(remake_config_install ${remake_install})
+  endif(remake_recurse)
 
   foreach(remake_config ${remake_configs})
-    file(RELATIVE_PATH remake_config_relative ${CMAKE_CURRENT_BINARY_DIR}
-      ${remake_config})
-    remake_file_suffix(remake_config_suffixed
-      ${remake_config_relative} ${remake_suffix} STRIP)
+    remake_file_configure(${remake_config} OUTPUT remake_file)
+    remake_file_suffix(remake_suffixed ${remake_file} ${remake_suffix} STRIP)
+    if(remake_recurse)
+      get_filename_component(remake_file_path ${remake_file} PATH)
+      file(RELATIVE_PATH remake_file_dir ${CMAKE_CURRENT_BINARY_DIR}
+        ${remake_file_path})
+      remake_set(remake_file_install ${remake_install}/${remake_file_dir})
+    endif(remake_recurse)
+
     remake_component_install(
-      FILES ${remake_config}
+      FILES ${remake_file}
       DESTINATION ${remake_install}
-      RENAME ${remake_config_suffixed}
+      RENAME ${remake_suffixed}
       COMPONENT ${remake_component})
   endforeach(remake_config)
 endmacro(remake_add_configurations)

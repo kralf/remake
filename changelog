@@ -1,3 +1,9 @@
+remake (1:0.6.2-221) lucid; urgency=low
+
+  * Added RECURSE and EXCLUDE arguments to remake_add_configurations()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 31 Jul 2013 11:15:00 +0100
+
 remake (1:0.6.2-220) lucid; urgency=low
 
   * Added PLUGIN target type to remake_component_build() and
