@@ -210,6 +210,8 @@ macro(remake_distribute_deb)
       "\tdh $@\n"
       "override_dh_auto_configure:"
       "\tdh_auto_configure -- ${distribute_definitions}\n"
+      "override_dh_pysupport:"
+      "\t\n"
       "override_dh_installdocs:"
       "\t\n"
       "override_dh_installchangelogs:"
