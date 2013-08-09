@@ -22,7 +22,7 @@
 
 use Getopt::Std;
 
-getopts("hqo:r:p:v:d:u:a:w:");
+getopts("hqo:r:np:v:d:u:a:w:");
 
 use Cwd;
 use File::Find;
@@ -46,6 +46,7 @@ my $cl_authors = $opt_A;
 my $cl_width = $opt_w;
 my $cl_help = $opt_h;
 my $cl_quiet = $opt_q;
+my $cl_renumber = $opt_n;
 
 sub print_stdout {
   print STDOUT @_;
@@ -76,6 +77,7 @@ sub print_help {
   print_stdopt "-q", "do not generate any output [false]";
   print_stdopt "-o FILE|-", "optional output file or STDOUT [changelog]";
   print_stdopt "-r [REV1:]REV2", "first and last revision [0:HEAD]";
+  print_stdopt "-n", "renumber revisions [false]";
   print_stdopt "-p NAME", "project name [guess from repository]";
   print_stdopt "-v VERSION", "project version [guess from repository]";
   print_stdopt "-d DISTRIBUTION", "project distribution [unstable]";
@@ -111,7 +113,12 @@ sub parse_svn {
   }
   print_stderr "$generator: Project name is $$project{name}\n";
 
-  my $version = $$project{version};
+  my $skipped = 0;
+  if ($cl_renumber) {
+    $skipped= $$repository{tail};
+  }
+
+  my $version = $$project{version};  
   for ($rev = $$repository{tail}; $rev <= $$repository{head}; $rev++) {
     my $lists =
       `svn cat -r $rev $$repository{path}/CMakeLists.txt 2> /dev/null`;
@@ -122,36 +129,53 @@ sub parse_svn {
       $version =~
         /[\n\s]*[0-9a-zA-Z\-_]+[\n\s]*(VERSION)?[\n\s]*([0-9\.]+).*/s;
       $version = $2;
-      $version .= "-$rev";
+      
+      my $version_rev = $rev-$skipped;
+      $version .= "-$version_rev";
     }
   
     my %revision;
     $revision{number} = $rev;
     $revision{version} = $version;
+    $revision{empty} = 1;
 
     $log = `svn log -r $rev $$repository{path} 2> /dev/null`;
-    my $line = $log;
-    $line =~ s/.*(r$rev.*?)\n.*/\1/s;
-    my @header = split(/\s*\|\s*/, $line);
-    my $author = @header[1];
-    if ($$authors{$author}) {
-      $revision{author} = $$authors{$author};
+    if ($? == 0) {
+      my $line = $log;
+      $line =~ s/.*(r$rev.*?)\n.*/\1/s;
+      my @header = split(/\s*\|\s*/, $line);
+      my $author = @header[1];
+      if ($$authors{$author}) {
+        $revision{author} = $$authors{$author};
+      }
+      else {
+        $revision{author} = "$author <$author\@unknown>";
+      }
+      $revision{time} = str2time(@header[2]);
+      my @lines = split(/\n/, $log);
+      my @message = @lines[2..(@lines-2)];
+      my $stripped = join("\n", @message);
+      $stripped =~ s/^[\s\n]*//s;
+      $stripped =~ s/[\s\n]*$//s;
+      if (not $stripped eq "") {
+        $revision{empty} = 0;
+        @{$revision{message}} = split(/\n/, $stripped);
+      }
+    }
+    
+    if (!$revision{empty}) {
+      print_stderr "$generator: Revision $revision{number}: ".
+        "$$project{name} ($revision{version}) $$project{distribution}; ".
+        "urgency=$$project{urgency}\n";
     }
     else {
-      $revision{author} = "$author <$author\@unknown>";
+      print_stderr "$generator: Revision $revision{number}: empty\n";
+
+      if ($cl_renumber) {
+        $skipped += 1;
+      }
     }
-    $revision{time} = str2time(@header[2]);
-    my @lines = split(/\n/, $log);
-    my @message = @lines[2..(@lines-2)];
-    my $stripped = join("\n", @message);
-    $stripped =~ s/^[\s\n]*//s;
-    $stripped =~ s/[\s\n]*$//s;
-    @{$revision{message}} = split(/\n/, $stripped);
-
-    print_stderr "$generator: Revision $revision{number}: ".
-      "$$project{name} ($revision{version}) $$project{distribution}; ".
-      "urgency=$$project{urgency}\n";
-
+    
     %{$$revisions{$rev}} = %revision;
   }
 }
@@ -165,34 +189,36 @@ sub generate_debcl {
 
   $$changelog = "";
   for ($rev = $$repository{head}; $rev >= $$repository{tail}; $rev--) {
-    if ($$changelog) {
+    if (!$$revisions{$rev}{empty}) {
+      if ($$changelog) {
+        $$changelog .= "\n";
+      }
+
+      $$changelog .= "$$project{name} ($$revisions{$rev}{version}) ".
+        "$$project{distribution}; urgency=$$project{urgency}\n";
       $$changelog .= "\n";
-    }
 
-    $$changelog .= "$$project{name} ($$revisions{$rev}{version}) ".
-      "$$project{distribution}; urgency=$$project{urgency}\n";
-    $$changelog .= "\n";
+      foreach $line (@{$$revisions{$rev}{message}}) {
+        if ($line =~ /^[a-zA-Z0-9]/) {
+          $line = "  * $line";
+        }
+        else {
+          $line = "    $line";
+        }
 
-    foreach $line (@{$$revisions{$rev}{message}}) {
-      if ($line =~ /^[a-zA-Z0-9]/) {
-        $line = "  * $line";
+        my $min = $width-10;
+        $format = '(.{'.$min.','.$width.'}\s+[^\s]*)\s+';
+        $line =~ s/$format/$1\n/;
+        $line =~ /[a-zA-Z0-9]/;
+        my $indent = ' 'x$-[0];
+        $line =~ s/\n/\n$indent/mg;
+        $$changelog .= "$line\n";
       }
-      else {
-        $line = "    $line";
-      }
 
-      my $min = $width-10;
-      $format = '(.{'.$min.','.$width.'}\s+[^\s]*)\s+';
-      $line =~ s/$format/$1\n/;
-      $line =~ /[a-zA-Z0-9]/;
-      my $indent = ' 'x$-[0];
-      $line =~ s/\n/\n$indent/mg;
-      $$changelog .= "$line\n";
+      $$changelog .= "\n";
+      $time = time2str("%a, %d %b %Y %H:%M:%S %z", $$revisions{$rev}{time});
+      $$changelog .= " -- $$revisions{$rev}{author}  $time\n";
     }
-
-    $$changelog .= "\n";
-    $time = time2str("%a, %d %b %Y %H:%M:%S %z", $$revisions{$rev}{time});
-    $$changelog .= " -- $$revisions{$rev}{author}  $time\n";
   }
 }
 
@@ -263,7 +289,7 @@ if ($cl_author_file) {
   open(file, "< $cl_author_file") or
     die("Error: $!\n");
     
-  $format = '([a-zA-Z]+)\s*=\s*([a-zA-Z ]+<[^>]+>)';
+  $format = '([a-zA-Z]+)\s*=\s*([^<]+<[^>]+>)';
   while (my $line = <file>) {
     if ($line =~ /$format/) {
       $authors{$1} = $2;

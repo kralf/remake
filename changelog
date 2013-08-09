@@ -1,3 +1,10 @@
+remake (1:0.6.2-223) lucid; urgency=low
+
+  * Improved handling of empty revisions in svn2debcl 
+  * Added revision renumbering to svn2debcl
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 09 Aug 2013 12:39:00 +0100
+
 remake (1:0.6.2-222) lucid; urgency=low
 
   * Overriding dh_pysupport in remake_distribute_deb() as ReMake knows
