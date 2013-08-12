@@ -26,6 +26,7 @@ include(ReMakePython)
 include(ReMakePack)
 include(ReMakeDistribute)
 include(ReMakeDebian)
+include(ReMakePkgConfig)
 
 include(ReMakePrivate)
 
@@ -1572,6 +1573,42 @@ macro(remake_ros_package_add_library ros_name)
       "${ros_link_flags}" INSTALL_RPATH_USE_LINK_PATH ON)
   endif(ros_link_flags)
 endmacro(remake_ros_package_add_library)
+
+### \brief Generate a ROS package's pkg-config file.
+#   This macro generates a pkg-config file for an already defined ROS
+#   package by calling remake_pkg_config_generate(). The name of the
+#   pkg-config file is constructed by appending the .pc extension to
+#   ${PACKAGE_NAME}. Furthermore, the ROS package's build dependencies are
+#   evaluated and passed as requirements into remake_pkg_config_generate().
+#   Note that only ROS expects its pkg-config files to be named after the
+#   package. Therefore, external build dependencies will not be enlisted
+#   automatically by the macro and must instead be specified explicitly
+#   through the REQUIRES arguments. See ReMakePkgConfig for additional
+#   information.
+#   \optional[value] PACKAGE:package The name of the already defined ROS
+#     package from which to generate the pkg-config file, defaulting to
+#     the package name conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] arg The list of additional arguments to be passed on to
+#     remake_pkg_config_generate(). See ReMakePkgConfig for details.
+macro(remake_ros_package_config_generate)
+  remake_arguments(PREFIX ros_ VAR PACKAGE ARGN args ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+
+  string(REGEX REPLACE "_" "-" ros_component ${ros_package})
+  remake_ros_package_get(${ros_package} INTERNAL_BUILD_DEPENDS
+    OUTPUT ros_dependencies)
+  remake_ros_package_get(${ros_package} EXTERNAL_BUILD_DEPENDS
+    OUTPUT ros_depends)
+  remake_list_push(ros_dependencies ${ros_depends})
+  
+  remake_pkg_config_generate(
+    COMPONENT ${ros_component}
+    FILENAME ${ros_package}.pc
+    NAME ${ros_package}
+    REQUIRES ${ros_dependencies}
+    ${ros_args})
+endmacro(remake_ros_package_config_generate)
 
 ### \brief Generate binary Debian packages from a ReMakeROS project.
 #   This macro configures package generation for a ReMakeROS project

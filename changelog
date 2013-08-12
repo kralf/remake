@@ -1,3 +1,15 @@
+remake (1:0.6.2-224) lucid; urgency=low
+
+  * Revised remake_pkg_config_generate() to use the header destinations
+    of devel components
+  * Added various arguments to remake_pkg_config_generate() which allow
+    for overriding the default pkg-config filename, the devel component,
+    and the install component
+  * Added remake_ros_package_config_generate() macro to standardize
+    pkg-config file generation for ROS packages
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 12 Aug 2013 13:55:00 +0100
+
 remake (1:0.6.2-223) lucid; urgency=low
 
   * Improved handling of empty revisions in svn2debcl 

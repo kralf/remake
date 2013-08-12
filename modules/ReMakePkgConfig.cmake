@@ -60,16 +60,24 @@ macro(remake_pkg_config)
 endmacro(remake_pkg_config)
 
 ### \brief Generate a component's pkg-config file.
-#   This macro generates a pkg-config file for the specified component of
+#   This macro generates a pkg-config file for the specified components of
 #   the ReMake project. It queries and analyzes the component variables in
 #   order to fill the required fields of the pkg-config file during the
 #   configuration run of CMake. An install rule is then defined for the
 #   generated file by calling remake_component_install() and passing
-#   ${COMPONENT}-${REMAKE_COMPONENT_DEVEL_SUFFIX} as install component.
-#   See ReMakeComponent for further information.
-#   \optional[value] COMPONENT:component The name of the component for
-#     which to generate and install the pkg-config file, defaults to
-#     ${REMAKE_COMPONENT}.
+#   ${INSTALL_COMPONENT} as install component. See ReMakeComponent for
+#   further information.
+#   \optional[value] COMPONENT:component The name of the component from
+#     which to populate the binary-related fields of the pkg-config file,
+#     defaults to ${REMAKE_COMPONENT}.
+#   \optional[value] DEV_COMPONENT:component The name of the component from
+#     which to populate the header-related fields of the pkg-config file,
+#     defaults to ${COMPONENT}-${REMAKE_COMPONENT_DEVEL_SUFFIX}.
+#   \optional[value] INSTALL_COMPONENT:component The name of the component
+#     for which to install the pkg-config file, defaults to ${DEV_COMPONENT}.
+#   \optional[value] FILENAME:filename The name of the generated pkg-config
+#     file, defaults to the component-specific filename for ${COMPONENT}
+#     with the .pc file extension. See ReMakeComponent for further information.
 #   \optional[value] NAME:name The component's name as indicated in the
 #     pkg-config file, defaults to ${REMAKE_PROJECT_NAME} with the
 #     component name appended in parentheses.
@@ -88,7 +96,8 @@ endmacro(remake_pkg_config)
 #     for searching the component's library destination and the flags
 #     for linking against all libraries being installed by the component.
 macro(remake_pkg_config_generate)
-  remake_arguments(PREFIX pkg_config_ VAR COMPONENT VAR NAME VAR DESCRIPTION
+  remake_arguments(PREFIX pkg_config_ VAR COMPONENT VAR DEV_COMPONENT
+    VAR INSTALL_COMPONENT VAR FILENAME VAR NAME VAR DESCRIPTION
     LIST REQUIRES LIST EXTRA_CFLAGS LIST EXTRA_LIBS ${ARGN})
   remake_set(pkg_config_component SELF DEFAULT ${REMAKE_COMPONENT})
   if(${pkg_config_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
@@ -97,40 +106,56 @@ macro(remake_pkg_config_generate)
     remake_set(pkg_config_name SELF DEFAULT
       "${REMAKE_PROJECT_NAME} (${pkg_config_component})")
   endif(${pkg_config_component} STREQUAL ${REMAKE_DEFAULT_COMPONENT})
-
+  remake_component_name(pkg_config_dev_component_default
+    ${pkg_config_component} ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+  remake_set(pkg_config_dev_component SELF DEFAULT
+    ${pkg_config_dev_component_default})
+  remake_set(pkg_config_install_component SELF DEFAULT
+    ${pkg_config_dev_component})
+  remake_component_get(${pkg_config_component} FILENAME
+    OUTPUT pkg_config_filename_default)
+  remake_set(pkg_config_filename SELF DEFAULT
+    ${pkg_config_filename_default}.pc)
+    
   remake_pkg_config()
 
-  remake_component_get(${pkg_config_component} FILENAME
-    OUTPUT pkg_config_filename)
   remake_file(pkg_config_file
-    "${REMAKE_PKG_CONFIG_DIR}/${pkg_config_filename}.pc" TOPLEVEL)
-
+    "${REMAKE_PKG_CONFIG_DIR}/${pkg_config_filename}" TOPLEVEL)
   remake_component_get(${pkg_config_component} INSTALL_PREFIX
     OUTPUT pkg_config_prefix)
   remake_file_write(${pkg_config_file} LINES
     "prefix=${pkg_config_prefix}")
   remake_file_write(${pkg_config_file} LINES
     "exec_prefix=\\\\\\\${prefix}")
-
-  remake_component_get(${pkg_config_component} HEADER_DESTINATION
-    OUTPUT pkg_config_header_destination)
-  if(IS_ABSOLUTE ${pkg_config_header_destination})
+  remake_component_get(${pkg_config_dev_component} INSTALL_PREFIX
+    OUTPUT pkg_config_include_prefix)
+  if(pkg_config_include_prefix STREQUAL pkg_config_prefix)
     remake_file_write(${pkg_config_file} LINES
-      "includedir=${pkg_config_header_destination}")
-  else(IS_ABSOLUTE ${pkg_config_header_destination})
+      "include_prefix=\\\\\\\${prefix}")
+  else(pkg_config_include_prefix STREQUAL pkg_config_prefix)
     remake_file_write(${pkg_config_file} LINES
-      "includedir=\\\\\\\${prefix}/${pkg_config_header_destination}")
-  endif(IS_ABSOLUTE ${pkg_config_header_destination})
+      "include_prefix=${pkg_config_include_prefix}")
+  endif(pkg_config_include_prefix STREQUAL pkg_config_prefix)
 
   remake_component_get(${pkg_config_component} LIBRARY_DESTINATION
     OUTPUT pkg_config_library_destination)
   if(IS_ABSOLUTE ${pkg_config_library_destination})
     remake_file_write(${pkg_config_file} LINES
-      "libdir=${pkg_config_library_destination}\n")
+      "libdir=${pkg_config_library_destination}")
   else(IS_ABSOLUTE ${pkg_config_library_destination})
     remake_file_write(${pkg_config_file} LINES
-      "libdir=\\\\\\\${prefix}/${pkg_config_library_destination}\n")
+      "libdir=\\\\\\\${prefix}/${pkg_config_library_destination}")
   endif(IS_ABSOLUTE ${pkg_config_library_destination})
+
+  remake_component_get(${pkg_config_dev_component} HEADER_DESTINATION
+    OUTPUT pkg_config_header_destination)
+  if(IS_ABSOLUTE ${pkg_config_header_destination})
+    remake_file_write(${pkg_config_file} LINES
+      "includedir=${pkg_config_header_destination}\n")
+  else(IS_ABSOLUTE ${pkg_config_header_destination})
+    remake_file_write(${pkg_config_file} LINES
+      "includedir=\\\\\\\${include_prefix}/${pkg_config_header_destination}\n")
+  endif(IS_ABSOLUTE ${pkg_config_header_destination})
 
   remake_file_write(${pkg_config_file} LINES
     "Name: ${pkg_config_name}")
@@ -170,8 +195,6 @@ macro(remake_pkg_config_generate)
   endif(pkg_config_requires)
 
   remake_project_get(PKG_CONFIG_DESTINATION)
-  remake_component_name(pkg_config_install_component
-    ${pkg_config_component} ${REMAKE_COMPONENT_DEVEL_SUFFIX})
   remake_component_install(
     FILES ${pkg_config_file}
     DESTINATION ${PKG_CONFIG_DESTINATION}
