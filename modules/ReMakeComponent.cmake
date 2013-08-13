@@ -287,15 +287,16 @@ macro(remake_component_get component_name component_var)
     remake_set(component_output SELF DEFAULT ${component_var})
 
     remake_project_get(${component_global_var} OUTPUT ${component_output})
-
+    
     if(DEFINED ${component_output})
       if(component_destination)
         if(${component_output})
           if(NOT IS_ABSOLUTE ${component_output})
-            remake_component_get(${component_name} INSTALL_PREFIX
-              OUTPUT ${component_install})
+            remake_list_push(component_outputs ${component_output})
+            remake_component_get(${component_name} INSTALL_PREFIX)
+            remake_list_pop(component_outputs component_output)            
             get_filename_component(${component_output}
-              ${component_install}/${${component_output}} ABSOLUTE)
+              ${INSTALL_PREFIX}/${${component_output}} ABSOLUTE)
           endif(NOT IS_ABSOLUTE ${component_output})
         else(${component_output})
           remake_component_get(${component_name} INSTALL_PREFIX

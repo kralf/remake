@@ -1,3 +1,10 @@
+remake (1:0.6.2-225) lucid; urgency=low
+
+  * Fixed bug in remake_component_get() which was caused by an
+    overwritten variable due to recursive calls
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 13 Aug 2013 13:17:00 +0100
+
 remake (1:0.6.2-224) lucid; urgency=low
 
   * Revised remake_pkg_config_generate() to use the header destinations
