@@ -1368,7 +1368,7 @@ macro(remake_ros_package_generate ros_name)
 
     remake_add_headers(${ros_${ros_name}_headers}
       COMPONENT ${ros_dev_component} GENERATED)
-    include_directories(${ros_include_dir})
+    include_directories(${ros_include_dir} BEFORE)
 
     if(ros_distribute)
       remake_component_name(ros_python_component ${ros_component}

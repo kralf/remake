@@ -1,3 +1,11 @@
+remake (1:0.6.2-226) lucid; urgency=low
+
+  * Fixed remake_ros_package_generate() to prepend the header output
+    directory to the list of include paths, thus preventing accidential
+    builds against the installed content of a ROS package
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 23 Aug 2013 08:42:00 +0100
+
 remake (1:0.6.2-225) lucid; urgency=low
 
   * Fixed bug in remake_component_get() which was caused by an
