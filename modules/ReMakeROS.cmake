@@ -1386,7 +1386,7 @@ macro(remake_ros_package_generate ros_name)
     endif(ros_distribute)
 
     remake_ros_package_get(${ros_package} INCLUDE_DIRS OUTPUT ros_include_dirs)
-    remake_list_push(ros_include_dirs ${ros_include_dir})
+    remake_set(ros_include_dirs ${ros_include_dir} ${ros_include_dirs})
     remake_list_remove_duplicates(ros_include_dirs)
     remake_ros_package_set(${ros_package} INCLUDE_DIRS ${ros_include_dirs}
       CACHE INTERNAL "Include directories of ROS package ${ros_package}.")
