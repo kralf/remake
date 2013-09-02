@@ -1,3 +1,9 @@
+remake (1:0.6.2-229) lucid; urgency=low
+
+  * Added default glob expression list of remake_add_configurations()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 02 Sep 2013 13:32:00 +0100
+
 remake (1:0.6.2-228) lucid; urgency=low
 
   * Added EXCLUDE argument to remake_add_scripts()

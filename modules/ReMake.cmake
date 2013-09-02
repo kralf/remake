@@ -582,7 +582,7 @@ endmacro(remake_add_scripts)
 #   configuration targets are automatically configured by
 #   remake_file_configure() prior to the install stage.
 #   \required[list] glob A list of glob expressions that are resolved in
-#     order to find the configuration file templates.
+#     order to find the configuration file templates, defaulting to *.
 #   \optional[option] RECURSE If this option is given, configuration targets
 #     will be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}.
 #     In addtion, for each file the install destination will be appended by
@@ -603,6 +603,7 @@ endmacro(remake_add_scripts)
 macro(remake_add_configurations)
   remake_arguments(PREFIX remake_ OPTION RECURSE LIST EXCLUDE VAR INSTALL
     VAR COMPONENT VAR SUFFIX ARGN globs ${ARGN})
+  remake_set(remake_globs SELF DEFAULT *)
   remake_set(remake_exclude SELF DEFAULT CMakeLists.txt)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
