@@ -516,7 +516,10 @@ endmacro(remake_add_headers)
 #   This macro automatically defines install rules for script files from
 #   a list of glob expressions.
 #   \required[list] glob A list of glob expressions that are resolved in
-#     order to find the scripts.
+#     order to find the scripts, defaulting to *.
+#   \optional[list] EXCLUDE:filename An optional list of filenames which
+#     shall be excluded from the list of script files, defaulting to
+#     CMakeLists.txt.
 #   \optional[value] INSTALL:dirname The optional directory that shall be
 #     passed as the scripts' install destination relative to the component's
 #     ${SCRIPT_DESTINATION}.
@@ -532,8 +535,10 @@ endmacro(remake_add_headers)
 #     to the script names during installation, forced to
 #     ${REMAKE_BRANCH_SUFFIX} if defined within a ReMake branch.
 macro(remake_add_scripts)
-  remake_arguments(PREFIX remake_ VAR INSTALL VAR COMPONENT VAR PREFIX
-    VAR SUFFIX ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ LIST EXCLUDE VAR INSTALL VAR COMPONENT
+    VAR PREFIX VAR SUFFIX ARGN globs ${ARGN})
+  remake_set(remake_globs SELF DEFAULT *)
+  remake_set(remake_exclude SELF DEFAULT CMakeLists.txt)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
   remake_component(${remake_component})
@@ -558,7 +563,8 @@ macro(remake_add_scripts)
     remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
   endif(REMAKE_BRANCH_BUILD)
 
-  remake_file_glob(remake_scripts ${remake_globs})
+  remake_file_glob(remake_scripts ${remake_globs}
+    EXCLUDE ${remake_exclude})
   foreach(remake_script ${remake_scripts})
     remake_file_suffix(remake_script_suffixed
       ${remake_script} ${remake_suffix} STRIP)
