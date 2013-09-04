@@ -98,6 +98,10 @@ endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 #   \optional[list] DEFINE:var An optional list of variable names and values
 #     of the form ${VAR}=${VALUE} to be passed during the configuration
 #     stage of the distribution.
+#   \optional[list] OVERRIDE:target An optional list of target names to be
+#     overridden in debian/rules in addition to dh_auto_configure,
+#     dh_auto_install, dh_installdocs, dh_installchangelogs, and dh_pysupport.
+#     Note that target overriding can sometimes be used to fix build problems.
 #   \optional[var] UPLOAD:host An optional host for uploading the generated
 #     source package via the dput Debian tool. See the dput documentation
 #     for valid host formats.
@@ -114,8 +118,8 @@ endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 macro(remake_distribute_deb)
   remake_arguments(PREFIX distribute_ VAR DISTRIBUTION VAR ALIAS
     VAR SECTION VAR ARCH VAR PRIORITY VAR CHANGELOG VAR URGENCY
-    VAR COMPATIBILITY LIST DEPENDS LIST PASS LIST DEFINE VAR UPLOAD
-    LIST EXCLUDE OPTION FORCE_CONSISTENCY ${ARGN})
+    VAR COMPATIBILITY LIST DEPENDS LIST PASS LIST DEFINE LIST OVERRIDE
+    VAR UPLOAD LIST EXCLUDE OPTION FORCE_CONSISTENCY ${ARGN})
   remake_set(distribute_section SELF DEFAULT misc)
   remake_set(distribute_arch SELF DEFAULT any)
   remake_set(distribute_priority SELF DEFAULT extra)
@@ -215,9 +219,16 @@ macro(remake_distribute_deb)
       "override_dh_installdocs:"
       "\t\n"
       "override_dh_installchangelogs:"
-      "\t\n"
+      "\t\n")
+      
+    foreach(distribute_target ${distribute_override})
+      remake_list_push(distribute_rules
+        "override_${distribute_target}:"
+        "\t\n")
+    endforeach(distribute_target)
+    
+    remake_list_push(distribute_rules
       "override_dh_auto_install:")
-
     remake_file(distribute_dir
       ${REMAKE_DISTRIBUTE_DIR}/debian/${distribute_alias})
     remake_file_mkdir(${distribute_dir})
