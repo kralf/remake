@@ -1,3 +1,9 @@
+remake (1:0.6.2-231) lucid; urgency=low
+
+  * Added NO_INCLUDE option to remake_add_library()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 16 Oct 2013 12:41:00 +0100
+
 remake (1:0.6.2-230) lucid; urgency=low
 
   * Added OVERRIDE argument to remake_distribute_deb()

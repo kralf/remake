@@ -111,6 +111,11 @@ endmacro(remake_add_modules)
 #     library types.
 #   \optional[option] RECURSE If this option is given, source files will
 #     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[option] NO_INCLUDE By default, the current source directory
+#     is added to the header include directories by calling remake_include().
+#     In some rare cases, however, such behavior may not be intended. Passing
+#     this option therefore prevents the current source directory from
+#     becoming a header search path.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
 #     as the library's install destination, defaults to the component's
 #     ${LIBRARY_DESTINATION}.
@@ -134,8 +139,8 @@ endmacro(remake_add_modules)
 #     prototype pattern intentionally hides symbol usage from the compiler.
 macro(remake_add_library remake_name)
   remake_arguments(PREFIX remake_ LIST GENERATED LIST DEPENDS VAR TYPE
-    OPTION RECURSE VAR INSTALL VAR COMPONENT VAR PREFIX VAR SUFFIX ARGN
-    globs LIST LINK LIST FORCE_LINK ${ARGN})
+    OPTION RECURSE OPTION NO_INCLUDE VAR INSTALL VAR COMPONENT VAR PREFIX
+    VAR SUFFIX LIST LINK LIST FORCE_LINK ARGN globs ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
   remake_set(remake_type SELF DEFAULT SHARED)
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
@@ -168,7 +173,9 @@ macro(remake_add_library remake_name)
   endif(remake_recurse)
   remake_target_get_sources(remake_target_sources ${remake_name})
   remake_target_get_dependencies(remake_target_depends ${remake_name})
-  remake_include()
+  if(NOT remake_no_include)
+    remake_include()
+  endif(NOT remake_no_include)
 
   remake_set(remake_plugins
     ${PLUGIN_DESTINATION}/${remake_name}/*${CMAKE_SHARED_LIBRARY_SUFFIX})
