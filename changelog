@@ -1,3 +1,10 @@
+remake (1:0.6.2-232) lucid; urgency=low
+
+  * Fixed bug in remake_component_get() that would cause destination
+    variables to always be prefixed with the install path prefix
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 21 Oct 2013 10:56:00 +0100
+
 remake (1:0.6.2-231) lucid; urgency=low
 
   * Added NO_INCLUDE option to remake_add_library()
