@@ -234,7 +234,7 @@ sub generate_man {
   my $date = sprintf("%d-%02d-%02d", $time[5]+1900, $time[4], 
     $time[3]);
 
-  $$man .= ".TH \"".uc($man_name)."\" $man_extension \"$date\" ".
+  $$man .= ".TH \"".uc($man_name)."\" $man_section \"$date\" ".
     "Linux \"$project_name Module Documentation\"\n";
   $$man .= ".SH NAME\n";
   my @macro_names;
@@ -289,6 +289,7 @@ sub generate_man {
     $macro_signature = join(" ", @param_signatures);
     $macro->{signature} = $macro_signature;
 
+    $$man .= ".HP\n";
     $$man .= ".BR \"$macro->{name}($macro->{signature})\"\n";
     $$man .= ".br\n";
   }
@@ -316,8 +317,8 @@ sub generate_man {
   
       if ($variable->{description}) {
         $description = $variable->{description};
-        $description =~ s/\*\s*"([^"]*)"\s*/\n.TP\n.I \1\n/g;
-        $description =~ s/\*\s*([^\s]*)\s*/\n.TP\n.I \1\n/g;
+        $description =~ s/\*\s*"([^"]*)"\s*/\n.PP\n.I \1\n/g;
+        $description =~ s/\*\s*([^\s]*)\s*/\n.PP\n.I \1\n/g;
         $$man .= "$description\n";
       }
 
@@ -329,11 +330,12 @@ sub generate_man {
     $$man .= ".SH MACROS\n";
   }
   for my $macro (@$macros) {
-    $$man .= ".TP\n";
+    $$man .= ".HP\n";
     $$man .= ".BI \"$macro->{name}($macro->{signature})\"\n";
     $$man .= ".RS\n";
 
     if ($macro->{brief}) {
+      $$man .= ".PP\n";
       $$man .= "$macro->{brief}\n";
       $$man .= ".PP\n";
     }
@@ -388,7 +390,7 @@ sub generate_man {
     $$man .= ".RE\n";
   }
 
-  $$man .= ".SH AUTHOR\n";
+  $$man .= ".SH AUTHORS\n";
   $$man .= "Written by $project_authors.\n";  
 
   $$man .= ".SH REPORTING BUGS\n";
@@ -448,20 +450,20 @@ sub find_source {
       $reference_component = $1;
       $reference_component =~ s/([a-z])([A-Z])/\1_\2/g;
       $references{$reference_key} =
-        lc($project_name)."_".lc($reference_component)."($man_extension)";
+        lc($project_name)."_".lc($reference_component)."($man_section)";
     }
   }
   
   my $man;
   print_stderr "$generator: - $module{name}: Generating ".
-    "$man_name($man_extension)\n";
+    "$man_name($man_section)\n";
   generate_man($man_name, \%module, \$usage, \@variables, \@macros,
     \%references, \$man);
 
   if ($doc_type =~ /man/) {
-    my $doc_name = "man${man_extension}/$man_name.$man_extension.gz";
+    my $doc_name = "man${man_section}/$man_name.$man_section.gz";
     print_stderr "Writing $doc_name\n";
-    mkpath("${doc_output}/man${man_extension}");
+    mkpath("${doc_output}/man${man_section}");
     my $pid = open(file, "| $gzip_executable -f > $doc_output/$doc_name") or
       die("Error: Failed to compress $doc_name!\n");
     print file $man;

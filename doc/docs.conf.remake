@@ -12,7 +12,7 @@ $project_summary = '${REMAKE_PROJECT_SUMMARY}';
 $gzip_executable = '${GZIP_EXECUTABLE}';
 $groff_executable = '${GROFF_EXECUTABLE}';
 
-$man_extension = '3';
+$man_section = 3;
 
 $find_pattern = '^ReMake[^.]*\.cmake$';
 $source_pattern = '\.cmake$';
