@@ -258,6 +258,7 @@ sub generate_man {
     $$man .= ".BR \"include($$module{name})\"\n";
   }
   $$man .= ".sp\n";
+  $$man .= ".PD 0\n";
   for my $macro (@$macros) {
     my $macro_signature;
     my @param_signatures;
@@ -293,6 +294,7 @@ sub generate_man {
     $$man .= ".BR \"$macro->{name}($macro->{signature})\"\n";
     $$man .= ".br\n";
   }
+  $$man .= ".PD\n";
 
   $$man .= ".SH DESCRIPTION\n";
   if ($$module{description}) {

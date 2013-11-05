@@ -1,3 +1,9 @@
+remake (1:0.6.3-234) lucid; urgency=low
+
+  * Minor change of documentation formatting
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 05 Nov 2013 08:53:00 +0100
+ 
 remake (1:0.6.3-233) lucid; urgency=low
 
   * New features:
