@@ -210,7 +210,7 @@ endmacro(remake_doc_configure)
 #     independently, disregarding any output conflicts.
 #   \required[list] INPUT:glob A list of glob expressions that
 #     resolves to a set of input directories for Doxygen, defaults to
-#     ${REMAKE_PROJECT_SOURCE_DIR}.
+#     ${REMAKE_PROJECT_SOURCE_DIR} and ${CMAKE_CURRENT_BINARY_DIR}.
 #   \optional[list] PATTERNS:pattern An optional list of glob patterns that
 #     are used to filter input files for Doxygen, defaults to *.h, *.hpp,
 #     and *.tpp.
@@ -219,6 +219,12 @@ endmacro(remake_doc_configure)
 #     that we have refrained from making man a default type for the Doxygen
 #     generator as it usually produces vast amounts of cluttered manual pages
 #     from source code.
+#   \optional[value] MAIN_PAGE:glob An optional glob expression resolving
+#     to one or multiple files which will be configured using
+#     remake_file_configure() and provide the main page content of the
+#     Doxygen documentation. By default, this glob expression is *.h.remake.
+#     Note that Doxygen will automatically pick up the configured files
+#     from the special input directory ${CMAKE_CURRENT_BINARY_DIR}.
 #   \optional[value] OUTPUT:dirname An optional directory name that
 #     identifies the base output directory for Doxygen, defaults to
 #     ${CMAKE_CURRENT_BINARY_DIR}. Note that the base output directory will
@@ -232,10 +238,12 @@ endmacro(remake_doc_configure)
 #     respectively.
 macro(remake_doc_doxygen)
   remake_arguments(PREFIX doc_ LIST INPUT LIST PATTERNS LIST TYPES
-    VAR OUTPUT VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
-  remake_set(doc_input SELF DEFAULT ${REMAKE_PROJECT_SOURCE_DIR})
+    VAR MAIN_PAGE VAR OUTPUT VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
+  remake_set(doc_input SELF DEFAULT ${REMAKE_PROJECT_SOURCE_DIR}
+    ${CMAKE_CURRENT_BINARY_DIR})
   remake_set(doc_patterns SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
   remake_set(doc_types SELF DEFAULT html chi latex rtf xml)
+  remake_set(doc_main_page SELF DEFAULT *.h.remake)
   remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(NOT DEFINED DOXYGEN_FOUND)
@@ -252,6 +260,7 @@ macro(remake_doc_doxygen)
     string(REPLACE ";" " " REMAKE_DOC_INPUT "${doc_input_dirs}")
     string(REPLACE ";" " " REMAKE_DOC_PATTERNS "${doc_patterns}")
     remake_file_glob(doc_files ${doc_globs})
+    remake_file_configure(${doc_main_page} OUTPUT doc_main_configured)
 
     foreach(doc_type ${REMAKE_DOC_DOXYGEN_TYPES})
       remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
@@ -272,7 +281,7 @@ macro(remake_doc_doxygen)
         file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output_dir})
         remake_doc_generate(doxygen ${doc_type}
           COMMAND ${DOXYGEN_EXECUTABLE} ${doc_configured}
-          DEPENDS ${doc_input_files} ${doc_configured}
+          DEPENDS ${doc_input_files} ${doc_configured} ${doc_main_configured}
           COMMENT "Generating Doxygen documentation ${doc_relative}"
           OUTPUT ${doc_output_dir}
           ${COMPONENT})

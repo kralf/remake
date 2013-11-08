@@ -1,3 +1,10 @@
+remake (1:0.6.3-235) lucid; urgency=low
+
+  * Extended remake_doc_doxygen() by MAIN_PAGE argument to facilitate the
+    automated generation of the Doxygen main page content
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 08 Nov 2013 10:49:00 +0100
+ 
 remake (1:0.6.3-234) lucid; urgency=low
 
   * Minor change of documentation formatting
