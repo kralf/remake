@@ -212,8 +212,8 @@ endmacro(remake_doc_configure)
 #     resolves to a set of input directories for Doxygen, defaults to
 #     ${REMAKE_PROJECT_SOURCE_DIR} and ${CMAKE_CURRENT_BINARY_DIR}.
 #   \optional[list] PATTERNS:pattern An optional list of glob patterns that
-#     are used to filter input files for Doxygen, defaults to *.h, *.hpp,
-#     and *.tpp.
+#     are used to filter input files for Doxygen, defaults to *.dox, *.h,
+#     *.hpp, and *.tpp.
 #   \optional[list] TYPES:type Defines the types of documentation generated
 #     by Doxygen. The default types are html, chi, latex, rtf, and xml. Note
 #     that we have refrained from making man a default type for the Doxygen
@@ -222,7 +222,7 @@ endmacro(remake_doc_configure)
 #   \optional[value] MAIN_PAGE:glob An optional glob expression resolving
 #     to one or multiple files which will be configured using
 #     remake_file_configure() and provide the main page content of the
-#     Doxygen documentation. By default, this glob expression is *.h.remake.
+#     Doxygen documentation. By default, this glob expression is *.dox.remake.
 #     Note that Doxygen will automatically pick up the configured files
 #     from the special input directory ${CMAKE_CURRENT_BINARY_DIR}.
 #   \optional[value] OUTPUT:dirname An optional directory name that
@@ -241,9 +241,10 @@ macro(remake_doc_doxygen)
     VAR MAIN_PAGE VAR OUTPUT VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
   remake_set(doc_input SELF DEFAULT ${REMAKE_PROJECT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR})
-  remake_set(doc_patterns SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
+  remake_set(doc_patterns SELF DEFAULT *.dox DEFAULT *.h DEFAULT *.hpp
+    DEFAULT *.tpp)
   remake_set(doc_types SELF DEFAULT html chi latex rtf xml)
-  remake_set(doc_main_page SELF DEFAULT *.h.remake)
+  remake_set(doc_main_page SELF DEFAULT *.dox.remake)
   remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(NOT DEFINED DOXYGEN_FOUND)

@@ -1,3 +1,11 @@
+remake (1:0.6.3-236) lucid; urgency=low
+
+  * Changed default values in remake_doc_doxygen() to reflect that the
+    main page is expected to have the dox extension (unlike headers,
+    these files will not show up in the generated list of files)
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 08 Nov 2013 11:12:00 +0100
+ 
 remake (1:0.6.3-235) lucid; urgency=low
 
   * Extended remake_doc_doxygen() by MAIN_PAGE argument to facilitate the
