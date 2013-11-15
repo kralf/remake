@@ -323,3 +323,37 @@ macro(remake_debian_find_file debian_pattern)
     endif(NOT debian_result AND debian_packages)
   endif(APT_FILE_EXECUTABLE)
 endmacro(remake_debian_find_file)
+
+### \brief Retrieve the Debian alternatives for a generic name.
+#   This macro queries the Debian update-alternatives tool in order to
+#   retrieve the alternative names for some generic name. Such generic
+#   name may for instance refer to, but is not limited to, a program or
+#   library with alternative implementations for the same or similar 
+#   functionalities. Further details are provided by the documentation
+#   of the Debian alternatives system.
+#   \required[value] name The generic name for which to retrieve the
+#     alternative names.
+#   \required[value] OUTPUT:variable The name of an output list variable
+#     which will be assigned the alternative names in the system. If no
+#     alternatives could be found, the output variable will be assigned
+#     the generic name, assuming that it is the only alternative.
+macro(remake_debian_get_alternatives debian_name)
+  remake_arguments(PREFIX debian_ VAR OUTPUT ${ARGN})
+  remake_set(${debian_output} ${debian_name})
+
+  if(NOT UPDATE_ALTERNATIVES_EXECUTABLE)
+    find_program(UPDATE_ALTERNATIVES_EXECUTABLE update-alternatives)
+  endif(NOT UPDATE_ALTERNATIVES_EXECUTABLE)
+
+  if(UPDATE_ALTERNATIVES_EXECUTABLE)
+    execute_process(
+      COMMAND ${UPDATE_ALTERNATIVES_EXECUTABLE} --list ${debian_name}
+      OUTPUT_VARIABLE debian_alternatives
+      RESULT_VARIABLE debian_result
+      OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+
+    if(NOT debian_result AND debian_alternatives)
+      string(REGEX REPLACE "\n" ";" ${debian_output} ${debian_alternatives})
+    endif(NOT debian_result AND debian_alternatives)
+  endif(UPDATE_ALTERNATIVES_EXECUTABLE)
+endmacro(remake_debian_get_alternatives)
