@@ -23,6 +23,7 @@ include(ReMakePrivate)
 include(ReMakeProject)
 include(ReMakeFile)
 include(ReMakeComponent)
+include(ReMakeDebian)
 
 ### \brief ReMake documentation macros
 #   The ReMake documentation module has been designed for simple and 
@@ -385,6 +386,17 @@ endmacro(remake_doc_groff)
 #     passed to the generator target when being executed. Placeholders may be
 #     used for command-line substitution of arguments to the generator target
 #     executable. Details are provided with the corresponding macro parameters.
+#   \optional[value] LINK_ALTERNATIVES:lib An optional generic library name
+#     with alternatives installed in the system. The macro passes the generic
+#     library name to remake_debian_get_alternatives() in order to find its
+#     alternative names. For each alternative library name, the target
+#     executables will be called with the LD_PRELOAD environment variable
+#     set to the alternative. Further, a prefix-stripped and filename
+#     extension-stripped library name conversion of the current alternative
+#     may be substituted in the output filename for the special placeholder
+#     %ALTERNATIVE%. Targets may thus generate specific documentation for 
+#     different alternatives of a library they depend on. See ReMakeDebian
+#     for additional information.
 #   \optional[value] OUTPUT_DIRECTORY:dirname An optional directory name that
 #     identifies the base output directory for all target generators, defaults
 #     to ${CMAKE_CURRENT_BINARY_DIR}. Note that the base output directory will
@@ -393,10 +405,10 @@ endmacro(remake_doc_groff)
 #   \required[value] OUTPUT_FILE:filename The filename that identifies the
 #     output file of a document generator target when being executed, relative
 #     to the output directory. As output filenames must be unique, i.e.,
-#     target-specific and type-specific, the  placeholders %TARGET%,
-#     %EXECUTABLE%, and %TYPE% may be used. The full-path target-specific and
-#     type-specific output filenames may further be  substituted for the
-#     command-line placeholder %OUTPUT%.
+#     target-specific and type-specific, the placeholders %TARGET%,
+#     %EXECUTABLE%, %TYPE%, and %ALTERNATIVE% may be used. The full-path
+#     target-specific and type-specific output filenames may further be 
+#     substituted for the command-line placeholder %OUTPUT%.
 #   \optional[option] MAKE_DIRECTORIES As some target generators may expect
 #     their output directories to exist, this option causes the macro to
 #     create these directories during the configuration stage of CMake.
@@ -414,12 +426,18 @@ endmacro(remake_doc_groff)
 #     remake_doc_install() for defining the build and install rules,
 #     respectively.
 macro(remake_doc_targets)
-  remake_arguments(PREFIX doc_ LIST ARGS LIST TYPES VAR INSTALL VAR COMPONENT
-    VAR OUTPUT_DIRECTORY VAR OUTPUT_FILE OPTION MAKE_DIRECTORIES ARGN targets
-    ${ARGN})
+  remake_arguments(PREFIX doc_ LIST ARGS LIST LINK_ALTERNATIVES LIST TYPES
+    VAR INSTALL VAR COMPONENT VAR OUTPUT_DIRECTORY VAR OUTPUT_FILE
+    OPTION MAKE_DIRECTORIES ARGN targets ${ARGN})
   remake_set(doc_types SELF DEFAULT ${REMAKE_DOC_TYPES})
   remake_set(doc_output_directory SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
+  remake_unset(doc_alternatives)
+  if(doc_link_alternatives)
+    remake_debian_get_alternatives(${doc_link_alternatives}
+      OUTPUT doc_alternatives)
+  endif(doc_link_alternatives)
+  
   foreach(doc_target ${doc_targets})
     remake_doc_support(${doc_target} ${doc_types})
     remake_var_name(doc_types_var REMAKE_DOC ${doc_target} TYPES)
@@ -428,6 +446,7 @@ macro(remake_doc_targets)
       remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
       remake_set(doc_output_dir ${doc_output_directory}/${${doc_output_var}})
       get_target_property(doc_target_executable ${doc_target} OUTPUT_NAME)
+      get_target_property(doc_target_location ${doc_target} LOCATION)
 
       remake_set(doc_output ${doc_output_dir}/${doc_output_file})
       string(REPLACE "%TYPE%" "${doc_type}" doc_output ${doc_output})
@@ -437,25 +456,58 @@ macro(remake_doc_targets)
       
       remake_set(doc_type_args ${doc_args})
       remake_list_replace(doc_type_args %TYPE% REPLACE ${doc_type} VERBATIM)
-      remake_list_replace(doc_type_args %OUTPUT% REPLACE ${doc_output}
-        VERBATIM)
       remake_list_replace(doc_type_args %TARGET% REPLACE ${doc_target}
          VERBATIM)
       remake_list_replace(doc_type_args %EXECUTABLE% REPLACE
         ${doc_target_executable} VERBATIM)
 
-      if(doc_make_directories)
-        get_filename_component(doc_output_path ${doc_output} PATH)
-        remake_file_mkdir(${doc_output_path})
-      endif(doc_make_directories)
-        
-      file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output})
-      remake_doc_generate(${doc_target} ${doc_type}
-        COMMAND ${doc_target} ${doc_type_args}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Generating ${doc_target} documentation ${doc_relative}"
-        OUTPUT ${doc_output}
-        ${COMPONENT})
+      if(doc_alternatives)
+        foreach(doc_alternative ${doc_alternatives})
+          get_filename_component(doc_alternative_we ${doc_alternative} NAME_WE)
+          string(REGEX REPLACE "^${CMAKE_SHARED_LIBRARY_PREFIX}" "" doc_alt
+            ${doc_alternative_we})                  
+          string(REPLACE "%ALTERNATIVE%" "${doc_alt}" doc_output_alt
+            ${doc_output})
+          
+          remake_set(doc_type_args_alt ${doc_type_args})
+          remake_list_replace(doc_type_args_alt %OUTPUT% REPLACE
+            ${doc_output_alt} VERBATIM)
+          
+          if(doc_make_directories)
+            get_filename_component(doc_output_path ${doc_output_alt} PATH)
+            remake_file_mkdir(${doc_output_path})
+          endif(doc_make_directories)
+          
+          file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR}
+            ${doc_output_alt})
+          remake_set(LD_PRELOAD ${doc_alternative})
+          remake_doc_generate(${doc_target}_${doc_alt} ${doc_type}
+            COMMAND ${doc_target_location} ${doc_type_args_alt}
+            DEPENDS ${doc_target}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+            COMMENT "Generating ${doc_target} documentation ${doc_relative}"
+            OUTPUT ${doc_output_alt}
+            ENVIRONMENT LD_PRELOAD
+            ${COMPONENT})
+        endforeach(doc_alternative)
+      else(doc_alternatives)
+        remake_list_replace(doc_type_args %OUTPUT% REPLACE ${doc_output}
+          VERBATIM)
+          
+        if(doc_make_directories)
+          get_filename_component(doc_output_path ${doc_output} PATH)
+          remake_file_mkdir(${doc_output_path})
+        endif(doc_make_directories)
+          
+        file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output})
+        remake_doc_generate(${doc_target} ${doc_type}
+          COMMAND ${doc_target_location} ${doc_type_args}
+          DEPENDS ${doc_target}
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+          COMMENT "Generating ${doc_target} documentation ${doc_relative}"
+          OUTPUT ${doc_output}
+          ${COMPONENT})
+      endif(doc_alternatives)
     endforeach(doc_type)
 
     remake_doc_install(
@@ -546,6 +598,11 @@ endmacro(remake_doc_custom)
 #   \required[value] type The document type that will be built by this
 #     rule. Note that here the document type will only be used to construct
 #     a generator-specific and type-specific documentation target name.
+#   \optional[list] ENVIRONMENT:var An optional list of variable names
+#     known to CMake which will be set as environment variables to the
+#     generator command. Sine CMake does not provide a portable solution
+#     for setting the environment of a custom command, the variable
+#     definitions are instead prepended to the generator command as VAR=${VAR}.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_component_add_command(), defaults to
 #     ${REMAKE_COMPONENT}-${REMAKE_DOC_COMPONENT_SUFFIX}. See ReMakeComponent
@@ -553,14 +610,25 @@ endmacro(remake_doc_custom)
 #   \optional[list] arg Additional arguments to be passed on to
 #     remake_component_add_command(). See ReMakeComponent for details.
 macro(remake_doc_generate doc_generator doc_type)
-  remake_arguments(PREFIX doc_ VAR COMPONENT ARGN generate_args ${ARGN})
+  remake_arguments(PREFIX doc_ VAR COMMAND LIST ENVIRONMENT VAR COMPONENT
+    ARGN generate_args ${ARGN})
   remake_component_name(doc_default_component ${REMAKE_COMPONENT}
     ${REMAKE_DOC_COMPONENT_SUFFIX})
   remake_set(doc_component SELF DEFAULT ${doc_default_component})
 
-  remake_target_name(doc_target ${doc_generator} ${doc_type})
+  remake_unset(doc_generate_env)
+  foreach(doc_env ${doc_environment})
+    remake_list_push(doc_generate_env "${doc_env}=${${doc_env}}")
+  endforeach(doc_env)
+  if(doc_generate_env)
+    string(REPLACE ";" ";&&;" doc_generate_env "${doc_generate_env}")
+  endif(doc_generate_env)
+  
+  remake_target_name(doc_as_target ${doc_generator} ${doc_type})
   remake_component_add_command(
-    ${doc_generate_args} AS ${doc_target}
+    COMMAND ${doc_generate_env} ${doc_command}
+    ${doc_generate_args}
+    AS ${doc_as_target}
     COMPONENT ${doc_component})
 endmacro(remake_doc_generate)
 

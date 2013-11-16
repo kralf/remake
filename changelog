@@ -1,3 +1,11 @@
+remake (1:0.6.3-238) lucid; urgency=low
+
+  * Added LINK_ALTERNATIVES argument to remake_doc_targets() which allows
+    for generating target documentation for different alternatives of a
+    library dependency
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 16 Nov 2013 07:53:00 +0100
+ 
 remake (1:0.6.3-237) lucid; urgency=low
 
   * Added remake_debian_get_alternatives() macro to ReMakeDebian
