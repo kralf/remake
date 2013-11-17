@@ -1,3 +1,11 @@
+remake (1:0.6.3-239) lucid; urgency=low
+
+  * Added LIST_SEPARATOR argument to remake_file_configure()
+  * Revised remake_pack_deb() to make use of LIST_SEPARATOR argument
+    to remake_file_configure()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 17 Nov 2013 11:25:00 +0100
+ 
 remake (1:0.6.3-238) lucid; urgency=low
 
   * Added LINK_ALTERNATIVES argument to remake_doc_targets() which allows

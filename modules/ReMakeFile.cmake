@@ -619,13 +619,15 @@ endmacro(remake_file_link)
 #     will be C-style escaped.
 #   \optional[option] ESCAPE_NEWLINES If specified, any substituted line
 #     breaks will be C-style escaped.
+#   \optional[value] LIST_SEPARATOR:string An optional string which will
+#     substitute CMake's list separator in the output files.
 #   \optional[option] STRIP_PATHS This option causes the macro to strip
 #     any directories from the relative-path output filenames and to
 #     directly place the output files under the destination directory.
 macro(remake_file_configure)
   remake_arguments(PREFIX file_conf_ VAR DESTINATION VAR EXT VAR OUTPUT
     OPTION OUTDATED OPTION ESCAPE_QUOTES OPTION ESCAPE_NEWLINES
-    OPTION STRIP_PATHS ARGN globs ${ARGN})
+    VAR LIST_SEPARATOR OPTION STRIP_PATHS ARGN globs ${ARGN})
   remake_set(file_conf_destination SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
 
   if(file_conf_output)
@@ -663,6 +665,10 @@ macro(remake_file_configure)
           string(REGEX REPLACE "\\\${([a-zA-Z_]*)}" "\\1" file_conf_var
             ${file_conf_var})
           remake_set(file_conf_value "${${file_conf_var}}")
+          if(file_conf_list_separator)
+            string(REPLACE ";" "${file_conf_list_separator}"
+              file_conf_value "${file_conf_value}")
+          endif(file_conf_list_separator)
           if(file_conf_escape_quotes)
             string(REGEX REPLACE "\"" "\\\\\"" file_conf_value
               "${file_conf_value}")
