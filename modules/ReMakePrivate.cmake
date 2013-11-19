@@ -26,6 +26,9 @@
 #   In most cases, there exists no need for directly calling any private
 #   macros from a CMakeLists.txt file. However, the macros shall be documented
 #   for the beauty and purpose of completeness.
+#
+#   \variable REMAKE_PRIVATE_STACK The variable stack implemented as a
+#     CMake list.
 
 if(NOT DEFINED REMAKE_PRIVATE_CMAKE)
   set(REMAKE_PRIVATE_CMAKE ON)
@@ -336,3 +339,47 @@ macro(remake_debug)
     endif(DEFINED ${private_var})
   endforeach(private_var)
 endmacro(remake_debug)
+
+### \brief Push variables onto stack.
+#   This macro is a helper macro to locally secure variable values on a stack.
+#   Since CMake macros do not incorporate the concept of a local variable, it
+#   can be highly useful in cases where variable values are at risk to be
+#   modified unintentionally by other macros. However, be aware of the scope
+#   of the stack.
+#   \required[list] var The list of variables to be pushed onto the stack in
+#     the order provided.
+macro(remake_push)
+  foreach(private_var ${ARGN})
+    if(DEFINED ${private_var})
+      string(REPLACE ";" "$#!" private_stack_var "${${private_var}}")
+      list(APPEND REMAKE_PRIVATE_STACK "${private_stack_var}")
+    else(DEFINED ${private_var})
+      if(REMAKE_PRIVATE_STACK)
+        list(APPEND REMAKE_PRIVATE_STACK "")
+      else(REMAKE_PRIVATE_STACK)
+        set(REMAKE_PRIVATE_STACK ";")
+      endif(REMAKE_PRIVATE_STACK)
+    endif(DEFINED ${private_var})
+  endforeach(private_var)
+endmacro(remake_push)
+
+### \brief Pop variables from stack.
+#   This macro is a helper macro to recover variable values from a stack which
+#   have been locally secured by remake_push(). Since CMake macros do not
+#   incorporate the concept of a local variable, it can be highly useful in
+#   cases where variable values are at risk to be modified unintentionally by
+#   other macros. However, be aware of the scope of the stack.
+#   \required[list] var The list of variables to be popped from the stack
+#     in the order provided. Note that, for a list of variables secured by
+#     remake_push(), the argument to this macro would be the reversed list.
+macro(remake_pop)
+  foreach(private_var ${ARGN})
+    list(GET REMAKE_PRIVATE_STACK -1 private_stack_var)
+    list(REMOVE_AT REMAKE_PRIVATE_STACK -1)
+    if(private_stack_var)
+      string(REPLACE "$#!" ";" ${private_var} "${private_stack_var}")
+    else(private_stack_var)
+      unset(${private_var})
+    endif(private_stack_var)
+  endforeach(private_var)
+endmacro(remake_pop)

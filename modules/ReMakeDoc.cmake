@@ -253,6 +253,7 @@ macro(remake_doc_doxygen)
   endif(NOT DEFINED DOXYGEN_FOUND)
 
   if(DOXYGEN_FOUND)
+    remake_push(INSTALL)
     remake_doc_support(doxygen ${doc_types})
     remake_list_push(REMAKE_DOC_DOXYGEN_SUPPORTED_TYPES man)
     remake_list_remove_duplicates(REMAKE_DOC_DOXYGEN_SUPPORTED_TYPES)
@@ -290,6 +291,7 @@ macro(remake_doc_doxygen)
       endforeach(doc_file)
     endforeach(doc_type)
 
+    remake_pop(INSTALL)
     remake_doc_install(
       TYPES ${REMAKE_DOC_DOXYGEN_TYPES}
       OUTPUT ${doc_output}
@@ -329,6 +331,7 @@ macro(remake_doc_groff)
   endif(NOT DEFINED GROFF_FOUND)
 
   if(GROFF_FOUND)
+    remake_push(INSTALL)
     remake_doc_support(groff man ascii utf8 html ps)
     foreach(doc_type ${REMAKE_DOC_GROFF_TYPES})
       remake_var_name(doc_output_var REMAKE_DOC ${doc_macro} OUTPUT)
@@ -364,6 +367,7 @@ macro(remake_doc_groff)
       endif(${doc_macro} STREQUAL ${doc_type})
     endforeach(doc_type)
 
+    remake_pop(INSTALL)
     remake_doc_install(
       TYPES ${REMAKE_DOC_TYPES}
       OUTPUT ${doc_output}
@@ -431,6 +435,7 @@ macro(remake_doc_targets)
     OPTION MAKE_DIRECTORIES ARGN targets ${ARGN})
   remake_set(doc_types SELF DEFAULT ${REMAKE_DOC_TYPES})
   remake_set(doc_output_directory SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
+  remake_push(INSTALL)
 
   remake_unset(doc_alternatives)
   if(doc_link_alternatives)
@@ -438,9 +443,12 @@ macro(remake_doc_targets)
       OUTPUT doc_alternatives)
   endif(doc_link_alternatives)
   
+  remake_unset(doc_install_types)
   foreach(doc_target ${doc_targets})
     remake_doc_support(${doc_target} ${doc_types})
     remake_var_name(doc_types_var REMAKE_DOC ${doc_target} TYPES)
+    remake_list_push(doc_install_types ${${doc_types_var}})
+    remake_list_remove_duplicates(doc_install_types)
 
     foreach(doc_type ${${doc_types_var}})
       remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
@@ -509,12 +517,15 @@ macro(remake_doc_targets)
           ${COMPONENT})
       endif(doc_alternatives)
     endforeach(doc_type)
+  endforeach(doc_target)
 
+  remake_pop(INSTALL)
+  if(doc_install_types)
     remake_doc_install(
-      TYPES ${${doc_types_var}}
+      TYPES ${doc_install_types}
       OUTPUT ${doc_output_directory}
       ${INSTALL} ${COMPONENT})
-  endforeach(doc_target)
+  endif(doc_install_types)
 endmacro(remake_doc_targets)
 
 ### \brief Generate documentation using a custom generator.
@@ -555,6 +566,7 @@ macro(remake_doc_custom doc_generator doc_command)
     LIST OUTPUT ARGN custom_args ${ARGN})
   remake_set(doc_types SELF DEFAULT ${REMAKE_DOC_TYPES})
   remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
+  remake_push(INSTALL)
 
   remake_doc_support(${doc_generator} ${doc_types})
   remake_var_name(doc_types_var REMAKE_DOC ${doc_generator} TYPES)
@@ -581,6 +593,7 @@ macro(remake_doc_custom doc_generator doc_command)
       ${COMPONENT})
   endforeach(doc_type)
 
+  remake_pop(INSTALL)
   remake_doc_install(
     TYPES ${${doc_types_var}}
     OUTPUT ${doc_output}

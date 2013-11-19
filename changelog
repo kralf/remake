@@ -1,3 +1,15 @@
+remake (1:0.6.4-240) lucid; urgency=low
+
+  * Added remake_push() and remake_pop() to ReMakePrivate module
+  * Fixed bug in remake_doc_targets() which would cause multiple
+    installations of the generated documents into potentially faulty
+    locations
+  * Safety-fix of other documentation-generating macros to prevent
+    similar bugs
+  * Increased minor version
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 19 Nov 2013 15:08:00 +0100
+ 
 remake (1:0.6.3-239) lucid; urgency=low
 
   * Added LIST_SEPARATOR argument to remake_file_configure()
