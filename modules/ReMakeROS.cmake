@@ -71,22 +71,22 @@ endif(NOT DEFINED REMAKE_ROS_CMAKE)
 macro(remake_ros)
   if(NOT ROS_FOUND)
     remake_set(ros_paths PATHS)
-    if(ENV{ROS_ROOT})
+    if(DEFINED ENV{ROS_ROOT})
       remake_list_push(ros_paths "$ENV{ROS_ROOT}/../..")
     elseif(ROS_DISTRIBUTION)
       remake_list_push(ros_paths "/opt/ros/${ROS_DISTRIBUTION}")
-    endif(ENV{ROS_ROOT})
+    endif(DEFINED ENV{ROS_ROOT})
 
     remake_find_executable(env.sh PACKAGE ROS ${ros_paths})
-
+    
     if(ROS_FOUND)
       get_filename_component(ros_path ${ROS_EXECUTABLE} PATH)
       remake_set(ROS_PATH ${ros_path} CACHE STRING
         "Path to the ROS distribution." FORCE)
 
-      if(ENV{ROS_DISTRO})
+      if(DEFINED ENV{ROS_DISTRO})
         remake_set(ros_distribution $ENV{ROS_DISTRO})
-      else(ENV{ROS_DISTRO})
+      else(DEFINED ENV{ROS_DISTRO})
         remake_ros_command(
           echo $ROS_DISTRO
           OUTPUT ros_command)
@@ -95,7 +95,7 @@ macro(remake_ros)
           OUTPUT_VARIABLE ros_distribution
           ERROR_VARIABLE ros_error
           ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-      endif(ENV{ROS_DISTRO})
+      endif(DEFINED ENV{ROS_DISTRO})
       remake_set(ROS_DISTRIBUTION ${ros_distribution} CACHE STRING
         "Name of the ROS distribution." FORCE)
       if(NOT ROS_DISTRIBUTION)
@@ -103,9 +103,9 @@ macro(remake_ros)
         message(FATAL_ERROR "ROS distribution is undefined.")
       endif(NOT ROS_DISTRIBUTION)
 
-      if(ENV{ROS_PACKAGE_PATH})
+      if(DEFINED ENV{ROS_PACKAGE_PATH})
         remake_set(ros_package_path $ENV{ROS_PACKAGE_PATH})
-      else(ENV{ROS_PACKAGE_PATH})
+      else(DEFINED ENV{ROS_PACKAGE_PATH})
         remake_ros_command(
           echo $ROS_PACKAGE_PATH
           OUTPUT ros_command)
@@ -117,7 +117,7 @@ macro(remake_ros)
           string(REGEX REPLACE ":" ":${CMAKE_FIND_ROOT_PATH}"
           ros_package_path ${CMAKE_FIND_ROOT_PATH}${ros_package_path})
         endif(CMAKE_CROSSCOMPILING AND CMAKE_FIND_ROOT_PATH)
-      endif(ENV{ROS_PACKAGE_PATH})
+      endif(DEFINED ENV{ROS_PACKAGE_PATH})
       if(ros_package_path)
         string(REGEX REPLACE ":" ";" ros_package_path ${ros_package_path})
       endif(ros_package_path)

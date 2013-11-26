@@ -1,3 +1,11 @@
+remake (1:0.6.4-241) lucid; urgency=low
+
+  * Fixed bug in remake_ros() that would lead to ROS environment variables
+    not being checked properly if defined (if(ENV{VAR}) apparently behaves
+    differently from if(VAR))
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Nov 2013 14:39:00 +0100
+ 
 remake (1:0.6.4-240) lucid; urgency=low
 
   * Added remake_push() and remake_pop() to ReMakePrivate module
