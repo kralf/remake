@@ -1254,7 +1254,7 @@ macro(remake_ros_package_generate ros_name)
   if(ROSRUN_FOUND AND ros_${ros_name}s)
     remake_ros_package_add_dependencies(
       ${ros_package}
-      BUILD_DEPENDS rosbash)
+      BUILD_DEPENDS rosbash rosbuild)
 
     string(REGEX REPLACE ";" ":" ros_pkg_path "${ROS_PACKAGE_PATH}")
     if(CMAKE_CROSSCOMPILING AND CMAKE_FIND_ROOT_PATH)
