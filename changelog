@@ -1,3 +1,11 @@
+remake (1:0.6.4-243) lucid; urgency=low
+
+  * Added FORCE_LINK argument to remake_add_executable() and
+    remake_add_executables(), allowing to also link executables with the
+    --no-as-needed linker flag set
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 29 Mar 2014 07:21:00 +0100
+ 
 remake (1:0.6.4-242) lucid; urgency=low
 
   * Automatically adding rosbuild to package build dependencies in
