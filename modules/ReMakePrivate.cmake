@@ -218,7 +218,12 @@ endmacro(remake_var_regex)
 #     and the FORCE option have to present in order for this initialization to
 #     take effect. If the variable type or documentation string required for
 #     defining cache variables are omitted from the list of arguments, it will
-#     be attempted to infer them from the variable properties.
+#     be attempted to infer them from the variable properties. It is important
+#     to remark that initialization of the designated CMake variable
+#     CMAKE_INSTALL_PREFIX follows a special treatment which allows the
+#     variable value to be overridden from the command line. In particular,
+#     any previously cached value will not be modified if the internal CMake
+#     variable CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT evaluates to false.
 #   \optional[value] DEFAULT:value An optional default value to be assigned
 #     to an otherwise undefined or empty variable.
 #   \optional[list] args An optional list of arguments to be passed on to
@@ -231,9 +236,15 @@ macro(remake_set private_var)
 
   set(private_initialized OFF)
   if(private_init)
-    if (REMAKE_CACHE_INITIALIZED)
+    if(REMAKE_CACHE_INITIALIZED)
       set(private_initialized ON)
-    endif (REMAKE_CACHE_INITIALIZED)
+    else(REMAKE_CACHE_INITIALIZED)
+      if(${private_var} STREQUAL "CMAKE_INSTALL_PREFIX")
+        if(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+          set(private_initialized ON)
+        endif(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+      endif(${private_var} STREQUAL "CMAKE_INSTALL_PREFIX")
+    endif(REMAKE_CACHE_INITIALIZED)
   endif(private_init)
 
   list(FIND private_set_args CACHE private_cache)

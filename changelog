@@ -1,3 +1,11 @@
+remake (1:0.6.4-244) lucid; urgency=low
+
+  * Extended remake_set() by a special initialization treatment for
+    CMAKE_INSTALL_PREFIX, allowing its value to be overridden from the
+    command line
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 12 May 2014 09:09:00 +0100
+ 
 remake (1:0.6.4-243) lucid; urgency=low
 
   * Added FORCE_LINK argument to remake_add_executable() and
