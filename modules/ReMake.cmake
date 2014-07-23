@@ -719,10 +719,12 @@ macro(remake_add_files)
   endif(REMAKE_BRANCH_BUILD)
 
   if(remake_recurse)
-    remake_file_glob(
-      remake_files ${remake_globs}
-      RECURSE ${CMAKE_CURRENT_SOURCE_DIR}
-      EXCLUDE ${remake_exclude})
+    if(remake_suffix)
+      remake_file_glob(
+        remake_files ${remake_globs}
+        RECURSE ${CMAKE_CURRENT_SOURCE_DIR}
+        EXCLUDE ${remake_exclude})
+    endif(remake_suffix)
   else(remake_recurse)
     if(remake_generated)
       remake_set(remake_files ${remake_globs})
@@ -734,21 +736,42 @@ macro(remake_add_files)
     remake_set(remake_file_install ${remake_install})
   endif(remake_recurse)
 
-  foreach(remake_file ${remake_files})
-    remake_file_suffix(remake_suffixed ${remake_file} ${remake_suffix} STRIP)
-    if(remake_recurse)
-      get_filename_component(remake_file_path ${remake_file} PATH)
-      file(RELATIVE_PATH remake_file_dir ${CMAKE_CURRENT_SOURCE_DIR}
-        ${remake_file_path})
-      remake_set(remake_file_install ${remake_install}/${remake_file_dir})
-    endif(remake_recurse)
+  if(remake_suffix)
+    foreach(remake_file ${remake_files})
+      remake_file_suffix(remake_suffixed ${remake_file} ${remake_suffix} STRIP)
+      if(remake_recurse)
+        get_filename_component(remake_file_path ${remake_file} PATH)
+        file(RELATIVE_PATH remake_file_dir ${CMAKE_CURRENT_SOURCE_DIR}
+          ${remake_file_path})
+        remake_set(remake_file_install ${remake_install}/${remake_file_dir})
+      endif(remake_recurse)
 
-    remake_component_install(
-      FILES ${remake_file}
-      DESTINATION ${remake_file_install}
-      RENAME ${remake_suffixed}
-      COMPONENT ${remake_component})
-  endforeach(remake_file)
+      remake_component_install(
+        FILES ${remake_file}
+        DESTINATION ${remake_file_install}
+        RENAME ${remake_suffixed}
+        COMPONENT ${remake_component})
+    endforeach(remake_file)
+  else(remake_suffix)
+    if(remake_recurse)
+      string(REPLACE ";" ";FILES_MATCHING;PATTERN;" remake_files_matching
+        "${remake_globs}")
+      string(REPLACE ";" ";EXCLUDE;PATTERN;" remake_files_exclude
+        "${remake_exclude}")
+    
+      remake_component_install(
+        DIRECTORY .
+        DESTINATION ${remake_install}
+        COMPONENT ${remake_component}
+        FILES_MATCHING PATTERN ${remake_files_matching}
+        PATTERN ${remake_files_exclude} EXCLUDE)
+    else(remake_recurse)
+      remake_component_install(
+        FILES ${remake_files}
+        DESTINATION ${remake_install}
+        COMPONENT ${remake_component})
+    endif(remake_recurse)
+  endif(remake_suffix)
 endmacro(remake_add_files)
 
 ### \brief Add subdirectories.

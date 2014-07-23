@@ -1,3 +1,10 @@
+remake (1:0.6.4-245) lucid; urgency=low
+
+  * Now using install(DIRECTORY...) signature in remake_add_files() if
+    RECURSE option and no SUFFIX is given, fixing efficiency issues
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 23 Jul 2014 13:33:00 +0100
+ 
 remake (1:0.6.4-244) lucid; urgency=low
 
   * Extended remake_set() by a special initialization treatment for

@@ -565,12 +565,13 @@ macro(remake_component_install)
     endif(component_empty)
 
     if(component_install_dest)
-      install(${component_args}
-        DESTINATION ${component_install_dest}
-        COMPONENT ${component_name})
+      string(REGEX REPLACE ";DESTINATION;[^;]+"
+        ";DESTINATION;${component_install_dest}"
+        component_install_args "${ARGN}")
     else(component_install_dest)
-      install(${component_args}
-        COMPONENT ${component_name})
+      remake_set(component_install_args ${ARGN})
     endif(component_install_dest)
+    
+    install(${component_install_args})
   endif(component_build)
 endmacro(remake_component_install)
