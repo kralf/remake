@@ -571,6 +571,10 @@ macro(remake_component_install)
     else(component_install_dest)
       remake_set(component_install_args ${ARGN})
     endif(component_install_dest)
+    if(NOT "${ARGN}" MATCHES ".*;COMPONENT;.*")
+      remake_list_push(component_install_args
+        COMPONENT ${component_name})
+    endif(NOT "${ARGN}" MATCHES ".*;COMPONENT;.*")
     
     install(${component_install_args})
   endif(component_build)

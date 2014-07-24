@@ -1,3 +1,10 @@
+remake (1:0.6.4-246) lucid; urgency=low
+
+  * Fixed bug in remake_component_install() that would lead to default
+    COMPONENT argument not being passed to install rule
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 24 Jul 2014 10:51:00 +0100
+ 
 remake (1:0.6.4-245) lucid; urgency=low
 
   * Now using install(DIRECTORY...) signature in remake_add_files() if
