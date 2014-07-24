@@ -1,3 +1,9 @@
+remake (1:0.6.4-247) lucid; urgency=low
+
+  * Added remake_doc_jade() documentation generating macro
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 24 Jul 2014 14:31:00 +0100
+ 
 remake (1:0.6.4-246) lucid; urgency=low
 
   * Fixed bug in remake_component_install() that would lead to default

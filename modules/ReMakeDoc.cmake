@@ -301,9 +301,9 @@ endmacro(remake_doc_doxygen)
 
 ### \brief Generate GNU Troff documentation.
 #   This macro defines documentation build and install rules for the GNU
-#   Troff (groff) generator. Unlike Doxygen, groff does not generate
-#   documentation from documented source code, but takes formatted
-#   input to create HTML or PostScript documents. For details, see groff(1).
+#   Troff (groff) generator. Unlike Doxygen, groff documentation is not
+#   generated from documented source code, but takes formatted input to
+#   create HTML or PostScript documents. For details, see groff(1).
 #   \required[list] glob A list of glob expressions resolving to groff input
 #     files. The files must contain formatted input that can be interpreted
 #     by the named groff macro.
@@ -351,15 +351,19 @@ macro(remake_doc_groff)
           get_filename_component(doc_name ${doc_file} NAME)
           remake_set(doc_output_file
             ${doc_output_dir}/${doc_name}.${doc_extension})
+
+          if(doc_commands)
+            remake_list_push(doc_commands "&&")
+          endif(doc_commands)
           remake_list_push(doc_commands
-            COMMAND ${GROFF_EXECUTABLE} -t -e -m${doc_macro_file}
+            ${GROFF_EXECUTABLE} -t -e -m${doc_macro_file}
               -T${doc_type} ${doc_file} > ${doc_output_file})
           remake_list_push(doc_output_files ${doc_output_file})
         endforeach(doc_file)
 
         file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output_dir})
         remake_doc_generate(groff ${doc_type}
-          ${doc_commands}
+          COMMAND ${doc_commands}
           DEPENDS ${doc_macro_file} ${doc_files}
           COMMENT "Generating groff documentation ${doc_relative}"
           OUTPUT ${doc_output_files}
@@ -374,6 +378,94 @@ macro(remake_doc_groff)
       ${INSTALL} ${COMPONENT})
   endif(GROFF_FOUND)
 endmacro(remake_doc_groff)
+
+### \brief Generate Jade documentation.
+#   This macro defines documentation build and install rules for the Jade
+#   node template engine generator. Unlike Doxygen, Jade documentation is
+#   not generated from documented source code, but takes formatted input to
+#   create HTML or PostScript documents. For details, see jw(1).
+#   \required[list] glob A list of glob expressions resolving to Jade input
+#     files. The files must contain formatted input that can be interpreted
+#     by the named Jade frontend.
+#   \optional[value] FRONTEND:frontend The jade frontend to be used for
+#     interpreting the input, defaults to docbook.
+#   \optional[value] OUTPUT:dirname An optional directory name that
+#     identifies the base output directory for Jade, defaults to
+#     ${CMAKE_CURRENT_BINARY_DIR}. Note that the base output directory will
+#     automatically be suffixed by the filename conversion of the current
+#     document type.
+#   \optional[value] INSTALL:dirname The optional install directory that is
+#     passed to remake_doc_install() for defining the install rules.
+#   \optional[value] COMPONENT:component The optional name of the
+#     install component that is passed to remake_doc_generate() and
+#     remake_doc_install() for defining the build and install rules,
+#     respectively.
+macro(remake_doc_jade)
+  remake_arguments(PREFIX doc_ VAR FRONTEND VAR OUTPUT VAR INSTALL
+    VAR COMPONENT ARGN globs ${ARGN})
+  remake_set(doc_frontend SELF DEFAULT docbook)
+  remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
+
+  if(NOT DEFINED JW_FOUND)
+    remake_find_executable(jw)
+  endif(NOT DEFINED JW_FOUND)
+
+  if(JW_FOUND)
+    remake_push(INSTALL)
+    remake_doc_support(jade docbook man html)
+    foreach(doc_type ${REMAKE_DOC_JADE_TYPES})
+      remake_var_name(doc_output_var REMAKE_DOC ${doc_type} OUTPUT)
+      remake_set(doc_output_dir ${doc_output}/${${doc_output_var}})
+      remake_file_mkdir(${doc_output_dir})
+
+      if(${doc_frontend} STREQUAL ${doc_type})
+        remake_file_configure(${doc_globs} DESTINATION ${doc_output_dir})
+      else(${doc_frontend} STREQUAL ${doc_type})
+        remake_file_glob(doc_files ${doc_globs})
+        remake_file_name(doc_extension ${doc_type})
+
+        remake_set(doc_commands)
+        remake_set(doc_output_files)
+        foreach(doc_file ${doc_files})
+          remake_set(doc_command ${JW_EXECUTABLE} -f ${doc_frontend}
+              -b ${doc_type} -o ${doc_output_dir})
+          get_filename_component(doc_name ${doc_file} NAME_WE)
+          remake_set(doc_output_file
+            ${doc_output_dir}/${doc_name}.${doc_extension})
+              
+          if(${doc_type} STREQUAL "html")
+            remake_list_push(doc_command -V %root-filename%=${doc_name})
+          elseif(${doc_type} STREQUAL "man")
+            remake_set(doc_output_file
+              ${doc_output_dir}/${doc_name}.1)
+          endif(${doc_type} STREQUAL "html")
+          
+          if(doc_commands)
+            remake_list_push(doc_commands "&&")
+          endif(doc_commands)
+          remake_list_push(doc_commands ${doc_command} ${doc_file})
+          remake_list_push(doc_output_files ${doc_output_file})
+        endforeach(doc_file)
+
+        file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output_dir})
+        remake_doc_generate(jw ${doc_type}
+          COMMAND ${doc_commands}
+          DEPENDS ${doc_files}
+          COMMENT "Generating jade documentation ${doc_relative}"
+          OUTPUT ${doc_output_files}
+          ${COMPONENT})
+      endif(${doc_frontend} STREQUAL ${doc_type})
+    endforeach(doc_type)
+
+    remake_pop(INSTALL)
+    remake_doc_install(
+      TYPES ${REMAKE_DOC_TYPES}
+      OUTPUT ${doc_output}
+      ${INSTALL} ${COMPONENT}
+      PATTERN *.refs EXCLUDE
+      PATTERN *.links EXCLUDE)
+  endif(JW_FOUND)
+endmacro(remake_doc_jade)
 
 ### \brief Generate documentation from an executable target for this target.
 #   This macro defines documentation build and install rules for generators
