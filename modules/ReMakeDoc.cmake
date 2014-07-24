@@ -383,12 +383,20 @@ endmacro(remake_doc_groff)
 #   This macro defines documentation build and install rules for the Jade
 #   node template engine generator. Unlike Doxygen, Jade documentation is
 #   not generated from documented source code, but takes formatted input to
-#   create HTML or PostScript documents. For details, see jw(1).
+#   create HTML or PostScript documents. The macro configures a list of
+#   input files using remake_file_configure() and then adds generator commands
+#   to the component target. See ReMakeFile for details on file configuration,
+#   and jw(1) for information about the jade wrapper.
 #   \required[list] glob A list of glob expressions resolving to Jade input
 #     files. The files must contain formatted input that can be interpreted
-#     by the named Jade frontend.
+#     by the named Jade frontend. Note that each file gets configured and
+#     processed independently.
 #   \optional[value] FRONTEND:frontend The jade frontend to be used for
 #     interpreting the input, defaults to docbook.
+#   \optional[value] MAN_SECTION:section The man section to be assumed for
+#     generating documentation using the man backend, defaults to 1. Note
+#     that during the configuration stage, the man section is accessible 
+#     via the JADE_MAN_SECTION variable.
 #   \optional[value] OUTPUT:dirname An optional directory name that
 #     identifies the base output directory for Jade, defaults to
 #     ${CMAKE_CURRENT_BINARY_DIR}. Note that the base output directory will
@@ -401,11 +409,12 @@ endmacro(remake_doc_groff)
 #     remake_doc_install() for defining the build and install rules,
 #     respectively.
 macro(remake_doc_jade)
-  remake_arguments(PREFIX doc_ VAR FRONTEND VAR OUTPUT VAR INSTALL
-    VAR COMPONENT ARGN globs ${ARGN})
+  remake_arguments(PREFIX doc_ VAR FRONTEND VAR MAN_SECTION VAR OUTPUT
+    VAR INSTALL VAR COMPONENT ARGN globs ${ARGN})
   remake_set(doc_frontend SELF DEFAULT docbook)
   remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
-
+  remake_set(doc_man_section SELF DEFAULT 1)
+  
   if(NOT DEFINED JW_FOUND)
     remake_find_executable(jw)
   endif(NOT DEFINED JW_FOUND)
@@ -418,6 +427,8 @@ macro(remake_doc_jade)
       remake_set(doc_output_dir ${doc_output}/${${doc_output_var}})
       remake_file_mkdir(${doc_output_dir})
 
+      remake_set(JADE_MAN_SECTION ${doc_man_section})
+
       if(${doc_frontend} STREQUAL ${doc_type})
         remake_file_configure(${doc_globs} DESTINATION ${doc_output_dir})
       else(${doc_frontend} STREQUAL ${doc_type})
@@ -427,23 +438,28 @@ macro(remake_doc_jade)
         remake_set(doc_commands)
         remake_set(doc_output_files)
         foreach(doc_file ${doc_files})
-          remake_set(doc_command ${JW_EXECUTABLE} -f ${doc_frontend}
-              -b ${doc_type} -o ${doc_output_dir})
-          get_filename_component(doc_name ${doc_file} NAME_WE)
+          remake_file_configure(${doc_file} OUTPUT doc_configured)
+          remake_set(doc_command
+            ${JW_EXECUTABLE} -f ${doc_frontend} -b ${doc_type})
+          get_filename_component(doc_name ${doc_configured} NAME_WE)
+          remake_set(doc_output_path ${doc_output_dir})
           remake_set(doc_output_file
-            ${doc_output_dir}/${doc_name}.${doc_extension})
+            ${doc_output_path}/${doc_name}.${doc_extension})
               
           if(${doc_type} STREQUAL "html")
             remake_list_push(doc_command -V %root-filename%=${doc_name})
           elseif(${doc_type} STREQUAL "man")
+            remake_set(doc_output_path
+              "${doc_output_dir}/man${doc_man_section}")
             remake_set(doc_output_file
-              ${doc_output_dir}/${doc_name}.1)
+              "${doc_output_path}/${doc_name}.${doc_man_section}")
           endif(${doc_type} STREQUAL "html")
           
           if(doc_commands)
             remake_list_push(doc_commands "&&")
           endif(doc_commands)
-          remake_list_push(doc_commands ${doc_command} ${doc_file})
+          remake_list_push(doc_commands
+            ${doc_command} -o ${doc_output_path} ${doc_configured})
           remake_list_push(doc_output_files ${doc_output_file})
         endforeach(doc_file)
 

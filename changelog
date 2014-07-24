@@ -1,3 +1,10 @@
+remake (1:0.6.4-248) lucid; urgency=low
+
+  * Added MAN_SECTION argument to remake_doc_jade(), which now configures
+    the input files
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 24 Jul 2014 15:26:00 +0100
+ 
 remake (1:0.6.4-247) lucid; urgency=low
 
   * Added remake_doc_jade() documentation generating macro
