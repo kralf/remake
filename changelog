@@ -1,3 +1,11 @@
+remake (1:0.6.4-250) lucid; urgency=low
+
+  * Added REQUIRED argument to remake_qt4()
+  * Fixed remake_qt3() and remake_qt4() to establish cache variables
+    if already found through the standard CMake macros
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 25 Jul 2014 08:05:00 +0100
+ 
 remake (1:0.6.4-249) lucid; urgency=low
 
   * Tiny documentation fix for remake_add_documentation()

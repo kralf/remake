@@ -41,9 +41,12 @@ macro(remake_qt3)
 
   if(NOT DEFINED QT_FOUND)
     remake_find_package(Qt3 QUIET ALIAS Qt)
+  endif(NOT DEFINED QT_FOUND)
+  
+  if(DEFINED QT_FOUND AND NOT DEFINED QT3_MOC)
     remake_project_set(QT3_MOC ${QT_FOUND} CACHE BOOL
       "Process Qt3 meta-objects.")
-  endif(NOT DEFINED QT_FOUND)
+  endif(DEFINED QT_FOUND AND NOT DEFINED QT3_MOC)
 endmacro(remake_qt3)
 
 ### \brief Add the Qt3 header directories to the include path.

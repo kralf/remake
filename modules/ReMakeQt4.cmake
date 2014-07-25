@@ -33,16 +33,27 @@ endif(NOT DEFINED REMAKE_QT4_CMAKE)
 #   meta-object processing. Note that the macro automatically gets
 #   invoked by the macros defined in this module. It needs not be called
 #   directly from a CMakeLists.txt file.
+#   \optional[list] REQUIRED:module An optional list of required Qt4
+#     modules.
 macro(remake_qt4)
+  remake_arguments(PREFIX qt4_ LIST REQUIRED ${ARGN})
+  
   if(NOT DEFINED QT4_FOUND)
-    remake_find_package(Qt4 QUIET)
+    if(qt4_required)
+      remake_find_package(Qt4 REQUIRED ${qt4_required} QUIET)
+    else(qt4_required)
+      remake_find_package(Qt4 QUIET)
+    endif(qt4_required)
+  else(NOT DEFINED QT4_FOUND)
+    include(FindQt4)
+  endif(NOT DEFINED QT4_FOUND)
+  
+  if(DEFINED QT4_FOUND AND NOT DEFINED QT4_MOC)
     remake_project_set(QT4_MOC ${QT4_FOUND} CACHE BOOL
       "Process Qt4 meta-objects.")
     remake_project_set(QT4_UIC ${QT4_FOUND} CACHE BOOL
       "Process Qt4 user interface files.")
-  else(NOT DEFINED QT4_FOUND)
-    include(FindQt4)
-  endif(NOT DEFINED QT4_FOUND)
+  endif(DEFINED QT4_FOUND AND NOT DEFINED QT4_MOC)
 endmacro(remake_qt4)
 
 ### \brief Add the Qt4 header directories to the include path.
