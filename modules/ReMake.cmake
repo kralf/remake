@@ -855,7 +855,7 @@ endmacro(remake_add_generated)
 #   This macro adds a documentation target, using the requested generator
 #   for document generation. Additional arguments passed to the macro are
 #   forwarded to the selected generator.
-#   \required[option] SOURCE|CONFIGURE|DOYXGEN|GROFF|TARGETS|CUSTOM
+#   \required[option] SOURCE|CONFIGURE|DOYXGEN|GROFF|JADE|TARGETS|CUSTOM
 #     The generator to be used for document generation.
 #   \required[list] arg The arguments to be forwared to the document
 #     generator. See ReMakeDoc for details.

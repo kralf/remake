@@ -1,3 +1,9 @@
+remake (1:0.6.4-249) lucid; urgency=low
+
+  * Tiny documentation fix for remake_add_documentation()
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 25 Jul 2014 08:05:00 +0100
+ 
 remake (1:0.6.4-248) lucid; urgency=low
 
   * Added MAN_SECTION argument to remake_doc_jade(), which now configures
