@@ -1,3 +1,9 @@
+remake (1:0.6.4-251) lucid; urgency=low
+
+  * Release distribution for Ubuntu Trusty Tahr
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 29 Jul 2014 06:58:00 +0100
+ 
 remake (1:0.6.4-250) lucid; urgency=low
 
   * Added REQUIRED argument to remake_qt4()
