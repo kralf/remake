@@ -1,3 +1,10 @@
+remake (1:0.6.4-252) lucid; urgency=low
+
+  * Added EXTRA argument to remake_ros_pack_deb() such as to allow for
+    the definition of extra control information for the project package
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 15 Sep 2014 10:47:00 +0100
+ 
 remake (1:0.6.4-251) lucid; urgency=low
 
   * Release distribution for Ubuntu Trusty Tahr

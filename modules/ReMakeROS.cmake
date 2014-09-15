@@ -1629,7 +1629,13 @@ endmacro(remake_ros_package_config_generate)
 #   components associated with a ROS package into one monolithic Debian
 #   package for that ROS package. Thus, the development headers and Python 
 #   modules may be deployed together with the runtime.
+#   \optional[list] EXTRA:glob An optional list of glob expressions matching
+#     extra control information files such as preinst, postinst, prerm, and
+#     postrm to be included in the control section of the Debian package
+#     named after the ReMake project. See ReMakePack for details.
 macro(remake_ros_pack_deb)
+  remake_arguments(PREFIX ros_ LIST EXTRA ${ARGN})
+  
   remake_ros()
 
   remake_unset(ros_pkg_components)
@@ -1766,7 +1772,14 @@ macro(remake_ros_pack_deb)
     remake_list_push(ros_pkg_main_deps ${ros_pkg_filename})
   endforeach(ros_pkg_component)
 
-  remake_pack_deb(DEPENDS ${ros_pkg_main_deps})
+  if(ros_extra)
+    remake_pack_deb(
+      DEPENDS ${ros_pkg_main_deps}
+      EXTRA ${ros_extra})
+  else(ros_extra)
+    remake_pack_deb(
+      DEPENDS ${ros_pkg_main_deps})
+  endif(ros_extra)  
 endmacro(remake_ros_pack_deb)
 
 ### \brief Distribute a ReMakeROS project according to the Debian standards.
