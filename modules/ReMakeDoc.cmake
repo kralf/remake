@@ -745,7 +745,7 @@ macro(remake_doc_generate doc_generator doc_type)
     string(REPLACE ";" ";&&;" doc_generate_env "${doc_generate_env}")
   endif(doc_generate_env)
   
-  remake_target_name(doc_as_target ${doc_generator} ${doc_type})
+  remake_component_target_name(doc_as_target ${doc_generator} ${doc_type})
   remake_component_add_command(
     COMMAND ${doc_generate_env} ${doc_command}
     ${doc_generate_args}
