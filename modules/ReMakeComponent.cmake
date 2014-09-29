@@ -553,9 +553,6 @@ macro(remake_component_install)
       endforeach(component_target)
       remake_component_set(${component_name} LIBRARIES ${component_libraries}
         CACHE INTERNAL "List of ${component_name} component libraries.")
-    elseif("${component_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;PLUGIN.*$")
-      string(REGEX REPLACE "^(.*TARGETS;[^A-Z]+.*);PLUGIN(.*)$"
-        "\\1;LIBRARY\\2" component_args "${component_args}")
     endif("${component_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;LIBRARY.*$")
 
     remake_component_get(${component_name} EMPTY OUTPUT component_empty)
@@ -564,17 +561,21 @@ macro(remake_component_install)
         "Flag indicating ${component_name} component is empty.")
     endif(component_empty)
 
+    remake_set(component_install_args ${ARGN})
+    if("${component_install_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;PLUGIN.*$")
+      string(REGEX REPLACE "^(.*TARGETS;[^A-Z]+.*);PLUGIN(.*)$"
+        "\\1;LIBRARY\\2" component_install_args "${component_install_args}")
+    endif("${component_install_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;PLUGIN.*$")
+        
     if(component_install_dest)
       string(REGEX REPLACE ";DESTINATION;[^;]+"
         ";DESTINATION;${component_install_dest}"
-        component_install_args "${ARGN}")
-    else(component_install_dest)
-      remake_set(component_install_args ${ARGN})
+        component_install_args "${component_install_args}")
     endif(component_install_dest)
-    if(NOT "${ARGN}" MATCHES ".*;COMPONENT;.*")
+    if(NOT "${component_install_args}" MATCHES ".*;COMPONENT;.*")
       remake_list_push(component_install_args
         COMPONENT ${component_name})
-    endif(NOT "${ARGN}" MATCHES ".*;COMPONENT;.*")
+    endif(NOT "${component_install_args}" MATCHES ".*;COMPONENT;.*")
     
     install(${component_install_args})
   endif(component_build)

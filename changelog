@@ -1,3 +1,10 @@
+remake (1:0.6.4-254) lucid; urgency=low
+
+  * Fixed argument handling in remake_component_install() which would cause
+    the PLUGIN keyword to not be subsituted correctly
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 29 Sep 2014 14:34:00 +0100
+ 
 remake (1:0.6.4-253) lucid; urgency=low
 
   * Modified remake_doc_generate() to generate a component target name for
