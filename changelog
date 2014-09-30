@@ -1,3 +1,10 @@
+remake (1:0.6.4-255) lucid; urgency=low
+
+  * Fixed syntax error in remake_add_files() which would give a CMake error
+    for the use of install DIRECTORY
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 30 Sep 2014 13:07:00 +0100
+ 
 remake (1:0.6.4-254) lucid; urgency=low
 
   * Fixed argument handling in remake_component_install() which would cause

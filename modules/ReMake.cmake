@@ -754,7 +754,7 @@ macro(remake_add_files)
     endforeach(remake_file)
   else(remake_suffix)
     if(remake_recurse)
-      string(REPLACE ";" ";FILES_MATCHING;PATTERN;" remake_files_matching
+      string(REPLACE ";" ";PATTERN;" remake_files_matching
         "${remake_globs}")
       string(REPLACE ";" ";EXCLUDE;PATTERN;" remake_files_exclude
         "${remake_exclude}")
