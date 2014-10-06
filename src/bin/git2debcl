@@ -22,7 +22,7 @@
 
 use Getopt::Std;
 
-getopts("hqo:r:np:v:d:u:a:w:");
+getopts("hqo:c:np:v:d:u:a:w:");
 
 use Cwd;
 use File::Find;
@@ -32,17 +32,15 @@ use File::Path;
 use Date::Parse;
 use Date::Format;
 
-my $generator = "remake-svn2debcl";
+my $generator = "remake-git2debcl";
 
 my $cl_path = $ARGV[0];
 my $cl_output = $opt_o;
-my $cl_revisions = $opt_r;
+my $cl_commits = $opt_c;
 my $cl_project = $opt_p;
 my $cl_version = $opt_v;
 my $cl_distribution = $opt_d;
 my $cl_urgency = $opt_u;
-my $cl_author_file = $opt_a;
-my $cl_authors = $opt_A;
 my $cl_width = $opt_w;
 my $cl_help = $opt_h;
 my $cl_quiet = $opt_q;
@@ -70,42 +68,56 @@ sub print_stdopt {
 
 sub print_help {
   print_stdout "usage: $generator [OPT1 [OPT2 [...]]] [PATH]\n";
-  print_stdout "\033[1mConvert Subversion log to Debian changelog\033[0m\n";
+  print_stdout "\033[1mConvert Git log to Debian changelog\033[0m\n";
   print_stdopt "PATH", "path to working copy [.]";
   print_stdopt "OPT1 OPT2 ...", "list of options as given below [default]";
   print_stdopt "-h", "display usage and exit [false]";
   print_stdopt "-q", "do not generate any output [false]";
   print_stdopt "-o FILE|-", "optional output file or STDOUT [changelog]";
-  print_stdopt "-r [REV1:]REV2", "first and last revision [0:HEAD]";
-  print_stdopt "-n", "renumber revisions [false]";
+  print_stdopt "-c [COMMIT1:]COMMIT2", "first and last commit [TAIL:HEAD]";
+  print_stdopt "-n", "renumber commits [false]";
   print_stdopt "-p NAME", "project name [guess from repository]";
   print_stdopt "-v VERSION", "project version [guess from repository]";
   print_stdopt "-d DISTRIBUTION", "project distribution [unstable]";
   print_stdopt "-u URGENCY", "project urgency [low]";
-  print_stdopt "-a FILE", "optional project author file";
-  print_stdopt "-A USER1:AUTHOR1[;...]", "optional list of project authors";
   print_stdopt "-w WIDTH", "message format output width [70]";
 }
 
-sub parse_svn {
+sub parse_git {
   my $repository = shift;
   my $project = shift;
-  my $revisions = shift;
-  my $authors = shift;
+  my $commits = shift;
 
-  $info = `svn info $$repository{path} 2> /dev/null` or
+  $root =
+    `cd $$repository{path} && git rev-parse --show-toplevel 2> /dev/null` or
     die "Error: $$repository{path} is not a working copy\n";
-
-  $$repository{root} = $info;
+  $root =~ s/([^\n]+)\n/\1/s;
+  $$repository{root} = $root;
   $$repository{root} =~ s/.*Repository Root:\s*([^\s]+)\n.*/\1/s;
   print_stderr "$generator: Repository root is $$repository{root}\n";
 
-  my $head = $info;
-  $head =~ s/.*Revision:\s*([0-9]+).*/\1/s;
-  if ((!$$repository{head}) or ($$repository{head} > $head)) {
+  $tail =
+    `cd $$repository{path} && git rev-list --max-parents=0 HEAD 2> /dev/null` or
+    die "Error: $$repository{path} is not a working copy\n";
+  $tail =~ s/([^\n]+)\n/\1/s;
+  if (!$$repository{tail}) {
+    $$repository{tail} = $tail;
+  }
+  $commit_lines = 
+    `cd $$repository{path} && git rev-list $$repository{tail} 2> /dev/null`;
+  $$repository{tailrev} = scalar(split(/\n/, $commit_lines));
+  print_stderr "$generator: Repository tail commit is $tail\n";
+  
+  $head = `cd $$repository{path} && git rev-parse HEAD 2> /dev/null` or
+    die "Error: $$repository{path} is not a working copy\n";
+  $head =~ s/([^\n]+)\n/\1/s;
+  if (!$$repository{head}) {
     $$repository{head} = $head;
   }
-  print_stderr "$generator: Repository head revision is $head\n";
+  $commit_lines = 
+    `cd $$repository{path} && git rev-list $$repository{head} 2> /dev/null`;
+  $$repository{headrev} = scalar(split(/\n/, $commit_lines));
+  print_stderr "$generator: Repository head commit is $head\n";
 
   if (!$$project{name}) {
     $$project{name} = $$repository{root};
@@ -118,10 +130,21 @@ sub parse_svn {
     $skipped= $$repository{tail};
   }
 
+  $commit_range = "$$repository{tail}...$$repository{head}";
+  $commit_lines =
+    `cd $$repository{path} && git rev-list $commit_range 2> /dev/null` or
+    die "Error: $$repository{path} is not a working copy\n";
+  my @commit_list = split(/\n/, $commit_lines);
+  push(@commit_list, $$repository{tail});
+  
   my $version = $$project{version};  
-  for ($rev = $$repository{tail}; $rev <= $$repository{head}; $rev++) {
+  foreach $com (reverse(@commit_list)) {
+    $commit_lines = 
+      `cd $$repository{path} && git rev-list $com 2> /dev/null`;
+    my $number = scalar(split(/\n/, $commit_lines));
+  
     my $lists =
-      `svn cat -r $rev $$repository{path}/CMakeLists.txt 2> /dev/null`;
+      `cd $$repository{path} && git show $com:CMakeLists.txt 2> /dev/null`;
     if (($? == 0) and ($lists =~ /.*remake_project\(.*?\).*/s)) {
       $lists =~ s/.*remake_project\((.*?)\).*/\1/s;
       $version = $lists;
@@ -130,53 +153,55 @@ sub parse_svn {
         /[\n\s]*[0-9a-zA-Z\-_]+[\n\s]*(VERSION)?[\n\s]*([^\s]+).*/s;
       $version = $2;
       
-      my $version_rev = $rev-$skipped;
+      my $version_rev = $number-$skipped;
       $version .= "-$version_rev";
     }
   
-    my %revision;
-    $revision{number} = $rev;
-    $revision{version} = $version;
-    $revision{empty} = 1;
+    my %commit;
+    $commit{number} = $number;
+    $commit{version} = $version;
+    $commit{empty} = 1;
 
-    $log = `svn log -r $rev $$repository{path} 2> /dev/null`;
+    $log = `cd $$repository{path} && git log -n 1 $com 2> /dev/null`;
     if ($? == 0) {
-      my $line = $log;
-      $line =~ s/.*(r$rev.*?)\n.*/\1/s;
-      my @header = split(/\s*\|\s*/, $line);
-      my $author = @header[1];
-      if ($$authors{$author}) {
-        $revision{author} = $$authors{$author};
-      }
-      else {
-        $revision{author} = "$author <$author\@unknown>";
-      }
-      $revision{time} = str2time(@header[2]);
       my @lines = split(/\n/, $log);
-      my @message = @lines[2..(@lines-2)];
-      my $stripped = join("\n", @message);
-      $stripped =~ s/^[\s\n]*//s;
-      $stripped =~ s/[\s\n]*$//s;
-      if (not $stripped eq "") {
-        $revision{empty} = 0;
-        @{$revision{message}} = split(/\n/, $stripped);
+      foreach $line (@lines) {
+        if ($line =~ /Author:\s*(.*)/) {
+          $commit{author} = $line;
+          $commit{author} =~ s/^Author:\s*(.*)/\1/;
+        }        
+        if ($line =~ /Date:\s*(.*)/) {
+          $time = $line;
+          $time =~ s/^Date:\s*(.*)/\1/;
+          $commit{time} = str2time($time);
+        }
       }
+      my @message = @lines[4..(@lines-1)];
+      my $stripped = join("\n", @message);
+      $stripped =~ s/^[\s]{4}//mg;
+      if (not $stripped eq "") {
+        $commit{empty} = 0;
+        @{$commit{message}} = split(/\n/, $stripped);
+      }
+      if ($number == 250) {
+        print "$stripped\n";
+      }      
     }
     
-    if (!$revision{empty}) {
-      print_stderr "$generator: Revision $revision{number}: ".
-        "$$project{name} ($revision{version}) $$project{distribution}; ".
+    if (!$commit{empty}) {
+      print_stderr "$generator: Commit $commit{number}: ".
+        "$$project{name} ($commit{version}) $$project{distribution}; ".
         "urgency=$$project{urgency}\n";
     }
     else {
-      print_stderr "$generator: Revision $revision{number}: empty\n";
+      print_stderr "$generator: Commit $commit{number}: empty\n";
 
       if ($cl_renumber) {
         $skipped += 1;
       }
     }
     
-    %{$$revisions{$rev}} = %revision;
+    %{$$commits{$number}} = %commit;
   }
 }
 
@@ -184,26 +209,27 @@ sub generate_debcl {
   my $changelog = shift;
   my $repository = shift;
   my $project = shift;
-  my $revisions = shift;
+  my $commits = shift;
   my $width = shift;
 
   $$changelog = "";
-  for ($rev = $$repository{head}; $rev >= $$repository{tail}; $rev--) {
-    if (!$$revisions{$rev}{empty}) {
+  for ($number = $$repository{headrev}; $number >= $$repository{tailrev};
+      $number--) {
+    if (!$$commits{$number}{empty}) {
       if ($$changelog) {
         $$changelog .= "\n";
       }
 
-      $$changelog .= "$$project{name} ($$revisions{$rev}{version}) ".
+      $$changelog .= "$$project{name} ($$commits{$number}{version}) ".
         "$$project{distribution}; urgency=$$project{urgency}\n";
       $$changelog .= "\n";
 
-      foreach $line (@{$$revisions{$rev}{message}}) {
+      foreach $line (@{$$commits{$number}{message}}) {
         if ($line =~ /^[a-zA-Z0-9]/) {
           $line = "  * $line";
         }
         else {
-          $line = "    $line";
+          $line = "  $line";
         }
 
         my $min = $width-10;
@@ -216,16 +242,15 @@ sub generate_debcl {
       }
 
       $$changelog .= "\n";
-      $time = time2str("%a, %d %b %Y %H:%M:%S %z", $$revisions{$rev}{time});
-      $$changelog .= " -- $$revisions{$rev}{author}  $time\n";
+      $time = time2str("%a, %d %b %Y %H:%M:%S %z", $$commits{$number}{time});
+      $$changelog .= " -- $$commits{$number}{author}  $time\n";
     }
   }
 }
 
 my %repository;
 my %project;
-my %authors;
-my %revisions;
+my %commits;
 my $changelog;
 
 if ($cl_help) {
@@ -240,24 +265,17 @@ else {
   $repository{path} = Cwd::abs_path(".");
 }
 
-if ($cl_revisions) {
-  if ($cl_revisions =~ /^[0-9]+:[0-9]+$/) {
-    $repository{tail} = $cl_revisions;
-    $repository{head} = $cl_revisions;
+if ($cl_commits) {
+  if ($cl_commits =~ /^[0-9a-f]+:[0-9a-f]+$/) {
+    $repository{tail} = $cl_commits;
+    $repository{head} = $cl_commits;
 
-    $repository{tail} =~ s/^([0-9]+):([0-9]+)$/\1/;
-    $repository{head} =~ s/^([0-9]+):([0-9]+)$/\2/;
+    $repository{tail} =~ s/^([0-9a-f]+):([0-9a-f]+)$/\1/;
+    $repository{head} =~ s/^([0-9a-f]+):([0-9a-f]+)$/\2/;
   }
-  elsif ($cl_revisions =~ /^[0-9]+$/) {
-    $repository{tail} = 1;
-    $repository{head} = $cl_revisions;
+  elsif ($cl_commits =~ /^[0-9a-f]+$/) {
+    $repository{head} = $cl_commits;
   }
-  else {
-    $repository{tail} = 1;
-  }
-}
-else {
-  $repository{tail} = 1;
 }
 
 if ($cl_project) {
@@ -285,31 +303,6 @@ else {
   $project{urgency} = "low";
 }
 
-if ($cl_author_file) {
-  open(file, "< $cl_author_file") or
-    die("Error: $!\n");
-    
-  $format = '([a-zA-Z]+)\s*=\s*([^<]+<[^>]+>)';
-  while (my $line = <file>) {
-    if ($line =~ /$format/) {
-      $authors{$1} = $2;
-    }
-    else {
-      die("Error: Badly formatted line in $cl_author_file!\n");
-    }
-  }
-}
-
-if ($cl_authors) {
-  foreach my $auth (split(/;/, $cl_authors)) {
-    my $key = $auth;
-    $key =~ s/(.*?):(.*)/\1/;
-
-    $authors{$key} = $auth;
-    $authors{$key} =~ s/(.*?):(.*)/\2/;
-  }
-}
-
 if (!$cl_width) {
   $cl_width = 70;
 }
@@ -318,8 +311,8 @@ if (!$cl_output) {
   $cl_output = "changelog";
 }
 
-parse_svn(\%repository, \%project, \%revisions, \%authors);
-generate_debcl(\$changelog, \%repository, \%project, \%revisions, $cl_width);
+parse_git(\%repository, \%project, \%commits);
+generate_debcl(\$changelog, \%repository, \%project, \%commits, $cl_width);
 
 if ($cl_output =~ /\-/) {
   print_stdout $changelog;
