@@ -346,7 +346,7 @@ macro(remake_ros_stack ros_name)
       LINES ${ros_manifest_tail})
 
     remake_set(ros_manifest_script
-      "include(ReMake)"
+      "include(ReMakeFile)"
       "remake_file_cat(${ros_manifest} ${ros_manifest}.d/*)")
     remake_file_write(${ros_manifest}.cmake LINES ${ros_manifest_script})
     remake_target_name(ros_manifest_target ${ros_name}
@@ -862,7 +862,7 @@ macro(remake_ros_package ros_name)
       LINES ${ros_manifest_tail})
 
     remake_set(ros_manifest_script
-      "include(ReMake)"
+      "include(ReMakeFile)"
       "remake_file_cat(${ros_manifest} ${ros_manifest}.d/*)")
     remake_file_write(${ros_manifest}.cmake LINES ${ros_manifest_script})
     remake_target_name(ros_manifest_target ${ros_name}

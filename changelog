@@ -1,3 +1,11 @@
+remake (1:0.6.5-259) lucid; urgency=low
+
+  * Changed remake_ros_stack() and remake_ros_package() to only include
+    ReMakeFile in the manifest generating script
+  * Added ReMakeList to the includes of ReMakeFile
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 Oct 2014 18:18:00 +0100
+
 remake (1:0.6.5-258) lucid; urgency=low
 
   * Fixed project patch version in CMakeLists.txt
