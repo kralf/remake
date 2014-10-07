@@ -182,6 +182,7 @@ sub parse_git {
       }
       my @message = @lines[4..(@lines-1)];
       my $stripped = join("\n", @message);
+      $stripped =~ s/^[\s]*\n//mg;
       $stripped =~ s/^[\s]{4}//mg;
       if (not $stripped eq "") {
         $commit{empty} = 0;

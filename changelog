@@ -1,3 +1,9 @@
+remake (1:0.6.5-258) lucid; urgency=low
+
+  * Fixed project patch version in CMakeLists.txt
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 Oct 2014 10:21:00 +0100
+
 remake (1:0.6.5-257) lucid; urgency=low
 
   * Added -N command line argument to git2debcl and svn2debcl (allowing

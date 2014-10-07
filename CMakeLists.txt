@@ -9,7 +9,7 @@ include(ReMake)
 
 remake_project(
   ReMake
-  VERSION 1:0.6.4
+  VERSION 1:0.6.5
   RELEASE beta
   SUMMARY "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
   AUTHOR "Ralf Kaestner"
