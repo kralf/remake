@@ -1,3 +1,15 @@
+remake (1:0.6.5-257) lucid; urgency=low
+
+  * Added -N command line argument to git2debcl and svn2debcl (allowing
+    to number the project revision in the changelog by commit/revision)
+  * Fixed bu in git2debcl which would cause the script to fail if multiple
+    root commits exist for a repository
+  * Changed output of remake_project() to mention contact in a dedicated
+    line
+  * Incremented patch version
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 Oct 2014 10:14:00 +0100
+ 
 remake (1:0.6.4-256) lucid; urgency=low
 
   * Added git2debcl script for converting Git logs into the Debian

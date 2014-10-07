@@ -48,7 +48,7 @@ include(ReMakePrivate)
 #     i.e., the project author named first.
 #   \variable REMAKE_PROJECT_AUTHORS The comma-separated list of project
 #     authors.
-#   \variable REMAKE_PROJECT_CONTACT The contact to the project responsible,
+#   \variable REMAKE_PROJECT_CONTACT The contact to the project maintainer,
 #     usually a valid e-mail address.
 #   \variable REMAKE_PROJECT_HOME The URL pointing to the project homepage,
 #     where users may find further documentation and bug tracking facilities.
@@ -102,7 +102,7 @@ endif(NOT DEFINED REMAKE_PROJECT_CMAKE)
 #     This summary is used in several places, including the packaging module.
 #   \required[value] AUTHOR:name The name of the project author(s). Note that
 #     several authors may be specified by providing several AUTHOR arguments.
-#   \required[value] CONTACT:contact A contact to the project responsible,
+#   \required[value] CONTACT:contact A contact to the project maintainer,
 #     usually a valid e-mail address.
 #   \optional[value] HOME:home A URL pointing to the project homepage, where
 #     users may find further documentation and bug tracking facilities.
@@ -348,8 +348,8 @@ macro(remake_project project_name)
     "version ${REMAKE_PROJECT_VERSION}, "
     "release ${REMAKE_PROJECT_RELEASE}")
   message(STATUS "Summary: ${REMAKE_PROJECT_SUMMARY}")
-  message(STATUS
-    "Author(s): ${REMAKE_PROJECT_AUTHORS} <${REMAKE_PROJECT_CONTACT}>")
+  message(STATUS "Author(s): ${REMAKE_PROJECT_AUTHORS}")
+  message(STATUS "Contact: <${REMAKE_PROJECT_CONTACT}>")
   if(REMAKE_PROJECT_HOME)
     message(STATUS "Home: ${REMAKE_PROJECT_HOME}")
   endif(REMAKE_PROJECT_HOME)

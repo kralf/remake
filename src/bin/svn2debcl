@@ -22,7 +22,7 @@
 
 use Getopt::Std;
 
-getopts("hqo:r:np:v:d:u:a:w:");
+getopts("hqo:r:nNp:v:d:u:a:w:");
 
 use Cwd;
 use File::Find;
@@ -47,6 +47,7 @@ my $cl_width = $opt_w;
 my $cl_help = $opt_h;
 my $cl_quiet = $opt_q;
 my $cl_renumber = $opt_n;
+my $cl_number = $opt_N;
 
 sub print_stdout {
   print STDOUT @_;
@@ -78,6 +79,7 @@ sub print_help {
   print_stdopt "-o FILE|-", "optional output file or STDOUT [changelog]";
   print_stdopt "-r [REV1:]REV2", "first and last revision [0:HEAD]";
   print_stdopt "-n", "renumber revisions [false]";
+  print_stdopt "-N", "number project revision by revision [false]";
   print_stdopt "-p NAME", "project name [guess from repository]";
   print_stdopt "-v VERSION", "project version [guess from repository]";
   print_stdopt "-d DISTRIBUTION", "project distribution [unstable]";
@@ -129,14 +131,15 @@ sub parse_svn {
       $version =~
         /[\n\s]*[0-9a-zA-Z\-_]+[\n\s]*(VERSION)?[\n\s]*([^\s]+).*/s;
       $version = $2;
-      
-      my $version_rev = $rev-$skipped;
-      $version .= "-$version_rev";
     }
   
     my %revision;
     $revision{number} = $rev;
     $revision{version} = $version;
+    if ($cl_number) {
+      my $version_rev = $number-$skipped;
+      $commit{version} .= "-$version_rev";
+    }
     $revision{empty} = 1;
 
     $log = `svn log -r $rev $$repository{path} 2> /dev/null`;

@@ -22,7 +22,7 @@
 
 use Getopt::Std;
 
-getopts("hqo:c:np:v:d:u:a:w:");
+getopts("hqo:c:nNp:v:d:u:a:w:");
 
 use Cwd;
 use File::Find;
@@ -45,6 +45,7 @@ my $cl_width = $opt_w;
 my $cl_help = $opt_h;
 my $cl_quiet = $opt_q;
 my $cl_renumber = $opt_n;
+my $cl_number = $opt_N;
 
 sub print_stdout {
   print STDOUT @_;
@@ -76,6 +77,7 @@ sub print_help {
   print_stdopt "-o FILE|-", "optional output file or STDOUT [changelog]";
   print_stdopt "-c [COMMIT1:]COMMIT2", "first and last commit [TAIL:HEAD]";
   print_stdopt "-n", "renumber commits [false]";
+  print_stdopt "-N", "number project revision by commit [false]";
   print_stdopt "-p NAME", "project name [guess from repository]";
   print_stdopt "-v VERSION", "project version [guess from repository]";
   print_stdopt "-d DISTRIBUTION", "project distribution [unstable]";
@@ -96,16 +98,16 @@ sub parse_git {
   $$repository{root} =~ s/.*Repository Root:\s*([^\s]+)\n.*/\1/s;
   print_stderr "$generator: Repository root is $$repository{root}\n";
 
-  $tail =
+  $lines =
     `cd $$repository{path} && git rev-list --max-parents=0 HEAD 2> /dev/null` or
     die "Error: $$repository{path} is not a working copy\n";
-  $tail =~ s/([^\n]+)\n/\1/s;
+  @tails = split(/\n/, $lines);
+  $tail = $tails[-1];
   if (!$$repository{tail}) {
     $$repository{tail} = $tail;
   }
   $commit_lines = 
     `cd $$repository{path} && git rev-list $$repository{tail} 2> /dev/null`;
-  $$repository{tailrev} = scalar(split(/\n/, $commit_lines));
   print_stderr "$generator: Repository tail commit is $tail\n";
   
   $head = `cd $$repository{path} && git rev-parse HEAD 2> /dev/null` or
@@ -116,7 +118,6 @@ sub parse_git {
   }
   $commit_lines = 
     `cd $$repository{path} && git rev-list $$repository{head} 2> /dev/null`;
-  $$repository{headrev} = scalar(split(/\n/, $commit_lines));
   print_stderr "$generator: Repository head commit is $head\n";
 
   if (!$$project{name}) {
@@ -125,44 +126,47 @@ sub parse_git {
   }
   print_stderr "$generator: Project name is $$project{name}\n";
 
-  my $skipped = 0;
-  if ($cl_renumber) {
-    $skipped= $$repository{tail};
-  }
-
   $commit_range = "$$repository{tail}...$$repository{head}";
   $commit_lines =
     `cd $$repository{path} && git rev-list $commit_range 2> /dev/null` or
     die "Error: $$repository{path} is not a working copy\n";
   my @commit_list = split(/\n/, $commit_lines);
   push(@commit_list, $$repository{tail});
+  @commit_list = reverse(@commit_list);
   
+  my $skipped = 0;
+  if ($cl_renumber) {
+    $skipped = grep { $commit_list[$_] eq $$repository{tail} } 0..$#commit_list;
+    $skipped = $skipped-1;
+  }
+
   my $version = $$project{version};  
-  foreach $com (reverse(@commit_list)) {
-    $commit_lines = 
-      `cd $$repository{path} && git rev-list $com 2> /dev/null`;
-    my $number = scalar(split(/\n/, $commit_lines));
+  foreach $hash (@commit_list) {
+    my($number)= grep { $commit_list[$_] eq $hash } 0..$#commit_list;
+    $number = $number+1;
   
     my $lists =
-      `cd $$repository{path} && git show $com:CMakeLists.txt 2> /dev/null`;
+      `cd $$repository{path} && git show $hash:CMakeLists.txt 2> /dev/null`;
     if (($? == 0) and ($lists =~ /.*remake_project\(.*?\).*/s)) {
       $lists =~ s/.*remake_project\((.*?)\).*/\1/s;
       $version = $lists;
 
       $version =~
         /[\n\s]*[0-9a-zA-Z\-_]+[\n\s]*(VERSION)?[\n\s]*([^\s]+).*/s;
-      $version = $2;
-      
-      my $version_rev = $number-$skipped;
-      $version .= "-$version_rev";
+      $version = $2;      
     }
   
     my %commit;
+    $commit{hash} = $hash;
     $commit{number} = $number;
     $commit{version} = $version;
+    if ($cl_number) {
+      my $version_rev = $number-$skipped;
+      $commit{version} .= "-$version_rev";
+    }
     $commit{empty} = 1;
 
-    $log = `cd $$repository{path} && git log -n 1 $com 2> /dev/null`;
+    $log = `cd $$repository{path} && git log -n 1 $hash 2> /dev/null`;
     if ($? == 0) {
       my @lines = split(/\n/, $log);
       foreach $line (@lines) {
@@ -189,7 +193,7 @@ sub parse_git {
     }
     
     if (!$commit{empty}) {
-      print_stderr "$generator: Commit $commit{number}: ".
+      print_stderr "$generator: Commit $commit{hash}: ".
         "$$project{name} ($commit{version}) $$project{distribution}; ".
         "urgency=$$project{urgency}\n";
     }
@@ -213,8 +217,8 @@ sub generate_debcl {
   my $width = shift;
 
   $$changelog = "";
-  for ($number = $$repository{headrev}; $number >= $$repository{tailrev};
-      $number--) {
+  my @numbers = sort { $b <=> $a } keys(%$commits);
+  foreach $number (@numbers) {
     if (!$$commits{$number}{empty}) {
       if ($$changelog) {
         $$changelog .= "\n";
