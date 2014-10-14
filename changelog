@@ -1,3 +1,19 @@
+remake (1:0.6.6-260) lucid; urgency=low
+
+  * Renamed remake_ros_package_generate() to
+    remake_ros_package_generate_messages_or_services() and removed
+    DISTRIBUTE option
+  * Added remake_ros_package_python_distribute() macro which now
+    handles the distribution of Python packages of a ROS package
+  * Added remake_ros_package_generate_configurations() macro along 
+    with the remake_ros_package_add_configurations() wrapper which
+    allow for generating dynamic reconfigure options
+  * remake_ros_package_add_generated() now also generates configurations
+  * Added DOCUMENTATION_DESTINATION argument to remake_component()
+  * Increased patch version
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 14 Oct 2014 09:58:00 +0100
+
 remake (1:0.6.5-259) lucid; urgency=low
 
   * Changed remake_ros_stack() and remake_ros_package() to only include

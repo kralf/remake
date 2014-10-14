@@ -50,6 +50,8 @@ if(NOT DEFINED REMAKE_ROS_CMAKE)
   remake_set(REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX ros_package_manifest)
   remake_set(REMAKE_ROS_PACKAGE_MESSAGES_TARGET_SUFFIX ros_messages)
   remake_set(REMAKE_ROS_PACKAGE_SERVICES_TARGET_SUFFIX ros_services)
+  remake_set(REMAKE_ROS_PACKAGE_CONFIGURATIONS_TARGET_SUFFIX
+    ros_configurations)
 
   remake_file_rmdir(${REMAKE_ROS_STACK_DIR} TOPLEVEL)
   remake_file_rmdir(${REMAKE_ROS_PACKAGE_DIR} TOPLEVEL)
@@ -356,7 +358,8 @@ macro(remake_ros_stack ros_name)
       PREFIX OFF
       INSTALL ${ROS_PATH}
       FILE_DESTINATION ${ros_dest_root}
-      CONFIGURATION_DESTINATION ${ros_dest_root}/etc)
+      CONFIGURATION_DESTINATION ${ros_dest_root}/etc
+      DOCUMENTATION_DESTINATION ${ros_dest_root}/docs)
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component(${ros_dev_component}
@@ -874,7 +877,8 @@ macro(remake_ros_package ros_name)
       EXECUTABLE_DESTINATION ${ros_dest_root}/bin
       SCRIPT_DESTINATION ${ros_dest_root}/bin
       FILE_DESTINATION ${ros_dest_root}
-      CONFIGURATION_DESTINATION ${ros_dest_root}/etc)
+      CONFIGURATION_DESTINATION ${ros_dest_root}/etc
+      DOCUMENTATION_DESTINATION ${ros_dest_root}/docs)
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component(${ros_dev_component}
@@ -1206,36 +1210,33 @@ macro(remake_ros_package_add_dependencies ros_name)
       remake_list_remove_duplicates(ros_extra_run_deps)
       remake_ros_package_set(${ros_name} EXTRA_RUN_DEPENDS
         ${ros_extra_run_deps} CACHE INTERNAL
-        "Extra runtime dependencies of ROS package ${ros_name}.")
+        "Extra runtime dependencies of ROS  package ${ros_name}.")
     endif(ros_extra_run_depends)
   else(NOT ros_index LESS 0)
     remake_ros_stack_add_dependencies(${ros_name} ${DEPENDS})
   endif(NOT ros_index LESS 0)
 endmacro(remake_ros_package_add_dependencies)
 
-### \brief Add a code generation target to a ROS package.
-#   This macro adds a code generation target to an already defined ROS
-#   package. It is a helper macro which is responsible for generating
-#   C++ headers and Python modules from a list of ROS message or service
-#   definitions. Usually, there is no need for calling it directly.
-#   Instead, use of the wrapper macros remake_ros_package_add_messages()
-#   and remake_ros_package_add_services() is strongly encouraged.
-#   \required[value] name The name of the generator to be used for
+### \brief Add a message or service code generation target to a ROS package.
+#   This macro adds a message or service code generation target to an
+#   already defined ROS package. It is a helper macro which is responsible
+#   for  generating C++ headers and Python modules from a list of ROS message
+#   or service definitions. Usually, there is no need for calling it directly.
+#   Instead, use of the wrapper macros remake_ros_package_add_messages(),
+#   remake_ros_package_add_services(), and remake_ros_package_add_generated()
+#   is strongly encouraged.
+#   \required[value] generator The name of the ROS generator to be used for
 #     code generation, usually message or service.
 #   \optional[value] PACKAGE:package The name of the already defined
 #     ROS package to which the code generation target shall be added,
 #     defaulting to the package name conversion of ${REMAKE_COMPONENT}.
-#   \optional[list] glob A list of glob expressions that are resolved
-#     in order to find the input files of the generator commands,
-#     defaulting to *.${EXT} and ${EXT}/*.${EXT}.
+#   \optional[list] glob A list of glob expressions that are resolved in
+#     order to find the input files of the generator commands, defaulting
+#     to *.${EXT} and ${EXT}/*.${EXT}.
 #   \required[value] EXT:extension The extension used by the input
 #     definitions, usually msg or srv.
-#   \optional[option] DISTRIBUTE If present, this option causes the
-#     macro to distribute all generated Python packages for the ROS
-#     package by calling remake_python_distribute().
-macro(remake_ros_package_generate ros_name)
-  remake_arguments(PREFIX ros_ VAR PACKAGE VAR EXT OPTION DISTRIBUTE
-    ARGN globs ${ARGN})
+macro(remake_ros_package_generate_messages_or_services ros_generator)
+  remake_arguments(PREFIX ros_ VAR PACKAGE VAR EXT ARGN globs ${ARGN})
   string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
   remake_set(ros_package SELF DEFAULT ${ros_default_package})
   remake_set(ros_globs SELF DEFAULT *.${ros_ext} ${ros_ext}/*.${ros_ext})
@@ -1247,11 +1248,11 @@ macro(remake_ros_package_generate ros_name)
   remake_file_mkdir(${ros_pkg_dir}/${ros_ext})
   remake_file_configure(${ros_globs}
     DESTINATION ${ros_pkg_dir}/${ros_ext} STRIP_PATHS
-    OUTPUT ros_${ros_name}s)
+    OUTPUT ros_${ros_generator}s)
 
   remake_find_executable(rosrun PATHS "${ROS_PATH}/bin")
 
-  if(ROSRUN_FOUND AND ros_${ros_name}s)
+  if(ROSRUN_FOUND AND ros_${ros_generator}s)
     remake_ros_package_add_dependencies(
       ${ros_package}
       BUILD_DEPENDS rosbash rosbuild)
@@ -1264,11 +1265,11 @@ macro(remake_ros_package_generate ros_name)
     endif(CMAKE_CROSSCOMPILING AND CMAKE_FIND_ROOT_PATH)
     
     remake_target_name(ros_manifest_targets
-    ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
-    remake_var_name(ros_${ros_name}_target_suffix_var
-      REMAKE_ROS_PACKAGE ${ros_name}s TARGET_SUFFIX)
-    remake_target_name(ros_${ros_name}s_target
-      ${ros_package} ${${ros_${ros_name}_target_suffix_var}})
+      ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+    remake_var_name(ros_${ros_generator}_target_suffix_var
+      REMAKE_ROS_PACKAGE ${ros_generator}s TARGET_SUFFIX)
+    remake_target_name(ros_${ros_generator}s_target
+      ${ros_package} ${${ros_${ros_generator}_target_suffix_var}})
     remake_set(ros_include_dir
       ${ros_pkg_dir}/${ros_ext}_gen/cpp/include)
     remake_set(ros_module_dir ${ros_pkg_dir}/src/${ros_package})
@@ -1282,128 +1283,286 @@ macro(remake_ros_package_generate ros_name)
       remake_list_push(ros_manifest_targets ${ros_manifest_target})
     endforeach(ros_dependency)
 
-    remake_unset(ros_${ros_name}_headers)
-    remake_unset(ros_${ros_name}_modules)
-    foreach(ros_${ros_name} ${ros_${ros_name}s})
-      get_filename_component(ros_${ros_name}_name ${ros_${ros_name}} NAME)
-      get_filename_component(ros_${ros_name}_name_we ${ros_${ros_name}}
-        NAME_WE)
+    remake_unset(ros_${ros_generator}_headers)
+    remake_unset(ros_${ros_generator}_modules)
+    foreach(ros_${ros_generator} ${ros_${ros_generator}s})
+      get_filename_component(ros_${ros_generator}_name
+        ${ros_${ros_generator}} NAME)
+      get_filename_component(ros_${ros_generator}_we
+        ${ros_${ros_generator}} NAME_WE)
 
-      remake_set(ros_${ros_name}_header
-        ${ros_include_dir}/${ros_package}/${ros_${ros_name}_name_we}.h)
+      remake_set(ros_${ros_generator}_header
+        ${ros_include_dir}/${ros_package}/${ros_${ros_generator}_we}.h)
       remake_ros_command(
         CMAKE_PREFIX_PATH=${ros_prefix_path} &&
         ROS_PACKAGE_PATH=${ros_pkg_dir}/..:${ros_pkg_path} &&
         ${ROSRUN_EXECUTABLE} roscpp gen${ros_ext}_cpp.py
-          ${ros_ext}/${ros_${ros_name}_name}
-        OUTPUT ros_${ros_name}_command)
+          ${ros_ext}/${ros_${ros_generator}_name}
+        OUTPUT ros_${ros_generator}_command)
       add_custom_command(
-        OUTPUT ${ros_${ros_name}_header}
-        COMMAND ${ros_${ros_name}_command}
+        OUTPUT ${ros_${ros_generator}_header}
+        COMMAND ${ros_${ros_generator}_command}
         WORKING_DIRECTORY ${ros_pkg_dir}
-        DEPENDS ${ros_${ros_name}}
-        COMMENT "Generating ${ros_${ros_name}_name_we} ${ros_name} (C++)")
-      remake_list_push(ros_${ros_name}_headers ${ros_${ros_name}_header})
+        DEPENDS ${ros_${ros_generator}}
+        COMMENT "Generating ${ros_${ros_generator}_we} ${ros_generator} (C++)")
+      remake_list_push(ros_${ros_generator}_headers
+        ${ros_${ros_generator}_header})
 
-      remake_set(ros_${ros_name}_module
-        ${ros_module_dir}/${ros_ext}/_${ros_${ros_name}_name_we}.py)
+      remake_set(ros_${ros_generator}_module
+        ${ros_module_dir}/${ros_ext}/_${ros_${ros_generator}_we}.py)
       remake_ros_command(
         CMAKE_PREFIX_PATH=${ros_prefix_path} &&
         ROS_PACKAGE_PATH=${ros_pkg_dir}/..:${ros_pkg_path} &&
         ${ROSRUN_EXECUTABLE} rospy gen${ros_ext}_py.py
-          ${ros_ext}/${ros_${ros_name}_name}
-        OUTPUT ros_${ros_name}_command)
+          ${ros_ext}/${ros_${ros_generator}_name}
+        OUTPUT ros_${ros_generator}_command)
       add_custom_command(
-        OUTPUT ${ros_${ros_name}_module}
-        COMMAND ${ros_${ros_name}_command}
+        OUTPUT ${ros_${ros_generator}_module}
+        COMMAND ${ros_${ros_generator}_command}
         WORKING_DIRECTORY ${ros_pkg_dir}
-        DEPENDS ${ros_${ros_name}}
-        COMMENT "Generating ${ros_${ros_name}_name_we} ${ros_name} (Python)")
-      remake_list_push(ros_${ros_name}_modules ${ros_${ros_name}_module})
-    endforeach(ros_${ros_name})
+        DEPENDS ${ros_${ros_generator}}
+        COMMENT
+          "Generating ${ros_${ros_generator}_we} ${ros_generator} (Python)")
+      remake_list_push(ros_${ros_generator}_modules
+        ${ros_${ros_generator}_module})
+    endforeach(ros_${ros_generator})
 
     remake_ros_command(
       CMAKE_PREFIX_PATH=${ros_prefix_path} &&
       ROS_PACKAGE_PATH=${ros_pkg_dir}/..:${ros_pkg_path} &&
       ${ROSRUN_EXECUTABLE} rospy gen${ros_ext}_py.py --initpy ${ros_pkg_dir}
-      OUTPUT ros_${ros_name}_command)
+      OUTPUT ros_${ros_generator}_command)
     add_custom_command(
       OUTPUT ${ros_module_dir}/${ros_ext}/__init__.py
-      COMMAND ${ros_${ros_name}_command}
+      COMMAND ${ros_${ros_generator}_command}
       WORKING_DIRECTORY ${ros_pkg_dir}
-      DEPENDS ${ros_${ros_name}_modules}
-      COMMENT "Generating ${ros_package} ${ros_name}s package (Python)")
-    remake_list_push(ros_${ros_name}_modules
+      DEPENDS ${ros_${ros_generator}_modules}
+      COMMENT "Generating ${ros_package} ${ros_generator}s package (Python)")
+    remake_list_push(ros_${ros_generator}_modules
       ${ros_module_dir}/${ros_ext}/__init__.py)
 
     remake_project_get(PYTHON_PACKAGES OUTPUT ros_python_packages)
     list(FIND ros_python_packages ${ros_package} ros_index)
     if(NOT ros_index GREATER -1)
-      add_custom_command(
-        OUTPUT ${ros_module_dir}/__init__.py
-        COMMAND ${ros_${ros_name}_command}
-        WORKING_DIRECTORY ${ros_pkg_dir}
-        DEPENDS ${ros_${ros_name}_modules}
-        COMMENT "Finalizing ${ros_package} package (Python)")
-      remake_list_push(ros_${ros_name}_modules ${ros_module_dir}/__init__.py)
       remake_python_package(
         NAME ${ros_package}
         DIRECTORY ${ros_module_dir}
-        ${ros_${ros_name}_modules} GENERATED)
+        ${ros_${ros_generator}_modules} GENERATED)
     else(NOT ros_index GREATER -1)
       remake_python_add_modules(
         PACKAGE ${ros_package}
-        ${ros_${ros_name}_modules} GENERATED)
+        ${ros_${ros_generator}_modules} GENERATED)
     endif(NOT ros_index GREATER -1)
 
-    remake_target(${ros_${ros_name}s_target}
-      DEPENDS ${ros_${ros_name}_headers} ${ros_${ros_name}_modules})
+    remake_target(${ros_${ros_generator}s_target}
+      DEPENDS ${ros_${ros_generator}_headers} ${ros_${ros_generator}_modules})
     remake_component_add_dependencies(COMPONENT ${ros_component}
-      DEPENDS ${ros_${ros_name}s_target})
+      DEPENDS ${ros_${ros_generator}s_target})
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component_add_dependencies(COMPONENT ${ros_dev_component}
-      DEPENDS ${ros_${ros_name}s_target})
-    add_dependencies(${ros_${ros_name}s_target} ${ros_manifest_targets})
+      DEPENDS ${ros_${ros_generator}s_target})
+    add_dependencies(${ros_${ros_generator}s_target} ${ros_manifest_targets})
 
-    remake_add_headers(${ros_${ros_name}_headers}
+    remake_add_headers(${ros_${ros_generator}_headers}
       COMPONENT ${ros_dev_component} GENERATED)
     include_directories(${ros_include_dir} BEFORE)
-
-    if(ros_distribute)
-      remake_component_name(ros_python_component ${ros_component}
-        ${REMAKE_PYTHON_COMPONENT_SUFFIX})
-      remake_ros_package_get(${ros_package} DESCRIPTION OUTPUT ros_description)
-      remake_python_distribute(
-        NAME ${ros_package}
-        PACKAGES ${ros_package}
-        DESCRIPTION "${ros_description}"
-        COMPONENT ${ros_python_component})
-
-      remake_target_name(ros_python_target
-        ${ros_package} ${REMAKE_PYTHON_TARGET_SUFFIX})
-      add_dependencies(${ros_python_target} ${ros_manifest_targets})
-    endif(ros_distribute)
 
     remake_ros_package_get(${ros_package} INCLUDE_DIRS OUTPUT ros_include_dirs)
     remake_set(ros_include_dirs ${ros_include_dir} ${ros_include_dirs})
     remake_list_remove_duplicates(ros_include_dirs)
     remake_ros_package_set(${ros_package} INCLUDE_DIRS ${ros_include_dirs}
       CACHE INTERNAL "Include directories of ROS package ${ros_package}.")
-  endif(ROSRUN_FOUND AND ros_${ros_name}s)
 
-  remake_component_get(${ros_component} FILE_DESTINATION OUTPUT ros_dest)
-  remake_component_install(
-    FILES ${ros_${ros_name}s}
-    DESTINATION ${ros_dest}/${ros_ext}
-    COMPONENT ${ros_component})
-endmacro(remake_ros_package_generate)
+    remake_component_get(${ros_component} FILE_DESTINATION OUTPUT ros_dest)
+    remake_component_install(
+      FILES ${ros_${ros_generator}s}
+      DESTINATION ${ros_dest}/${ros_ext}
+      COMPONENT ${ros_component})
+  endif(ROSRUN_FOUND AND ros_${ros_generator}s)
+endmacro(remake_ros_package_generate_messages_or_services)
+
+### \brief Add a configuration code generation target to a ROS package.
+#   This macro adds a configuration, i.e., a dynamic reconfigure parameters
+#   code generation target to an already defined ROS package. It is a helper
+#   macro which is responsible for generating C++ headers and Python modules
+#   from a list of ROS configuration definitions. Usually, there is no
+#   need for calling it directly. Instead, use of the wrapper macros
+#   remake_ros_package_add_configurations() and
+#   remake_ros_package_add_generated() is strongly encouraged. Note that,
+#   by convention, this macro expects the generated C++ headers and Python
+#   modules to be named after the source file, i.e., the source filename
+#   without extension to become the prefix of any generated output file.
+#   To ensure this behavior, the generator must be invoked with the
+#   respective name argument.
+#   \optional[value] PACKAGE:package The name of the already defined
+#     ROS package to which the code generation target shall be added,
+#     defaulting to the package name conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] glob A list of glob expressions that are resolved in
+#     order to find the input files of the generator commands, defaulting
+#     to *.${EXT} and ${EXT}/*.${EXT}.
+#   \required[value] EXT:extension The extension used by the input
+#     definitions, defaulting to cfg.
+macro(remake_ros_package_generate_configurations)
+  remake_arguments(PREFIX ros_ VAR PACKAGE VAR EXT ARGN globs ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+  remake_set(ros_ext SELF DEFAULT cfg)
+  remake_set(ros_globs SELF DEFAULT *.${ros_ext} ${ros_ext}/*.${ros_ext})
+
+  remake_ros()
+
+  remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
+  remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_package} TOPLEVEL)
+  remake_file_mkdir(${ros_pkg_dir}/${ros_ext})
+  remake_file_configure(${ros_globs}
+    DESTINATION ${ros_pkg_dir}/${ros_ext} STRIP_PATHS
+    OUTPUT ros_configurations)
+
+  if(ros_configurations)
+    remake_ros_package_add_dependencies(
+      ${ros_package}
+      BUILD_DEPENDS dynamic_reconfigure)
+      
+    remake_find_executable(rospack PATHS "${ROS_PATH}/bin")
+    remake_ros_command(
+      ${ROSPACK_EXECUTABLE} find dynamic_reconfigure
+      OUTPUT ros_command)
+    execute_process(
+      COMMAND ${ros_command}
+      OUTPUT_VARIABLE ros_dynamic_reconfigure_path
+      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    string(REGEX REPLACE ";" ":" ros_pkg_path "${ROS_PACKAGE_PATH}")
+    if(CMAKE_CROSSCOMPILING AND CMAKE_FIND_ROOT_PATH)
+      remake_set(ros_prefix_path ${CMAKE_FIND_ROOT_PATH}${ROS_PATH})
+    else(CMAKE_CROSSCOMPILING AND CMAKE_FIND_ROOT_PATH)
+      remake_set(ros_prefix_path ${ROS_PATH})
+    endif(CMAKE_CROSSCOMPILING AND CMAKE_FIND_ROOT_PATH)
+    
+    remake_target_name(ros_manifest_targets
+      ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+    remake_var_name(ros_configuration_target_suffix_var
+      REMAKE_ROS_PACKAGE configurations TARGET_SUFFIX)
+    remake_target_name(ros_configurations_target
+      ${ros_package} ${${ros_configuration_target_suffix_var}})
+    remake_set(ros_include_dir
+      ${ros_pkg_dir}/${ros_ext}_gen/cpp/include)
+    remake_set(ros_module_dir ${ros_pkg_dir}/src/${ros_package})
+    remake_set(ros_doc_dir ${ros_pkg_dir}/docs)
+
+    remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
+    remake_ros_package_get(${ros_package} INTERNAL_BUILD_DEPENDS
+      OUTPUT ros_depends)
+    foreach(ros_dependency ${ros_depends})
+      remake_target_name(ros_manifest_target
+        ${ros_dependency} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+      remake_list_push(ros_manifest_targets ${ros_manifest_target})
+    endforeach(ros_dependency)
+
+    remake_unset(ros_configuration_headers)
+    remake_unset(ros_configuration_modules)
+    remake_unset(ros_configuration_docs)
+    
+    foreach(ros_configuration ${ros_configurations})
+      get_filename_component(ros_configuration_name
+        ${ros_configuration} NAME)
+      get_filename_component(ros_configuration_we
+        ${ros_configuration} NAME_WE)
+
+      remake_set(ros_configuration_header
+        ${ros_include_dir}/${ros_package}/${ros_configuration_we}Config.h)
+      remake_set(ros_configuration_module
+        ${ros_module_dir}/${ros_ext}/${ros_configuration_we}Config.py)
+      remake_set(ros_configuration_doc
+        ${ros_doc_dir}/${ros_configuration_we}Config.dox
+        ${ros_doc_dir}/${ros_configuration_we}Config-usage.dox
+        ${ros_doc_dir}/${ros_configuration_we}Config.wikidoc)
+      remake_ros_command(
+        CMAKE_PREFIX_PATH=${ros_prefix_path} &&
+        ROS_PACKAGE_PATH=${ros_pkg_dir}/..:${ros_pkg_path} &&
+        python ${ros_configuration} ${ros_dynamic_reconfigure_path}
+          ${ros_pkg_dir} ${ros_include_dir}/${ros_package}
+          ${ros_module_dir} > /dev/null
+        OUTPUT ros_configuration_command)
+      add_custom_command(
+        OUTPUT ${ros_configuration_header} ${ros_configuration_module}
+          ${ros_configuration_doc}
+        COMMAND ${ros_configuration_command}
+        WORKING_DIRECTORY ${ros_pkg_dir}
+        DEPENDS ${ros_configuration}
+        COMMENT
+          "Generating ${ros_configuration_we} configuration (C++/Python)")
+      remake_list_push(ros_configuration_headers
+        ${ros_configuration_header})
+      remake_list_push(ros_configuration_modules
+        ${ros_configuration_module})
+      remake_list_push(ros_configuration_docs
+        ${ros_configuration_doc})
+    endforeach(ros_configuration)
+    
+    remake_project_get(PYTHON_PACKAGES OUTPUT ros_python_packages)
+    list(FIND ros_python_packages ${ros_package} ros_index)
+    if(NOT ros_index GREATER -1)
+      remake_python_package(
+        NAME ${ros_package}
+        DIRECTORY ${ros_module_dir}
+        ${ros_configuration_modules} GENERATED)
+    else(NOT ros_index GREATER -1)
+      remake_python_add_modules(
+        PACKAGE ${ros_package}
+        ${ros_configuration_modules} GENERATED)
+    endif(NOT ros_index GREATER -1)
+
+    remake_file_create(${ros_module_dir}/${ros_ext}/__init__.py)
+    remake_python_add_modules(
+      PACKAGE ${ros_package}
+      ${ros_module_dir}/${ros_ext}/__init__.py)
+      
+    remake_target(${ros_configurations_target}
+      DEPENDS ${ros_configuration_headers} ${ros_configuration_modules})
+    remake_component_add_dependencies(COMPONENT ${ros_component}
+      DEPENDS ${ros_configurations_target})
+    remake_component_name(ros_dev_component ${ros_component}
+      ${REMAKE_COMPONENT_DEVEL_SUFFIX})
+    remake_component_add_dependencies(COMPONENT ${ros_dev_component}
+      DEPENDS ${ros_configurations_target})
+    add_dependencies(${ros_configurations_target} ${ros_manifest_targets})
+
+    remake_add_headers(${ros_configuration_headers}
+      COMPONENT ${ros_dev_component} GENERATED)
+    include_directories(${ros_include_dir} BEFORE)
+
+    remake_ros_package_get(${ros_package} INCLUDE_DIRS OUTPUT ros_include_dirs)
+    remake_set(ros_include_dirs ${ros_include_dir} ${ros_include_dirs})
+    remake_list_remove_duplicates(ros_include_dirs)
+    remake_ros_package_set(${ros_package} INCLUDE_DIRS ${ros_include_dirs}
+      CACHE INTERNAL "Include directories of ROS package ${ros_package}.")
+
+    remake_component_get(${ros_component} FILE_DESTINATION
+      OUTPUT ros_dest)
+    remake_component_install(
+      FILES ${ros_configurations}
+      DESTINATION ${ros_dest}/${ros_ext}
+      COMPONENT ${ros_component})
+      
+    remake_component_get(${ros_component} DOCUMENTATION_DESTINATION
+      OUTPUT ros_dest)
+    remake_component_install(
+      FILES ${ros_configuration_docs}
+      DESTINATION ${ros_dest}
+      COMPONENT ${ros_component})
+  endif(ros_configurations)
+endmacro(remake_ros_package_generate_configurations)
 
 ### \brief Add ROS messages to a ROS package.
 #   This macro adds ROS messages to an already defined ROS package containing
-#   only message definitions. It invokes remake_ros_package_generate() to
-#   define a target and the corresponding commands for generating C++ headers
-#   and Python modules from a list of glob expressions.
+#   only message definitions. It invokes
+#   remake_ros_package_generate_messages_or_services() to define a target and
+#   the corresponding commands for generating C++ headers and Python modules
+#   from a list of glob expressions. Finally, the generated Python package is
+#   distributed by calling remake_ros_package_python_distribute() for the
+#   associated ROS package.
 #   \optional[value] PACKAGE:package The name of the already defined
 #     ROS package for which the message definitions shall be processed,
 #     defaulting to the package name conversion of ${REMAKE_COMPONENT}.
@@ -1411,14 +1570,22 @@ endmacro(remake_ros_package_generate)
 #     in order to find the message definitions, defaulting to *.msg and
 #     msg/*.msg.
 macro(remake_ros_package_add_messages)
-  remake_ros_package_generate(message ${ARGN} EXT msg DISTRIBUTE)
+  remake_arguments(PREFIX ros_ VAR PACKAGE ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+  
+  remake_ros_package_generate_messages_or_services(message ${ARGN} EXT msg)
+  remake_ros_package_python_distribute(PACKAGE ${ros_package})
 endmacro(remake_ros_package_add_messages)
 
 ### \brief Add ROS services to a ROS package.
 #   This macro adds ROS services to an already defined ROS package containing
-#   only service definitions. It invokes remake_ros_package_generate() to
-#   define a target and the corresponding commands for generating C++ headers
-#   and Python modules from a list of glob expressions.
+#   only service definitions. It invokes
+#   remake_ros_package_generate_messages_or_services() to define a target and
+#   the corresponding commands for generating C++ headers and Python modules
+#   from a list of glob expressions. Finally, the generated Python package is
+#   distributed by calling remake_ros_package_python_distribute() for the
+#   associated ROS package.
 #   \optional[value] PACKAGE:package The name of the already defined
 #     ROS package for which the service definitions shall be processed,
 #     defaulting to the package name conversion of ${REMAKE_COMPONENT}.
@@ -1426,25 +1593,64 @@ endmacro(remake_ros_package_add_messages)
 #     in order to find the service definitions, defaulting to *.srv and
 #     srv/*.srv.
 macro(remake_ros_package_add_services)
-  remake_ros_package_generate(service ${ARGN} EXT srv DISTRIBUTE)
+  remake_arguments(PREFIX ros_ VAR PACKAGE ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+  
+  remake_ros_package_generate_messages_or_services(service ${ARGN} EXT srv)
+  remake_ros_package_python_distribute(PACKAGE ${ros_package})
 endmacro(remake_ros_package_add_services)
 
-### \brief Add ROS messages and services to a ROS package.
-#   This macro adds ROS messages and services to an already defined ROS
-#   package containing both message and service definitions. It invokes
-#   remake_ros_package_generate() to define the targets and corresponding
-#   commands for generating C++ headers and Python modules from a list of
-#   glob expressions.
-#   \optional[value] PACKAGE:package The name of the already defined
-#     ROS package for which the message and service definitions shall be
-#     processed, defaulting to the package name conversion of
-#     ${REMAKE_COMPONENT}.
+### \brief Add ROS configurations to a ROS package.
+#   This macro adds ROS configurations, i.e. dynamic reconfigure options,
+#   to an already defined ROS package containing only configuration
+#   definitions. It invokes remake_ros_package_generate_configurations() to
+#   define a target and the corresponding commands for generating Python
+#   modules from a list of glob expressions. Finally, the generated Python
+#   package is distributed by calling remake_ros_package_python_distribute()
+#   for the associated ROS package.
+#   \optional[value] PACKAGE:package The name of the already defined ROS
+#     package for which the configuration definitions shall be processed,
+#     defaulting to the package name conversion of ${REMAKE_COMPONENT}.
 #   \optional[list] glob A list of glob expressions that are resolved
-#     in order to find the message and service definitions, defaulting to
-#     *.msg and msg/*.msg, and *.srv and srv/*.srv, respectively.
+#     in order to find the configuration definitions, defaulting to *.cfg
+#     and cfg/*.cfg.
+macro(remake_ros_package_add_configurations)
+  remake_arguments(PREFIX ros_ VAR PACKAGE ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+  
+  remake_ros_package_generate_configurations(${ARGN})
+  remake_ros_package_python_distribute(PACKAGE ${ros_package})
+endmacro(remake_ros_package_add_configurations)
+
+### \brief Add ROS code generation targets to a ROS package.
+#   This macro adds ROS messages, services, and configurations to an
+#   already defined ROS package containing definitions for any of these
+#   generation targets. It invokes
+#   remake_ros_package_generate_messages_or_services() and
+#   remake_ros_package_generate_configurations() to define the targets and
+#   corresponding commands for generating C++ headers and Python modules
+#   from a list of glob expressions. Finally, the generated Python packages
+#   are distributed by calling remake_ros_package_python_distribute() for
+#   the associated ROS package.
+#   \optional[value] PACKAGE:package The name of the already defined
+#     ROS package for which the message, service, and dynamic configuration
+#     definitions shall be processed, defaulting to the package name
+#     conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] glob A list of glob expressions that are resolved
+#     in order to find the message, service, and dynamic configuration
+#     definitions, defaulting to *.msg and msg/*.msg, *.srv and srv/*.srv,
+#     and *.cfg and cfg/*.cfg, respectively.
 macro(remake_ros_package_add_generated)
-  remake_ros_package_generate(message ${ARGN} EXT msg)
-  remake_ros_package_generate(service ${ARGN} EXT srv DISTRIBUTE)
+  remake_arguments(PREFIX ros_ VAR PACKAGE ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+  
+  remake_ros_package_generate_messages_or_services(message ${ARGN} EXT msg)
+  remake_ros_package_generate_messages_or_services(service ${ARGN} EXT srv)
+  remake_ros_package_generate_configurations(${ARGN})
+  remake_ros_package_python_distribute(PACKAGE ${ros_package})
 endmacro(remake_ros_package_add_generated)
 
 ### \brief Add an executable to a ROS package.
@@ -1574,6 +1780,30 @@ macro(remake_ros_package_add_library ros_name)
   endif(ros_link_flags)
 endmacro(remake_ros_package_add_library)
 
+### \brief Add files to a ROS package.
+#   This macro defines file install rules for an already defined ROS package.
+#   It therefore invokes remake_add_files() for the install component
+#   indicated by the specified ROS package.
+#   \optional[value] PACKAGE:package The name of the already defined ROS
+#     package which will be assigned the files install rules, defaulting to
+#     the package name conversion of ${REMAKE_COMPONENT}.
+#   \optional[list] arg The list of additional arguments to be passed on to
+#     remake_add_files(). Note that this list should not contain a COMPONENT
+#     specifier as the component name will be inferred from the ROS package
+#     name. See ReMake for details.
+macro(remake_ros_package_add_files)
+  remake_arguments(PREFIX ros_ VAR PACKAGE ARGN args ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+
+  remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
+  remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
+
+  remake_add_files(
+    ${ros_args}
+    COMPONENT ${ros_component})
+endmacro(remake_ros_package_add_files)
+
 ### \brief Generate a ROS package's pkg-config file.
 #   This macro generates a pkg-config file for an already defined ROS
 #   package by calling remake_pkg_config_generate(). The name of the
@@ -1609,6 +1839,56 @@ macro(remake_ros_package_config_generate)
     REQUIRES ${ros_dependencies}
     ${ros_args})
 endmacro(remake_ros_package_config_generate)
+
+### \brief Distribute all Python packages of a ROS package.
+#   This macro distributes all Python packages of a defined ROS package.
+#   The distribution thereby also includes such Python packages which result
+#   from the dedicated code generation targets associated with that ROS
+#   package, i.e., the generation of ROS messages, services, and dynamic
+#   configurations. Note that, once the Python packages of a ROS package
+#   have been distributed, any Python packages defined later will not be
+#   included in the Python distribution. Calling this macro explicitly
+#   will commonly not be required if the dedicated code generation wrapper
+#   macros are used.
+#   \optional[value] PACKAGE:package The name of the already defined
+#     ROS package whose Python packages shall be distributed, defaulting
+#     to the package name conversion of ${REMAKE_COMPONENT}.
+macro(remake_ros_package_python_distribute)
+  remake_arguments(PREFIX ros_ VAR PACKAGE ${ARGN})
+  string(REGEX REPLACE "-" "_" ros_default_package ${REMAKE_COMPONENT})
+  remake_set(ros_package SELF DEFAULT ${ros_default_package})
+
+  remake_file(ros_pkg_dir ${REMAKE_ROS_PACKAGE_DIR}/${ros_package} TOPLEVEL)
+  remake_set(ros_module_dir ${ros_pkg_dir}/src/${ros_package})
+  remake_file_create(${ros_module_dir}/__init__.py)
+  remake_python_add_modules(
+    PACKAGE ${ros_package}
+    ${ros_module_dir}/__init__.py)
+    
+  remake_target_name(ros_manifest_targets
+    ${ros_package} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+  remake_ros_package_get(${ros_package} INTERNAL_BUILD_DEPENDS
+    OUTPUT ros_depends)
+  foreach(ros_dependency ${ros_depends})
+    remake_target_name(ros_manifest_target
+      ${ros_dependency} ${REMAKE_ROS_PACKAGE_MANIFEST_TARGET_SUFFIX})
+    remake_list_push(ros_manifest_targets ${ros_manifest_target})
+  endforeach(ros_dependency)
+  
+  remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
+  remake_component_name(ros_python_component ${ros_component}
+    ${REMAKE_PYTHON_COMPONENT_SUFFIX})
+  remake_ros_package_get(${ros_package} DESCRIPTION OUTPUT ros_description)
+  remake_python_distribute(
+    NAME ${ros_package}
+    PACKAGES ${ros_package}
+    DESCRIPTION "${ros_description}"
+    COMPONENT ${ros_python_component})
+
+  remake_target_name(ros_python_target
+    ${ros_package} ${REMAKE_PYTHON_TARGET_SUFFIX})
+  add_dependencies(${ros_python_target} ${ros_manifest_targets})
+endmacro(remake_ros_package_python_distribute)
 
 ### \brief Generate binary Debian packages from a ReMakeROS project.
 #   This macro configures package generation for a ReMakeROS project

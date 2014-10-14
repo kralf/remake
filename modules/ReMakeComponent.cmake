@@ -72,6 +72,8 @@ endif(NOT DEFINED REMAKE_COMPONENT_CMAKE)
 #     directory of the component configuration files.
 #   \optional[value] HEADER_DESTINATION:dir The optional destination
 #     directory of the component development headers.
+#   \optional[value] DOCUMENTATION_DESTINATION:dir The optional destination
+#     directory of the component documentation.
 #   \optional[option] DEFAULT If present, this option declares the new
 #     component to be the default, i.e. no cache variables will be created
 #     that allows for the user to enable or disable the build or to specify
@@ -82,7 +84,8 @@ macro(remake_component component_name)
   remake_arguments(PREFIX component_ VAR FILENAME VAR PREFIX VAR INSTALL
     VAR LIBRARY_DESTINATION VAR EXECUTABLE_DESTINATION VAR PLUGIN_DESTINATION
     VAR SCRIPT_DESTINATION VAR FILE_DESTINATION VAR CONFIGURATION_DESTINATION
-    VAR HEADER_DESTINATION OPTION DEFAULT ${ARGN})
+    VAR HEADER_DESTINATION VAR DOCUMENTATION_DESTINATION OPTION DEFAULT
+    ${ARGN})
   remake_file_name(component_default_filename ${component_name})
   remake_set(component_filename SELF DEFAULT
     ${REMAKE_PROJECT_FILENAME}-${component_default_filename})
@@ -159,6 +162,11 @@ macro(remake_component component_name)
           ${component_header_destination} CACHE STRING
           "Install destination of ${component_name} component development headers.")
       endif(DEFINED component_header_destination)
+      if(DEFINED component_documentation_destination)
+        remake_component_set(${component_name} DOCUMENTATION_DESTINATION
+          ${component_documentation_destination} CACHE STRING
+          "Install destination of ${component_name} component documentation.")
+      endif(DEFINED component_documentation_destination)
     endif(component_default)
 
     remake_component_get(${component_name} BUILD OUTPUT component_build)
