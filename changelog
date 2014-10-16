@@ -1,3 +1,16 @@
+remake (1:0.6.6-261) lucid; urgency=low
+
+  * Added remake_ros_package_resolve_deb() macro for resolving Debian
+    package names using rosdep
+  * Revised remake_ros_pack_deb() and remake_ros_distribute_deb() to
+    call remake_ros_package_resolve_deb() in order to resolve runtime
+    and build dependencies
+  * Revised remake_ros_package_add_configurations() to also work under
+    fuerte (which does not provide the catkin parameter generator and
+    outputs C++ headers in a different location)
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 16 Oct 2014 08:38:00 +0100
+
 remake (1:0.6.6-260) lucid; urgency=low
 
   * Renamed remake_ros_package_generate() to

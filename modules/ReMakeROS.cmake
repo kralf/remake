@@ -1005,6 +1005,66 @@ macro(remake_ros_package_get ros_name ros_var)
   endif(ros_index GREATER -1)
 endmacro(remake_ros_package_get)
 
+### \brief Resolve the Debian package of an external ROS package.
+#   This macro resolves the name of the Debian package which provides the
+#   specified project-external ROS package. Therefore, it first queries
+#   rosdep and, in case of a failure, falls back to calling
+#   remake_debian_find_package() such as to identify the Debian package
+#   containing the manifest of the requested package. If both methods fail
+#   to resolve the Debian package, the output variable will be empty.
+#   \required[value] name The name of the external ROS package to resolve
+#     the Debian package name for.
+#   \required[value] variable The name of an output variable that will
+#     be assigned the name of the resolved Debian package.
+#   \optional[option] META If provided, this option entails resolution
+#     of a ROS meta-package or stack.
+macro(remake_ros_package_resolve_deb ros_name ros_output)
+  remake_arguments(PREFIX ros_ OPTION META ${ARGN})
+  remake_unset(${ros_output})
+  
+  remake_ros()
+  
+  remake_find_executable(rosdep)
+  if(ROSDEP_FOUND)
+    remake_ros_command(
+      ${ROSDEP_EXECUTABLE} resolve ${ros_name}
+      OUTPUT ros_command)
+    execute_process(
+      COMMAND ${ros_command}
+      RESULT_VARIABLE ros_result
+      OUTPUT_VARIABLE ${ros_output}
+      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+      
+    if(ros_result)
+      remake_unset(${ros_output})
+    else(ros_result)
+      string(REGEX REPLACE ".*#apt\n([^\n]*).*" "\\1" ${ros_output}
+        ${${ros_output}})
+    endif(ros_result)
+  endif(ROSDEP_FOUND)
+    
+  if(NOT ${ros_output})
+    remake_ros_find_package(${ros_name} ${META})
+    remake_var_name(ros_var ROS ${ros_name} PATH)
+    
+    if(${ROS_DISTRIBUTION} STRLESS groovy)
+      if(ros_meta)
+        remake_set(ros_manifest ${${ros_var}}/${REMAKE_ROS_STACK_MANIFEST})
+      else(ros_meta)
+        remake_set(ros_manifest ${${ros_var}}/${REMAKE_ROS_PACKAGE_MANIFEST})
+      endif(ros_meta)
+    else(${ROS_DISTRIBUTION} STRLESS groovy)
+      remake_set(ros_manifest ${${ros_var}}/${REMAKE_ROS_PACKAGE_MANIFEST})
+    endif(${ROS_DISTRIBUTION} STRLESS groovy)
+
+    string(REGEX REPLACE "_" "-" ros_pkg_name ${ros_name})
+    remake_debian_find_package(
+      ros-${ROS_DISTRIBUTION}-${ros_pkg_name}
+      CONTAINS ${ros_manifest}
+      OUTPUT ${ros_output})
+  endif(NOT ${ros_output})
+endmacro(remake_ros_package_resolve_deb)
+
 ### \brief Add dependencies to a ROS package, meta-package, or stack.
 #   Depending on the indicated ROS distribution, this macro adds dependencies
 #   to an already defined ROS package, meta-package, or stack. Regarding
@@ -1446,8 +1506,7 @@ macro(remake_ros_package_generate_configurations)
       REMAKE_ROS_PACKAGE configurations TARGET_SUFFIX)
     remake_target_name(ros_configurations_target
       ${ros_package} ${${ros_configuration_target_suffix_var}})
-    remake_set(ros_include_dir
-      ${ros_pkg_dir}/${ros_ext}_gen/cpp/include)
+    remake_set(ros_include_dir ${ros_pkg_dir}/${ros_ext}/cpp)
     remake_set(ros_module_dir ${ros_pkg_dir}/src/${ros_package})
     remake_set(ros_doc_dir ${ros_pkg_dir}/docs)
 
@@ -1931,8 +1990,6 @@ macro(remake_ros_pack_deb)
       remake_ros_stack_get(${ros_stack} INTERNAL_RUN_DEPENDS OUTPUT ${ros_var})
       remake_ros_stack_get(${ros_stack} DEPLOYS OUTPUT ros_deploys)
       remake_list_push(${ros_var} ${ros_deploys})
-      remake_var_name(ros_var ${ros_component} INTERNAL_BUILD_DEPENDS)
-      remake_set(${ros_var} FROM ${ros_var})
       remake_var_name(ros_var ${ros_component} META)
       remake_set(${ros_var} ON)
       remake_var_name(ros_var ${ros_component} MANIFEST)
@@ -1946,20 +2003,11 @@ macro(remake_ros_pack_deb)
     remake_ros_package_get(${ros_package} COMPONENT OUTPUT ros_component)
     remake_var_name(ros_var ${ros_component} DESCRIPTION)
     remake_ros_package_get(${ros_package} DESCRIPTION OUTPUT ${ros_var})
-    remake_var_name(ros_var ${ros_component} INTERNAL_BUILD_DEPENDS)
-    remake_ros_package_get(${ros_package} INTERNAL_BUILD_DEPENDS
-      OUTPUT ${ros_var})
-    remake_var_name(ros_var ${ros_component} EXTERNAL_BUILD_DEPENDS)
-    remake_ros_package_get(${ros_package} EXTERNAL_BUILD_DEPENDS
-      OUTPUT ${ros_var})
     remake_var_name(ros_var ${ros_component} INTERNAL_RUN_DEPENDS)
     remake_ros_package_get(${ros_package} INTERNAL_RUN_DEPENDS
       OUTPUT ${ros_var})
     remake_var_name(ros_var ${ros_component} EXTERNAL_RUN_DEPENDS)
     remake_ros_package_get(${ros_package} EXTERNAL_RUN_DEPENDS
-      OUTPUT ${ros_var})
-    remake_var_name(ros_var ${ros_component} EXTRA_BUILD_DEPENDS)
-    remake_ros_package_get(${ros_package} EXTRA_BUILD_DEPENDS
       OUTPUT ${ros_var})
     remake_var_name(ros_var ${ros_component} EXTRA_RUN_DEPENDS)
     remake_ros_package_get(${ros_package} EXTRA_RUN_DEPENDS
@@ -1973,44 +2021,38 @@ macro(remake_ros_pack_deb)
 
   remake_unset(ros_pkg_main_deps)
   foreach(ros_pkg_component ${ros_pkg_components})
-    remake_var_name(ros_var ${ros_pkg_component} INTERNAL_BUILD_DEPENDS)
-    remake_set(ros_build_deps_int FROM ${ros_var})
-    remake_var_name(ros_var ${ros_pkg_component} EXTERNAL_BUILD_DEPENDS)
-    remake_set(ros_build_deps_ext FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} INTERNAL_RUN_DEPENDS)
     remake_set(ros_run_deps_int FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} EXTERNAL_RUN_DEPENDS)
     remake_set(ros_run_deps_ext FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} EXTRA_RUN_DEPENDS)
     remake_set(ros_pkg_deps FROM ${ros_var})
-    remake_var_name(ros_var ${ros_pkg_component} EXTRA_BUILD_DEPENDS)
-    remake_list_push(ros_pkg_deps ${${ros_var}})
     remake_var_name(ros_var ${ros_pkg_component} DESCRIPTION)
     remake_set(ros_pkg_description FROM ${ros_var})
     remake_var_name(ros_var ${ros_pkg_component} META)
     remake_set(ros_pkg_meta FROM ${ros_var})
-    remake_var_name(ros_var ${ros_pkg_component} MANIFEST)
-    remake_set(ros_pkg_manifest FROM ${ros_var})
 
-    foreach(ros_dep_int ${ros_run_deps_int} ${ros_build_dep_int})
-      remake_ros_package_get(${ros_dep_int} COMPONENT
+    foreach(ros_run_dep_int ${ros_run_deps_int})
+      remake_ros_package_get(${ros_run_dep_int} COMPONENT
         OUTPUT ros_dep_component)
       remake_component_get(${ros_dep_component} FILENAME
         OUTPUT ros_dep_filename)
       remake_list_push(ros_pkg_deps ${ros_dep_filename})
-    endforeach(ros_dep_int)
+    endforeach(ros_run_dep_int)
 
-    foreach(ros_dep_ext ${ros_run_deps_ext} ${ros_build_deps_ext})
-      remake_var_name(ros_var ROS ${ros_dep_ext} PATH)
-      remake_set(ros_manifest ${${ros_var}}/${ros_pkg_manifest})
-
-      string(REGEX REPLACE "_" "-" ros_dep_ext ${ros_dep_ext})
-      remake_debian_find_package(
-        ros-${ROS_DISTRIBUTION}-${ros_dep_ext}
-        CONTAINS ${ros_manifest}
-        OUTPUT ros_dep_ext)
-      remake_list_push(ros_pkg_deps ${ros_dep_ext})
-    endforeach(ros_dep_ext)
+    foreach(ros_run_dep_ext ${ros_run_deps_ext})
+      if(${ROS_DISTRIBUTION} STRLESS groovy AND ros_pkg_meta)
+        remake_ros_package_resolve_deb(${ros_run_dep_ext} ros_pkg_dep META)
+      else(${ROS_DISTRIBUTION} STRLESS groovy AND ros_pkg_meta)
+        remake_ros_package_resolve_deb(${ros_run_dep_ext} ros_pkg_dep)
+      endif(${ROS_DISTRIBUTION} STRLESS groovy AND ros_pkg_meta)
+      if(NOT ros_pkg_dep)
+        message(FATAL_ERROR
+          "ROS runtime dependency ${ros_run_dep_ext} could not be resolved.")
+      endif(NOT ros_pkg_dep)
+      
+      remake_list_push(ros_pkg_deps ${ros_pkg_dep})
+    endforeach(ros_run_dep_ext)
 
     remake_component_name(ros_pkg_python_component ${ros_pkg_component}
       ${REMAKE_PYTHON_COMPONENT_SUFFIX})
@@ -2092,13 +2134,7 @@ macro(remake_ros_distribute_deb)
     remake_ros_package_get(${ros_package} EXTERNAL_BUILD_DEPENDS
       OUTPUT ros_depends)
     remake_list_push(ros_dependencies ${ros_depends})
-    remake_ros_package_get(${ros_package} EXTERNAL_RUN_DEPENDS
-      OUTPUT ros_depends)
-    remake_list_push(ros_dependencies ${ros_depends})
     remake_ros_package_get(${ros_package} EXTRA_BUILD_DEPENDS
-      OUTPUT ros_extra_depends)
-    remake_list_push(ros_extra_build_deps ${ros_extra_depends})
-    remake_ros_package_get(${ros_package} EXTRA_RUN_DEPENDS
       OUTPUT ros_extra_depends)
     remake_list_push(ros_extra_build_deps ${ros_extra_depends})
   endforeach(ros_package)
@@ -2108,24 +2144,47 @@ macro(remake_ros_distribute_deb)
 
   remake_unset(ros_build_deps)
   foreach(ros_build_dep ${ros_dependencies})
-    remake_var_name(ros_var ROS ${ros_build_dep} PATH)
-    remake_set(ros_manifest ${${ros_var}}/${REMAKE_ROS_PACKAGE_MANIFEST})
-
-    string(REGEX REPLACE "_" "-" ros_build_dep ${ros_build_dep})
-    remake_debian_find_package(
-      ros-${ROS_DISTRIBUTION}-${ros_build_dep}
-      CONTAINS ${ros_manifest}
-      OUTPUT ros_build_dep)
-
-    remake_list_push(ros_build_deps ${ros_build_dep})
+    remake_set(ros_python_command
+      "from rospkg import rospack"
+      "pack = rospack.RosPack()"
+      "deps = pack.get_depends('${ros_build_dep}', implicit=True)"
+      "print str.join(' ', deps)")
+    string(REGEX REPLACE ";" "\n" ros_python_command
+      "${ros_python_command}")
+    remake_ros_command(
+      python -c \"${ros_python_command}\"
+      OUTPUT ros_command)
+    execute_process(
+      COMMAND ${ros_command}
+      RESULT_VARIABLE ros_result
+      OUTPUT_VARIABLE ros_build_dep_ext
+      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(ros_result)
+      message(FATAL_ERROR
+        "ROS build dependencies for ${ros_build_dep} could not be determined.")
+    endif(ros_result)
+    string(REGEX REPLACE " " ";" ros_build_dep_ext "${ros_build_dep_ext}")
+    
+    remake_list_push(ros_build_deps ${ros_build_dep_ext})
   endforeach(ros_build_dep)
 
   remake_list_remove_duplicates(ros_build_deps)
-
+  remake_unset(ros_pkg_deps)
+  
+  foreach(ros_build_dep_ext ${ros_build_deps})
+    remake_ros_package_resolve_deb(${ros_build_dep_ext} ros_pkg_dep)
+    if(NOT ros_pkg_dep)
+      message(FATAL_ERROR
+        "ROS build dependency ${ros_build_dep_ext} could not be resolved.")
+    endif(NOT ros_pkg_dep)
+              
+    remake_list_push(ros_pkg_deps ${ros_pkg_dep})
+  endforeach(ros_build_dep_ext)
+  
   remake_distribute_deb(
     DISTRIBUTION ${ros_distribution}
     ALIAS ${ros_distribution}+${ROS_DISTRIBUTION}
-    DEPENDS ${ros_build_deps} ${ros_extra_build_deps}
+    DEPENDS ${ros_pkg_deps} ${ros_extra_build_deps}
     PASS CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH
       ROS_DISTRIBUTION
     ${ros_args})
