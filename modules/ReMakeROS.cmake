@@ -2142,7 +2142,7 @@ macro(remake_ros_distribute_deb)
   remake_list_remove_duplicates(ros_dependencies)
   remake_list_remove_duplicates(ros_extra_build_deps)
 
-  remake_unset(ros_build_deps)
+  remake_set(ros_build_deps ${ros_dependencies})
   foreach(ros_build_dep ${ros_dependencies})
     remake_set(ros_python_command
       "from rospkg import rospack"

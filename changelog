@@ -1,3 +1,10 @@
+remake (1:0.6.6-262) lucid; urgency=low
+
+  * Fixed bug in remake_ros_distribute_deb() which would cause the
+    explicit build dependencies to be ignored
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 16 Oct 2014 09:38:00 +0100
+ 
 remake (1:0.6.6-261) lucid; urgency=low
 
   * Added remake_ros_package_resolve_deb() macro for resolving Debian
