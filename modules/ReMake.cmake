@@ -913,8 +913,11 @@ endmacro(remake_add_package)
 #   \optional[list] glob An optional list of glob expressions that are
 #     resolved in order to find the directories to be added to the compiler's
 #     include path, defaults to the current directory.
+#   \optional[option] BEFORE If present, this option is passed on to
+#     CMake's include_directories() such as to prepend the specified
+#     directories to the include path.
 macro(remake_include)
-  remake_arguments(PREFIX remake_ ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ OPTION BEFORE ARGN globs ${ARGN})
   remake_set(remake_globs SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
 
   if(REMAKE_BRANCH_BUILD)
@@ -923,7 +926,11 @@ macro(remake_include)
     remake_file_glob(remake_dirs DIRECTORIES ${remake_globs})
   endif(REMAKE_BRANCH_BUILD)
 
-  include_directories(${remake_dirs})
+  if(remake_before)
+    include_directories(BEFORE ${remake_dirs})
+  else(remake_before)
+    include_directories(AFTER ${remake_dirs})
+  endif(remake_before)
 endmacro(remake_include)
 
 ### \brief Add a flag to the compiler command line.

@@ -1,3 +1,15 @@
+remake (1:0.6.7-263) lucid; urgency=low
+
+  * Added BEFORE option to remake_include()
+  * Fixed bug in remake_list_values() which would make the macro fail
+    for empty input lists
+  * Added remake_ros_package_export(), remake_ros_package_add_headers(),
+    remake_ros_package_add_plugin(), and remake_ros_plugin_add_class()
+    macros
+  * Incremented patch version
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Nov 2014 06:59:00 +0100
+ 
 remake (1:0.6.6-262) lucid; urgency=low
 
   * Fixed bug in remake_ros_distribute_deb() which would cause the
