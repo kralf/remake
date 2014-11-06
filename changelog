@@ -1,3 +1,11 @@
+remake (1:0.6.7-264) lucid; urgency=low
+
+  * Fixed bug in remake-git2debcl which would cause the project version
+    to be guessed wrong if the project name contained symbols other than
+    alphanumeric 
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Nov 2014 07:53:00 +0100
+ 
 remake (1:0.6.7-263) lucid; urgency=low
 
   * Added BEFORE option to remake_include()

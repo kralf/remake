@@ -152,7 +152,7 @@ sub parse_git {
       $version = $lists;
 
       $version =~
-        /[\n\s]*[0-9a-zA-Z\-_]+[\n\s]*(VERSION)?[\n\s]*([^\s]+).*/s;
+        /[\n\s]*[^\s]+[\n\s]*(VERSION)?[\n\s]*([^\s]+).*/s;
       $version = $2;      
     }
   
