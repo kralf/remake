@@ -99,7 +99,7 @@ sub parse_git {
   print_stderr "$generator: Repository root is $$repository{root}\n";
 
   $lines =
-    `cd $$repository{path} && git rev-list --max-parents=0 HEAD 2> /dev/null` or
+    `git rev-list --max-parents=0 HEAD -- $$repository{path} 2> /dev/null` or
     die "Error: $$repository{path} is not a working copy\n";
   @tails = split(/\n/, $lines);
   $tail = $tails[-1];
@@ -107,7 +107,7 @@ sub parse_git {
     $$repository{tail} = $tail;
   }
   $commit_lines = 
-    `cd $$repository{path} && git rev-list $$repository{tail} 2> /dev/null`;
+    `git rev-list $$repository{tail} -- $$repository{path} 2> /dev/null`;
   print_stderr "$generator: Repository tail commit is $tail\n";
   
   $head = `cd $$repository{path} && git rev-parse HEAD 2> /dev/null` or
@@ -117,7 +117,7 @@ sub parse_git {
     $$repository{head} = $head;
   }
   $commit_lines = 
-    `cd $$repository{path} && git rev-list $$repository{head} 2> /dev/null`;
+    `git rev-list $$repository{head} -- $$repository{path} 2> /dev/null`;
   print_stderr "$generator: Repository head commit is $head\n";
 
   if (!$$project{name}) {
@@ -128,7 +128,7 @@ sub parse_git {
 
   $commit_range = "$$repository{tail}...$$repository{head}";
   $commit_lines =
-    `cd $$repository{path} && git rev-list $commit_range 2> /dev/null` or
+    `git rev-list $commit_range -- $$repository{path} 2> /dev/null` or
     die "Error: $$repository{path} is not a working copy\n";
   my @commit_list = split(/\n/, $commit_lines);
   push(@commit_list, $$repository{tail});
@@ -146,7 +146,7 @@ sub parse_git {
     $number = $number+1;
   
     my $lists =
-      `cd $$repository{path} && git show $hash:CMakeLists.txt 2> /dev/null`;
+      `git show $hash:$$repository{path}/CMakeLists.txt 2> /dev/null`;
     if (($? == 0) and ($lists =~ /.*remake_project\(.*?\).*/s)) {
       $lists =~ s/.*remake_project\((.*?)\).*/\1/s;
       $version = $lists;
@@ -166,7 +166,7 @@ sub parse_git {
     }
     $commit{empty} = 1;
 
-    $log = `cd $$repository{path} && git log -n 1 $hash 2> /dev/null`;
+    $log = `git log -n 1 $hash -- $$repository{path} 2> /dev/null`;
     if ($? == 0) {
       my @lines = split(/\n/, $log);
       foreach $line (@lines) {
