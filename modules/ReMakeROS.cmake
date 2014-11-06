@@ -293,14 +293,25 @@ endmacro(remake_ros_find_stack)
 #     passed to remake_ros_stack_add_dependencies(). Note that, for
 #     ROS "fuerte" and earlier distributions, stacks may only specify
 #     dependencies on other stacks.
+#   \optional[value] CONFIGURATION_DESTINATION:dir The optional destination
+#     directory of the stack configuration files, defaulting to etc. Note
+#     that a relative-path destination will be prefixed with the root
+#     install destination of the stack.
+#   \optional[value] DOCUMENTATION_DESTINATION:dir The optional destination
+#     directory of the stack documentation, defaulting to docs. Note that a
+#     relative-path destination will be prefixed with the root install
+#     destination of the stack.
 macro(remake_ros_stack ros_name)
   remake_arguments(PREFIX ros_ VAR COMPONENT VAR DESCRIPTION VAR SOURCES
-    LIST DEPENDS ${ARGN})
+    LIST DEPENDS VAR CONFIGURATION_DESTINATION VAR DOCUMENTATION_DESTINATION
+    ${ARGN})
   string(REGEX REPLACE "_" "-" ros_default_component ${ros_name})
   remake_set(ros_component SELF DEFAULT ${ros_default_component})
   remake_set(ros_description SELF DEFAULT "${ros_name} stack")
   remake_set(ros_sources SELF DEFAULT ${ros_name})
   remake_set(ros_depends SELF DEFAULT ros ros_comm)
+  remake_set(ros_configuration_destination SELF DEFAULT etc)
+  remake_set(ros_documentation_destination SELF DEFAULT docs)
 
   remake_ros()
 
@@ -347,6 +358,15 @@ macro(remake_ros_stack ros_name)
     remake_file_write(${ros_manifest}.d/99-tail
       LINES ${ros_manifest_tail})
 
+    if(NOT IS_ABSOLUTE ${ros_configuration_destination})
+      remake_set(ros_configuration_destination
+        "${ros_dest_root}/${ros_configuration_destination}")
+    endif(NOT IS_ABSOLUTE ${ros_configuration_destination})
+    if(NOT IS_ABSOLUTE ${ros_documentation_destination})
+      remake_set(ros_documentation_destination
+        "${ros_dest_root}/${ros_documentation_destination}")
+    endif(NOT IS_ABSOLUTE ${ros_documentation_destination})
+    
     remake_set(ros_manifest_script
       "include(ReMakeFile)"
       "remake_file_cat(${ros_manifest} ${ros_manifest}.d/*)")
@@ -358,8 +378,8 @@ macro(remake_ros_stack ros_name)
       PREFIX OFF
       INSTALL ${ROS_PATH}
       FILE_DESTINATION ${ros_dest_root}
-      CONFIGURATION_DESTINATION ${ros_dest_root}/etc
-      DOCUMENTATION_DESTINATION ${ros_dest_root}/docs)
+      CONFIGURATION_DESTINATION ${ros_configuration_destination}
+      DOCUMENTATION_DESTINATION ${ros_documentation_destination})
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component(${ros_dev_component}
@@ -754,6 +774,22 @@ endmacro(remake_ros_find_package)
 #     passed. In particular, if the component name equals
 #     ${REMAKE_DEFAULT_COMPONENT}, the default value of this argument will
 #     resolve to OFF.
+#   \optional[value] EXECUTABLE_DESTINATION:dir The optional destination
+#     directory of the package executables, defaulting to bin. Note that a
+#     relative-path destination will be prefixed with the root install
+#     destination of the package.
+#   \optional[value] SCRIPT_DESTINATION:dir The optional destination
+#     directory of the package scripts, defaulting to bin. Note that a
+#     relative-path destination will be prefixed with the root install
+#     destination of the package.
+#   \optional[value] CONFIGURATION_DESTINATION:dir The optional destination
+#     directory of the package configuration files, defaulting to etc. Note
+#     that a relative-path destination will be prefixed with the root install
+#     destination of the package.
+#   \optional[value] DOCUMENTATION_DESTINATION:dir The optional destination
+#     directory of the package documentation, defaulting to docs. Note that a
+#     relative-path destination will be prefixed with the root install
+#     destination of the package.
 #   \optional[option] META If provided, this option entails definition
 #     of a ROS meta-package or stack. Such meta-packages or stacks should
 #     not contain any build targets, but may depend on other ROS packages
@@ -762,10 +798,16 @@ endmacro(remake_ros_find_package)
 macro(remake_ros_package ros_name)
   remake_arguments(PREFIX ros_ VAR COMPONENT VAR DESCRIPTION VAR SOURCES
     LIST DEPENDS LIST BUILD_DEPENDS LIST RUN_DEPENDS LIST EXTRA_BUILD_DEPENDS
-    LIST EXTRA_RUN_DEPENDS VAR REVERSE_DEPENDS OPTION META ${ARGN})
+    LIST EXTRA_RUN_DEPENDS VAR REVERSE_DEPENDS VAR EXECUTABLE_DESTINATION
+    VAR SCRIPT_DESTINATION VAR CONFIGURATION_DESTINATION VAR
+    DOCUMENTATION_DESTINATION OPTION META ${ARGN})
   string(REGEX REPLACE "_" "-" ros_default_component ${ros_name})
   remake_set(ros_component SELF DEFAULT ${ros_default_component})
   remake_set(ros_sources SELF DEFAULT ${ros_name})
+  remake_set(ros_executable_destination SELF DEFAULT bin)
+  remake_set(ros_script_destination SELF DEFAULT bin)  
+  remake_set(ros_configuration_destination SELF DEFAULT etc)
+  remake_set(ros_documentation_destination SELF DEFAULT docs)
 
   remake_ros()
 
@@ -860,6 +902,23 @@ macro(remake_ros_package ros_name)
       remake_ros_package_export(${ros_name} metapackage)
     endif(ros_meta)
 
+    if(NOT IS_ABSOLUTE ${ros_executable_destination})
+      remake_set(ros_executable_destination
+        "${ros_dest_root}/${ros_executable_destination}")
+    endif(NOT IS_ABSOLUTE ${ros_executable_destination})
+    if(NOT IS_ABSOLUTE ${ros_script_destination})
+      remake_set(ros_script_destination
+        "${ros_dest_root}/${ros_script_destination}")
+    endif(NOT IS_ABSOLUTE ${ros_script_destination})
+    if(NOT IS_ABSOLUTE ${ros_configuration_destination})
+      remake_set(ros_configuration_destination
+        "${ros_dest_root}/${ros_configuration_destination}")
+    endif(NOT IS_ABSOLUTE ${ros_configuration_destination})
+    if(NOT IS_ABSOLUTE ${ros_documentation_destination})
+      remake_set(ros_documentation_destination
+        "${ros_dest_root}/${ros_documentation_destination}")
+    endif(NOT IS_ABSOLUTE ${ros_documentation_destination})
+    
     remake_set(ros_manifest_script
       "include(ReMakeFile)"
       "remake_file_cat(${ros_manifest} ${ros_manifest}.d/*)")
@@ -870,12 +929,12 @@ macro(remake_ros_package ros_name)
       FILENAME ${ros_filename}
       PREFIX OFF
       INSTALL ${ROS_PATH}
-      EXECUTABLE_DESTINATION ${ros_dest_root}/bin
+      EXECUTABLE_DESTINATION ${ros_executable_destination}
       PLUGIN_DESTINATION lib
-      SCRIPT_DESTINATION ${ros_dest_root}/bin
+      SCRIPT_DESTINATION ${ros_script_destination}
       FILE_DESTINATION ${ros_dest_root}
-      CONFIGURATION_DESTINATION ${ros_dest_root}/etc
-      DOCUMENTATION_DESTINATION ${ros_dest_root}/docs)
+      CONFIGURATION_DESTINATION ${ros_configuration_destination}
+      DOCUMENTATION_DESTINATION ${ros_documentation_destination})
     remake_component_name(ros_dev_component ${ros_component}
       ${REMAKE_COMPONENT_DEVEL_SUFFIX})
     remake_component(${ros_dev_component}
