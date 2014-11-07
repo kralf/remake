@@ -463,9 +463,14 @@ endmacro(remake_add_executables)
 #     shall be excluded from the list of header files, defaulting to
 #     CMakeLists.txt.
 #   \optional[option] RECURSE If this option is given, header files will
-#     be searched recursively in and below ${CMAKE_CURRENT_SOURCE_DIR}. In
-#     addtion, for each header the install destination will be appended by its
-#     relative-path location below ${CMAKE_CURRENT_SOURCE_DIR}.
+#     be searched recursively in and below the directory specified by the 
+#     FROM argument. In addtion, for each header the install destination
+#     will be appended by its relative-path location below the search
+#     directory.
+#   \optional[value] FROM:dir In combination with the RECURSE option, this
+#     optional argument specifies the directory below which the header files
+#     shall be searched recursively. The default search directory is
+#     ${CMAKE_CURRENT_SOURCE_DIR}.
 #   \optional[value] INSTALL:dirname The optional directory that shall be
 #     passed as the headers' install destination relative to the component's
 #     ${HEADER_DESTINATION}.
@@ -479,8 +484,9 @@ endmacro(remake_add_executables)
 #     during the run of CMake or the build process. Note that the option
 #     will be ignored if RECURSE is provided in the arguments.
 macro(remake_add_headers)
-  remake_arguments(PREFIX remake_ LIST EXCLUDE OPTION RECURSE VAR INSTALL
-    VAR COMPONENT OPTION GENERATED ARGN globs ${ARGN})
+  remake_arguments(PREFIX remake_ LIST EXCLUDE OPTION RECURSE VAR FROM
+    VAR INSTALL VAR COMPONENT OPTION GENERATED ARGN globs ${ARGN})
+  remake_set(remake_from SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
   remake_set(remake_globs SELF DEFAULT *.h DEFAULT *.hpp DEFAULT *.tpp)
   remake_set(remake_exclude SELF DEFAULT CMakeLists.txt)
   remake_component_name(remake_default_component ${REMAKE_COMPONENT}
@@ -500,13 +506,14 @@ macro(remake_add_headers)
   if(remake_recurse)
     remake_file_glob(
       remake_headers ${remake_globs}
-      RECURSE ${CMAKE_CURRENT_SOURCE_DIR}
+      RECURSE ${remake_from}
       EXCLUDE ${remake_exclude})
 
     foreach(remake_header ${remake_headers})
       if(remake_recurse)
         get_filename_component(remake_header_path ${remake_header} PATH)
-        file(RELATIVE_PATH remake_header_dir ${CMAKE_CURRENT_SOURCE_DIR}
+        get_filename_component(remake_from_path ${remake_from} ABSOLUTE)
+        file(RELATIVE_PATH remake_header_dir ${remake_from_path}
           ${remake_header_path})
         remake_set(remake_header_install
           ${remake_install}/${remake_header_dir})

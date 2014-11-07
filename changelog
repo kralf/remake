@@ -1,3 +1,10 @@
+remake (1:0.6.7-267) lucid; urgency=low
+
+  * Added FROM argument to remake_add_headers(), allowing to specify the
+    recursive search directory
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 07 Nov 2014 08:37:00 +0100
+ 
 remake (1:0.6.7-266) lucid; urgency=low
 
   * Added destination arguments to remake_ros_stack() and remake_ros_package(),
