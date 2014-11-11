@@ -336,6 +336,10 @@ macro(remake_python_package)
 
   remake_python_package_unset(${python_name} MODULES CACHE)
   remake_python_package_unset(${python_name} EXTENSIONS CACHE)
+  if(NOT IS_ABSOLUTE ${python_directory})
+    remake_set(python_directory
+      ${CMAKE_CURRENT_SOURCE_DIR}/${python_directory})
+  endif(NOT IS_ABSOLUTE ${python_directory})
   remake_python_package_set(${python_name} DIRECTORY ${python_directory}
     CACHE INTERNAL "Build directory of Python package ${python_name}.")
 

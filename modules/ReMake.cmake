@@ -179,11 +179,9 @@ macro(remake_add_library remake_name)
 
   remake_set(remake_plugins
     ${PLUGIN_DESTINATION}/${remake_name}/*${CMAKE_SHARED_LIBRARY_SUFFIX})
-  if(IS_ABSOLUTE ${PLUGIN_DESTINATION})
-    remake_define(PLUGINS QUOTED "${remake_plugins}")
-  else(IS_ABSOLUTE ${PLUGIN_DESTINATION})
-    remake_define(PLUGINS QUOTED "${CMAKE_INSTALL_PREFIX}/${remake_plugins}")
-  endif(IS_ABSOLUTE ${PLUGIN_DESTINATION})
+  if(NOT IS_ABSOLUTE ${PLUGIN_DESTINATION})
+    remake_set(remake_plugins ${CMAKE_INSTALL_PREFIX}/${remake_plugins})
+  endif(NOT IS_ABSOLUTE ${PLUGIN_DESTINATION})
 
   if(remake_force_link)
     remake_list_push(remake_link -Wl,-no-as-needed ${remake_force_link})
@@ -199,6 +197,8 @@ macro(remake_add_library remake_name)
   if(remake_generated)
     set_source_files_properties(${remake_generated} PROPERTIES GENERATED ON)
   endif(remake_generated)
+  set_target_properties(${remake_name}${remake_suffix}
+    PROPERTIES COMPILE_DEFINITIONS PLUGINS="${remake_plugins}")
 
   if(remake_target_depends)
     add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
@@ -323,9 +323,10 @@ endmacro(remake_add_plugin)
 #     should be provided through the DEPENDS argument.
 #   \optional[list] DEPENDS:target An optional list of top-level targets the
 #     executable target depends on.
-#   \optional[option] TESTING With this option being present, the executable is
-#     assumed to be a testing binary. Consequently, a call to remake_test()
-#     creates a testing target for this executable. See ReMakeTest for details.
+#   \optional[option] TESTING With this option being present, the executable
+#     is assumed to be a testing binary. Consequently, a call to
+#     remake_test_target() creates a testing target for this executable.
+#     See ReMakeTest for details.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
 #     as the executable's install destination, defaults to the component's
 #     ${EXECUTABLE_DESTINATION}.
@@ -402,7 +403,7 @@ macro(remake_add_executable remake_name)
     COMPONENT ${remake_component})
 
   if(remake_testing)
-    remake_test(${remake_name}${remake_suffix})
+    remake_test_target(${remake_name}${remake_suffix})
   endif(remake_testing)
 endmacro(remake_add_executable)
 
@@ -415,9 +416,9 @@ endmacro(remake_add_executable)
 #     resolved in order to find the executables' sources, defaulting to *.c
 #     and *.cpp.
 #   \optional[option] TESTING With this option being present, the executables
-#     are assumed to be a testing binary. Consequently, a call to remake_test()
-#     creates a testing target for these executables. See ReMakeTest for
-#     details.
+#     are assumed to be a testing binary. Consequently, a call to
+#     remake_test_target() creates testing targets for these executables.
+#     See ReMakeTest for details.
 #   \optional[value] INSTALL:dirname The directory that shall be passed
 #     as the executables' install destinations, defaults to the component's
 #     ${EXECUTABLE_DESTINATION}.
@@ -857,6 +858,22 @@ macro(remake_add_generated remake_generator)
     remake_generate_custom(${ARGN})
   endif(${remake_generator} STREQUAL "FLEX")
 endmacro(remake_add_generated)
+
+### \brief Add a testing target.
+#   This macro adds a testing target, using the requested generator for
+#   test generation. Additional arguments passed to the macro are forwarded
+#   to the selected generator.
+#   \required[option] TARGET|PYTHON_NOSE The generator to be used for test
+#     generation.
+#   \required[list] arg The arguments to be forwared to the test generator.
+#     See ReMakeTest for details.
+macro(remake_add_test remake_test)
+  if(${remake_test} STREQUAL "TARGET")
+    remake_test_target(${ARGN})
+  elseif(${remake_test} STREQUAL "PYTHON_NOSE")
+    remake_test_python_nose(${ARGN})
+  endif(${remake_test} STREQUAL "TARGET")
+endmacro(remake_add_test)
 
 ### \brief Add a documentation target.
 #   This macro adds a documentation target, using the requested generator

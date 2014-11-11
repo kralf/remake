@@ -122,7 +122,7 @@ macro(remake_target_add_command target_name)
         message(FATAL_ERROR
           "Command output specified, but no output target given!")
       endif(target_as)
-    else(target_as)
+    else(target_output)
       add_custom_command(
         TARGET ${target_name}
         WORKING_DIRECTORY ${target_working_directory}

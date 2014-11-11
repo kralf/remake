@@ -1,3 +1,19 @@
+remake (1:0.7.0-267) lucid; urgency=low
+
+  * Fixed bug in remake_find_package() that would lead to the wrong FOUND
+    variable to be evaluated
+  * Fixed syntax bug in remake_target_add_command()
+  * Fixed remake_python_package() to perform absolute-path conversion of
+    package directory
+  * Revised ReMakeTest module:
+    + Splitted remake_test() into two macros, one of them becoming
+      remake_test_target()
+    + Added remake_test_python_nose() macro
+    + Testing logs now go into the top-level ReMakeFiles directory
+    + Added remake_add_test() convenience wrapper
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Nov 2014 15:05:00 +0100
+ 
 remake (1:0.6.7-267) lucid; urgency=low
 
   * Added FROM argument to remake_add_headers(), allowing to specify the

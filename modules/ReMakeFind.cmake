@@ -65,14 +65,15 @@ endif(NOT DEFINED REMAKE_FIND_CMAKE)
 macro(remake_find_package find_package)
   remake_arguments(PREFIX find_ OPTION CONFIG VAR ALIAS VAR RESULT_VAR
     OPTION OPTIONAL ARGN args ${ARGN})
+  remake_var_name(find_pkg_var ${find_package} FOUND)
   if(find_alias)
     remake_var_name(find_default_result_var ${find_alias} FOUND)
   else(find_alias)
-    remake_var_name(find_default_result_var ${find_package} FOUND)
+    remake_set(find_default_result_var ${find_pkg_var})
   endif(find_alias)
   remake_set(find_result_var SELF DEFAULT ${find_default_result_var})
 
-  if(NOT ${find_result_var})
+  if(NOT ${find_pkg_var})
     if(find_config)
       remake_set(find_args SELF DEFAULT ${find_package})
 
@@ -101,7 +102,7 @@ macro(remake_find_package find_package)
         
     remake_find_result(${find_package} ${${find_result_var}}
       TYPE package ${OPTIONAL})
-  endif(NOT ${find_result_var})
+  endif(NOT ${find_pkg_var})
 endmacro(remake_find_package)
 
 ### \brief Find a library and it's header file.
