@@ -1,3 +1,11 @@
+remake (1:0.7-270) lucid; urgency=low
+
+  * Added DEPENDS argument to remake_test_python_nose() and
+    remake_test_target(), allowing for the definition of additional
+    file or target dependencies
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Nov 2014 16:50:00 +0100
+ 
 remake (1:0.7-269) lucid; urgency=low
 
   * Fixed changelog version

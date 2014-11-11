@@ -45,12 +45,16 @@ endif(NOT DEFINED REMAKE_TEST_CMAKE)
 #   of the testing target implicitly fails with a non-zero return value.
 #   \required[value] target The name of an existing executable target for
 #     which to generate the test.
+#   \optional[list] DEPENDS:depend An optional list of additional file or
+#     target dependencies for the testing target.
 macro(remake_test_target test_target)
+  remake_arguments(PREFIX test_ LIST DEPENDS ${ARGN})
+    
   get_target_property(test_command ${test_target} LOCATION)
   remake_test(
     ${test_name}
     ${test_command}
-    DEPENDS ${test_target}
+    DEPENDS ${test_target} ${test_depends}
     DESCRIPTION "executable target")
 endmacro(remake_test_target)
 
@@ -67,8 +71,11 @@ endmacro(remake_test_target)
 #   \optional[value] MODULE_PATH:dir The optional name of the directory
 #     containing the required Python modules for the nose test, defaulting
 #     to ${CMAKE_CURRENT_SOURCE_DIR}.
+#   \optional[list] DEPENDS:depend An optional list of additional file or
+#     target dependencies for the testing target.
 macro(remake_test_python_nose test_filename)
-  remake_arguments(PREFIX test_ VAR NAME VAR MODULE_PATH ${ARGN})
+  remake_arguments(PREFIX test_ VAR NAME VAR MODULE_PATH LIST DEPENDS
+    ${ARGN})
   remake_set(test_name SELF DEFAULT python_nose)
   remake_set(test_module_path SELF DEFAULT ${CMAKE_CURRENT_SOURCE_DIR})
   
@@ -87,7 +94,7 @@ macro(remake_test_python_nose test_filename)
   remake_test(
     ${test_name}
     PYTHONPATH=${test_module_path} ${NOSETESTS_EXECUTABLE} -v ${test_script}
-    DEPENDS ${test_filename}
+    DEPENDS ${test_filename} ${test_depends}
     DESCRIPTION "Python nose")
 endmacro(remake_test_python_nose)
 
