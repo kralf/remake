@@ -352,59 +352,62 @@ macro(remake_add_executable remake_name)
   remake_arguments(PREFIX remake_ LIST GENERATED LIST DEPENDS OPTION TESTING
     VAR INSTALL VAR COMPONENT VAR PREFIX VAR SUFFIX ARGN globs LIST LINK
     LIST FORCE_LINK ${ARGN})
-  remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
-  remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
-  remake_component(${remake_component})
-  remake_component_get(${remake_component} EXECUTABLE_PREFIX)
-  remake_component_get(${remake_component} EXECUTABLE_DESTINATION)
-  remake_set(remake_install SELF DEFAULT ${EXECUTABLE_DESTINATION})
-  if(NOT DEFINED remake_prefix)
-    remake_set(remake_prefix ${EXECUTABLE_PREFIX})
-  endif(NOT DEFINED remake_prefix)
-  if(NOT remake_prefix)
-    remake_set(remake_prefix)
-  endif(NOT remake_prefix)
+  if(NOT remake_testing)
+    remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+    remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
 
-  if(REMAKE_BRANCH_BUILD)
-    remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
-    remake_branch_link(remake_link ${remake_link})
-    remake_branch_link(remake_force_link ${remake_force_link})
-    remake_branch_add_targets(${remake_name})
-  endif(REMAKE_BRANCH_BUILD)
+    remake_component(${remake_component})
+    remake_component_get(${remake_component} EXECUTABLE_PREFIX)
+    remake_component_get(${remake_component} EXECUTABLE_DESTINATION)
+    remake_set(remake_install SELF DEFAULT ${EXECUTABLE_DESTINATION})
+    if(NOT DEFINED remake_prefix)
+      remake_set(remake_prefix ${EXECUTABLE_PREFIX})
+    endif(NOT DEFINED remake_prefix)
+    if(NOT remake_prefix)
+      remake_set(remake_prefix)
+    endif(NOT remake_prefix)
 
-  remake_file_glob(remake_sources ${remake_globs})
-  remake_target_get_sources(remake_target_sources ${remake_name})
-  remake_target_get_dependencies(remake_target_depends ${remake_name})
+    if(REMAKE_BRANCH_BUILD)
+      remake_set(remake_suffix ${REMAKE_BRANCH_SUFFIX})
+      remake_branch_link(remake_link ${remake_link})
+      remake_branch_link(remake_force_link ${remake_force_link})
+      remake_branch_add_targets(${remake_name})
+    endif(REMAKE_BRANCH_BUILD)
 
-  if(remake_force_link)
-    remake_list_push(remake_link -Wl,-no-as-needed ${remake_force_link})
-  endif(remake_force_link)
-  
-  remake_component_build(
-    EXECUTABLE ${remake_name}${remake_suffix}
-    ${remake_sources} ${remake_target_sources} ${remake_generated}
-    OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
-    LINK ${remake_link}
-    COMPONENT ${remake_component})
-  if(remake_generated)
-    set_source_files_properties(${remake_generated} PROPERTIES GENERATED ON)
-  endif(remake_generated)
+    remake_file_glob(remake_sources ${remake_globs})
+    remake_target_get_sources(remake_target_sources ${remake_name})
+    remake_target_get_dependencies(remake_target_depends ${remake_name})
 
-  if(remake_target_depends)
-    add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
-  endif(remake_target_depends)
-  if(remake_depends)
-    add_dependencies(${remake_name}${remake_suffix} ${remake_depends})
-  endif(remake_depends)
-  remake_component_install(
-    TARGETS ${remake_name}${remake_suffix}
-    RUNTIME DESTINATION ${remake_install}
-    COMPONENT ${remake_component})
+    if(remake_force_link)
+      remake_list_push(remake_link -Wl,-no-as-needed ${remake_force_link})
+    endif(remake_force_link)
+    
+    remake_component_build(
+      EXECUTABLE ${remake_name}${remake_suffix}
+      ${remake_sources} ${remake_target_sources} ${remake_generated}
+      OUTPUT ${remake_prefix}${remake_name}${remake_suffix}
+      LINK ${remake_link}
+      COMPONENT ${remake_component})
+    if(remake_generated)
+      set_source_files_properties(${remake_generated} PROPERTIES GENERATED ON)
+    endif(remake_generated)
 
-  if(remake_testing)
-    remake_test_target(${remake_name}${remake_suffix})
-  endif(remake_testing)
+    if(remake_target_depends)
+      add_dependencies(${remake_name}${remake_suffix} ${remake_target_depends})
+    endif(remake_target_depends)
+    if(remake_depends)
+      add_dependencies(${remake_name}${remake_suffix} ${remake_depends})
+    endif(remake_depends)
+    remake_component_install(
+      TARGETS ${remake_name}${remake_suffix}
+      RUNTIME DESTINATION ${remake_install}
+      COMPONENT ${remake_component})
+  else(NOT remake_testing)
+    remake_set(remake_args ${ARGN})
+    list(REMOVE_ITEM remake_args TESTING)
+    remake_test_target(${remake_name} ${remake_args})
+  endif(NOT remake_testing)
 endmacro(remake_add_executable)
 
 ### \brief Add multiple executable targets.
@@ -838,6 +841,8 @@ macro(remake_add_recursion remake_build_system)
     remake_recurse_cmake(${ARGN})
   elseif(${remake_build_system} STREQUAL "QMAKE")
     remake_recurse_qmake(${ARGN})
+  else(${remake_build_system} STREQUAL "MAKE")
+    message(FATAL_ERROR "Unknown build system: ${remake_build_system}")
   endif(${remake_build_system} STREQUAL "MAKE")
 endmacro(remake_add_recursion)
 
@@ -856,6 +861,8 @@ macro(remake_add_generated remake_generator)
     remake_generate_bison(${ARGN})
   elseif(${remake_generator} STREQUAL "CUSTOM")
     remake_generate_custom(${ARGN})
+  else(${remake_generator} STREQUAL "FLEX")
+    message(FATAL_ERROR "Unknown code generator: ${remake_generator}")
   endif(${remake_generator} STREQUAL "FLEX")
 endmacro(remake_add_generated)
 
@@ -863,15 +870,19 @@ endmacro(remake_add_generated)
 #   This macro adds a testing target, using the requested generator for
 #   test generation. Additional arguments passed to the macro are forwarded
 #   to the selected generator.
-#   \required[option] TARGET|PYTHON_NOSE The generator to be used for test
-#     generation.
+#   \required[option] TARGET|GOOGLE|PYTHON_NOSE The generator to be used for
+#     test generation.
 #   \required[list] arg The arguments to be forwared to the test generator.
 #     See ReMakeTest for details.
 macro(remake_add_test remake_test)
   if(${remake_test} STREQUAL "TARGET")
     remake_test_target(${ARGN})
+  elseif(${remake_test} STREQUAL "GOOGLE")
+    remake_test_google(${ARGN})
   elseif(${remake_test} STREQUAL "PYTHON_NOSE")
     remake_test_python_nose(${ARGN})
+  else(${remake_test} STREQUAL "TARGET")
+    message(FATAL_ERROR "Unknown test generator: ${remake_test}")
   endif(${remake_test} STREQUAL "TARGET")
 endmacro(remake_add_test)
 
@@ -898,6 +909,8 @@ macro(remake_add_documentation remake_generator)
     remake_doc_targets(${ARGN})
   elseif(${remake_generator} STREQUAL "CUSTOM")
     remake_doc_custom(${ARGN})
+  else(${remake_generator} STREQUAL "SOURCE")
+    message(FATAL_ERROR "Unknown document generator: ${remake_test}")
   endif(${remake_generator} STREQUAL "SOURCE")
 endmacro(remake_add_documentation)
 

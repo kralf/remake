@@ -220,7 +220,7 @@ endmacro(remake_find_executable)
 #   \optional[option] OPTIONAL If provided, this option is passed on to
 #     remake_find_result().
 macro(remake_find_file find_file)
-  remake_arguments(PREFIX find_ VAR PACKAGE ARGN args OPTION OPTIONAL ${ARGN})
+  remake_arguments(PREFIX find_ VAR PACKAGE OPTION OPTIONAL ARGN args ${ARGN})
   remake_var_name(find_path_var ${find_package} PATH)
 
   find_path(${find_path_var} NAMES ${find_file} ${find_args})

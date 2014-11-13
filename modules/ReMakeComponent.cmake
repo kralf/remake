@@ -34,6 +34,7 @@ if(NOT DEFINED REMAKE_COMPONENT_CMAKE)
 
   remake_set(REMAKE_COMPONENT_TARGET_SUFFIX component)
   remake_set(REMAKE_COMPONENT_DEVEL_SUFFIX dev)
+  remake_set(REMAKE_COMPONENT_TESTING_SUFFIX test)
 endif(NOT DEFINED REMAKE_COMPONENT_CMAKE)
 
 ### \brief Define a new ReMake component.
