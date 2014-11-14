@@ -1,3 +1,10 @@
+remake (1:0.7.1-272) lucid; urgency=low
+
+  * Added -V and -r options to remake-git2debcl (for better control over
+    version discovery from project sources)
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 14 Nov 2014 17:15:00 +0100
+ 
 remake (1:0.7.1-271) lucid; urgency=low
 
   * Added remake_test_google() macro
@@ -9,7 +16,7 @@ remake (1:0.7.1-271) lucid; urgency=low
     remake_test_target()
   * Increased patch version
   
- -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Nov 2014 16:50:00 +0100
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Nov 2014 13:05:00 +0100
  
 remake (1:0.7-270) lucid; urgency=low
 

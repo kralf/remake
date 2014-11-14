@@ -22,7 +22,7 @@
 
 use Getopt::Std;
 
-getopts("hqo:c:nNp:v:d:u:a:w:");
+getopts("hqo:c:nNp:v:V:r:d:u:a:w:");
 
 use Cwd;
 use File::Find;
@@ -39,6 +39,8 @@ my $cl_output = $opt_o;
 my $cl_commits = $opt_c;
 my $cl_project = $opt_p;
 my $cl_version = $opt_v;
+my $cl_version_file = $opt_V;
+my $cl_version_regex = $opt_r;
 my $cl_distribution = $opt_d;
 my $cl_urgency = $opt_u;
 my $cl_width = $opt_w;
@@ -80,6 +82,8 @@ sub print_help {
   print_stdopt "-N", "number project revision by commit [false]";
   print_stdopt "-p NAME", "project name [guess from repository]";
   print_stdopt "-v VERSION", "project version [guess from repository]";
+  print_stdopt "-V FILE", "project version file [CMakeLists.txt]";
+  print_stdopt "-r REGEX", "project version regular expression";
   print_stdopt "-d DISTRIBUTION", "project distribution [unstable]";
   print_stdopt "-u URGENCY", "project urgency [low]";
   print_stdopt "-w WIDTH", "message format output width [70]";
@@ -145,15 +149,10 @@ sub parse_git {
     my($number)= grep { $commit_list[$_] eq $hash } 0..$#commit_list;
     $number = $number+1;
   
-    my $lists =
-      `git show $hash:$$repository{path}/CMakeLists.txt 2> /dev/null`;
-    if (($? == 0) and ($lists =~ /.*remake_project\(.*?\).*/s)) {
-      $lists =~ s/.*remake_project\((.*?)\).*/\1/s;
+    my $lists = `git show $hash:$cl_version_file 2> /dev/null`;
+    if (($? == 0) and ($lists =~ /$cl_version_regex/s)) {
+      $lists =~ s/$cl_version_regex/\1/s;
       $version = $lists;
-
-      $version =~
-        /[\n\s]*[^\s]+[\n\s]*(VERSION)?[\n\s]*([^\s]+).*/s;
-      $version = $2;      
     }
   
     my %commit;
@@ -188,9 +187,6 @@ sub parse_git {
         $commit{empty} = 0;
         @{$commit{message}} = split(/\n/, $stripped);
       }
-      if ($number == 250) {
-        print "$stripped\n";
-      }      
     }
     
     if (!$commit{empty}) {
@@ -292,6 +288,14 @@ if ($cl_version) {
 }
 else {
   $project{version} = "0.1";
+}
+
+if (!$cl_version_file) {
+  $cl_version_file = "CMakeLists.txt";
+}
+
+if (!$cl_version_regex) {
+  $cl_version_regex = ".*remake_project[(].*?VERSION[ \n]*([^ \n]+).*";
 }
 
 if ($cl_distribution) {
