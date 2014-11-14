@@ -224,8 +224,6 @@ endmacro(remake_test_python_nose)
 #   \optional[list] args An optional list of arguments to the testing command.
 #   \optional[list] DEPENDS:depend An optional list of file or target
 #     dependencies for the testing target.
-#   \optional[value] DESCRIPTION:string An optional descripition of the
-#     testing target.
 macro(remake_test test_type test_name test_command)
   remake_arguments(PREFIX test_ LIST DEPENDS ARGN args ${ARGN})
   if(NOT TARGET ${REMAKE_TEST_ALL_TARGET})

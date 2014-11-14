@@ -1,3 +1,9 @@
+remake (1:0.7.1-273) lucid; urgency=low
+
+  * Fixed documentation of remake_test()
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 14 Nov 2014 17:47:00 +0100
+ 
 remake (1:0.7.1-272) lucid; urgency=low
 
   * Added -V and -r options to remake-git2debcl (for better control over
