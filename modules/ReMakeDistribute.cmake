@@ -26,6 +26,11 @@ include(ReMakeDebian)
 ### \brief ReMake distribution macros
 #   The ReMake distribution macros facilitate automated distribution of
 #   a ReMake project.
+#
+#   \variable REMAKE_DISTRIBUTE_ALIAS The name of the distribution on
+#     the release build system.
+#   \variable REMAKE_DISTRIBUTE_RELEASE_BUILD If true, the build is a
+#     distribution's release build.
 
 if(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
   remake_set(REMAKE_DISTRIBUTE_CMAKE ON)
@@ -36,6 +41,16 @@ if(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
   remake_file(REMAKE_DISTRIBUTE_DIR ReMakeDistributions TOPLEVEL)
   remake_file_rmdir(${REMAKE_DISTRIBUTE_DIR})
   remake_file_mkdir(${REMAKE_DISTRIBUTE_DIR})
+  
+  if(NOT DEFINED REMAKE_DISTRIBUTE_RELEASE_BUILD)
+    if(REMAKE_DISTRIBUTE_ALIAS)
+      remake_set(REMAKE_DISTRIBUTE_RELEASE_BUILD ON
+        CACHE BOOL "If true, this is a distribution's release build.")
+    else(REMAKE_DISTRIBUTE_ALIAS)
+      remake_set(REMAKE_DISTRIBUTE_RELEASE_BUILD OFF
+        CACHE BOOL "If true, this is a distribution's release build.")
+    endif(REMAKE_DISTRIBUTE_ALIAS)
+  endif(NOT DEFINED REMAKE_DISTRIBUTE_RELEASE_BUILD)
 endif(NOT DEFINED REMAKE_DISTRIBUTE_CMAKE)
 
 ### \brief Distribute a ReMake project according to the Debian standards.

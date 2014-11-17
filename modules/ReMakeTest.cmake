@@ -18,6 +18,7 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
+include(ReMakeDistribute)
 include(ReMakeFile)
 include(ReMakeFind)
 include(ReMakeTarget)
@@ -234,12 +235,19 @@ macro(remake_test test_type test_name test_command)
   endif(NOT EXISTS ${REMAKE_TEST_DIR})
   
   remake_target_name(test_target ${test_name} ${REMAKE_TEST_TARGET_SUFFIX})
-  remake_file(test_log ${REMAKE_TEST_DIR}/${test_name} TOPLEVEL)
-  
-  remake_target(
-    ${test_target}
-    COMMAND ${test_command} ${test_args} 1> ${test_log}
-    COMMENT "Running ${test_type} test ${test_name}"
-    ${DEPENDS})
+  if(REMAKE_DISTRIBUTE_RELEASE_BUILD)
+    remake_target(
+      ${test_target}
+      COMMAND ${test_command} ${test_args}
+      COMMENT "Running ${test_type} test ${test_name}"
+      ${DEPENDS})
+  else(REMAKE_DISTRIBUTE_RELEASE_BUILD)
+    remake_file(test_log ${REMAKE_TEST_DIR}/${test_name} TOPLEVEL)
+    remake_target(
+      ${test_target}
+      COMMAND ${test_command} ${test_args} 1> ${test_log}
+      COMMENT "Running ${test_type} test ${test_name}"
+      ${DEPENDS})
+  endif(REMAKE_DISTRIBUTE_RELEASE_BUILD)
   add_dependencies(${REMAKE_TEST_ALL_TARGET} ${test_target})
 endmacro(remake_test)

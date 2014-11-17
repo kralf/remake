@@ -1,3 +1,14 @@
+remake (1:0.7.1-274) lucid; urgency=low
+
+  * Added new cache variable REMAKE_DISTRIBUTE_RELEASE_BUILD to indicate
+    whether a distribution's release build is ongoing
+  * Added variable documentation to ReMakeDistribute
+  * remake_test() now redirects stdout to log files only if 
+    REMAKE_DISTRIBUTE_RELEASE_BUILD is false (output should thus show up
+    in a PPA's build log)
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 17 Nov 2014 07:11:00 +0100
+ 
 remake (1:0.7.1-273) lucid; urgency=low
 
   * Fixed documentation of remake_test()
