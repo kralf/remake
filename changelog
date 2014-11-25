@@ -1,3 +1,13 @@
+remake (1:0.7.1-275) lucid; urgency=low
+
+  * Added FORCE_CACHE option to remake_find_result() (prevents
+    remake_find_package() from assumig cached results of CMake's
+    find_package() macros)
+  * Revised remake_find_executable(), remake_find_library(), and
+    remake_find_file() to use the FORCE_CACHE option of remake_find_result()
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 25 Nov 2014 13:26:00 +0100
+ 
 remake (1:0.7.1-274) lucid; urgency=low
 
   * Added new cache variable REMAKE_DISTRIBUTE_RELEASE_BUILD to indicate

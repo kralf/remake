@@ -100,8 +100,10 @@ macro(remake_find_package find_package)
       find_package(${find_package} ${find_args})
     endif(find_config)
         
-    remake_find_result(${find_package} ${${find_result_var}}
-      TYPE package ${OPTIONAL})
+    remake_find_result(
+      ${find_package} ${${find_result_var}}
+      TYPE package
+      ${OPTIONAL})
   endif(NOT ${find_pkg_var})
 endmacro(remake_find_package)
 
@@ -157,7 +159,7 @@ macro(remake_find_library find_lib find_header)
     TYPE library
     FILES "${find_shared_prefix}${find_lib}${find_shared_suffix}"
       "${find_static_prefix}${find_lib}${find_static_suffix}"
-    ${OPTIONAL})
+    ${OPTIONAL} FORCE_CACHE)
 
   if(${find_lib_var})
     remake_file_name(find_path_suffix ${find_package})
@@ -172,7 +174,7 @@ macro(remake_find_library find_lib find_header)
     NAME ${find_header}
     TYPE header
     FILES ${find_header}
-    ${OPTIONAL})
+    ${OPTIONAL} FORCE_CACHE)
 endmacro(remake_find_library)
 
 ### \brief Find an executable program.
@@ -202,7 +204,7 @@ macro(remake_find_executable find_exec)
     NAME ${find_exec}
     TYPE executable
     FILES ${find_exec}
-    ${OPTIONAL})
+    ${OPTIONAL} FORCE_CACHE)
 endmacro(remake_find_executable)
 
 ### \brief Find a file.
@@ -230,7 +232,7 @@ macro(remake_find_file find_file)
     NAME ${find_file}
     TYPE file
     FILES ${find_file}
-    ${OPTIONAL})
+    ${OPTIONAL} FORCE_CACHE)
 endmacro(remake_find_file)
 
 ### \brief Evaluate the result of a find operation.
@@ -253,11 +255,13 @@ endmacro(remake_find_file)
 #     to generate a list of candidate packages in case of a negative result.
 #   \optional[option] OPTIONAL If provided, a negative result will
 #     not lead to a fatal error but to a warning message instead.
+#   \optional[option] FORCE_CACHE Enforce the creation of a CMake cache
+#     variable to store the find result for subsequent runs of CMake.
 #   \required[value] result The find result returned to the calling macro,
 #     usually depends on the macro-specific find operation.
 macro(remake_find_result find_package)
   remake_arguments(PREFIX find_ VAR TYPE VAR NAME LIST FILES OPTION OPTIONAL
-    ARGN result ${ARGN})
+    OPTION FORCE_CACHE ARGN result ${ARGN})
   remake_set(find_type SELF DEFAULT package)
   remake_var_name(find_result_var ${find_package} FOUND)
 
@@ -270,9 +274,13 @@ macro(remake_find_result find_package)
   endif(find_name)
 
   if(find_result)
-    remake_set(${find_result_var} ON CACHE BOOL ${find_description} FORCE)
+    if(find_force_cache)
+      remake_set(${find_result_var} ON CACHE BOOL ${find_description} FORCE)
+    endif(find_force_cache)
   else(find_result)
-    remake_set(${find_result_var} OFF CACHE BOOL ${find_description} FORCE)
+    if(find_force_cache)
+      remake_set(${find_result_var} OFF CACHE BOOL ${find_description} FORCE)
+    endif(find_force_cache)
   
     if(find_name)
       remake_set(find_message
