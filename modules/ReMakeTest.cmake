@@ -51,6 +51,8 @@ endif(NOT DEFINED REMAKE_TEST_CMAKE)
 #   \optional[list] args An optional list of arguments to be passed on to
 #     remake_add_executable() for defining the executable target. See ReMake
 #     for details.
+#   \optional[list] COMMAND_ARGS:args An optional list of arguments to the
+#     testing command issued by remake_test().
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_add_executable(), defaults to
 #     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake 
@@ -58,8 +60,8 @@ endif(NOT DEFINED REMAKE_TEST_CMAKE)
 #   \optional[list] TEST_DEPENDS:depend An optional list of additional file
 #     or target dependencies for the testing target.
 macro(remake_test_target test_target)
-  remake_arguments(PREFIX test_ VAR COMPONENT LIST TEST_DEPENDS ARGN args
-    ${ARGN})
+  remake_arguments(PREFIX test_ LIST COMMAND_ARGS VAR COMPONENT
+    LIST TEST_DEPENDS ARGN args ${ARGN})
   remake_component_name(test_default_component ${REMAKE_COMPONENT}
     ${REMAKE_COMPONENT_TESTING_SUFFIX})
   remake_set(test_component SELF DEFAULT ${test_default_component})
@@ -73,7 +75,7 @@ macro(remake_test_target test_target)
   remake_test(
     "executable target"
     ${test_target}
-    ${test_command}
+    ${test_command} ${test_command_args}
     DEPENDS ${test_target} ${test_test_depends})
 endmacro(remake_test_target)
 
@@ -88,6 +90,8 @@ endmacro(remake_test_target)
 #   \optional[list] args An optional list of arguments to be passed on to
 #     remake_add_executable() for defining the executable target. See ReMake
 #     for details.
+#   \optional[list] COMMAND_ARGS:args An optional list of arguments to the
+#     testing command issued by remake_test().
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_add_executable(), defaults to
 #     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake 
@@ -98,8 +102,8 @@ endmacro(remake_test_target)
 #   \optional[list] TEST_DEPENDS:depend An optional list of additional file
 #     or target dependencies for the testing target.
 macro(remake_test_google test_target)
-  remake_arguments(PREFIX test_ VAR COMPONENT OPTION LINK_MAIN
-    LIST TEST_DEPENDS ARGN args ${ARGN})
+  remake_arguments(PREFIX test_ LIST COMMAND_ARGS VAR COMPONENT
+    OPTION LINK_MAIN LIST TEST_DEPENDS ARGN args ${ARGN})
   remake_component_name(test_default_component ${REMAKE_COMPONENT}
     ${REMAKE_COMPONENT_TESTING_SUFFIX})
   remake_set(test_component SELF DEFAULT ${test_default_component})
@@ -153,7 +157,7 @@ macro(remake_test_google test_target)
   remake_test(
     "Google"
     ${test_target}
-    ${test_command}
+    ${test_command} ${test_command_args}
     DEPENDS ${test_target} ${test_test_depends})
 endmacro(remake_test_google)
 

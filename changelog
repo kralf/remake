@@ -1,3 +1,11 @@
+remake (1:0.7.1-276) lucid; urgency=low
+
+  * Added COMMAND_ARGS argument to remake_test_target() and
+    remake_test_google() to allow for passing arguments to the
+    testing command
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 16 Dec 2014 16:43:00 +0100
+ 
 remake (1:0.7.1-275) lucid; urgency=low
 
   * Added FORCE_CACHE option to remake_find_result() (prevents
