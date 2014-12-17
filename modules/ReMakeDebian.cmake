@@ -245,7 +245,7 @@ macro(remake_debian_find_package debian_specifier)
         "^(${debian_name})(:${REMAKE_DEBIAN_ARCHITECTURE})?[\t].*$"
         "\\1" debian_package_name ${debian_package})
       string(REGEX REPLACE
-        "^${debian_name}(:${REMAKE_DEBIAN_ARCHITECTURE})?[\t](.*)$"
+        "^${debian_package_name}(:${REMAKE_DEBIAN_ARCHITECTURE})?[\t](.*)$"
         "\\2" debian_package_version ${debian_package})
 
       if(debian_version)

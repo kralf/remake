@@ -1,3 +1,10 @@
+remake (1:0.7.1-277) lucid; urgency=low
+
+  * Fixed bug in remake_remake_debian_find_package() which would cause
+    some regular package name expressions to fail
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 17 Dec 2014 08:50:00 +0100
+ 
 remake (1:0.7.1-276) lucid; urgency=low
 
   * Added COMMAND_ARGS argument to remake_test_target() and
