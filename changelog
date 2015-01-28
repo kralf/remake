@@ -1,3 +1,9 @@
+remake (1:0.7.1-280) lucid; urgency=low
+
+  * Updated README.md
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 28 Jan 2015 08:47:00 +0100
+ 
 remake (1:0.7.1-279) lucid; urgency=low
 
   * Revised README for github markdown

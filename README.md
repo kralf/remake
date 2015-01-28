@@ -5,13 +5,13 @@
 A set of CMake macros for restructuring GNU Automake/Autoconf projects.
 
 **Author(s):** Ralf Kaestner, Dizan Vasquez
-<br/>
+
 **Maintainer:** Ralf Kaestner <ralf.kaestner@gmail.com>
-<br/>
+
 **Licsense:** GNU Lesser General Public License (LGPL)
 
 **Operating system(s):** Debian-based Linux
-<br/>
+
 **Package PPA:** ppa:ethz-asl/build-essential
 
 ## Description
