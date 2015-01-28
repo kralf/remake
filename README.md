@@ -206,7 +206,21 @@ sudo apt-get install debhelper cmake groff
 
 #### Building with CMake
 
-* Clone ReMake from https://github.com/kralf/remake.git into `PROJECT_DIR`
+This project can be built the traditional CMake way. Assuming that you have
+cloned the project sources into `PROJECT_DIR`, a typical out-of-source build
+might look like this:
+
+* Create a build directory using 
+
+  ```
+  mkdir -p PROJECT_DIR/build
+  ```
+
+* Switch into the build directoy by 
+
+  ```
+  cd PROJECT_DIR/build
+  ```
 
 * In the build directory, run
 
