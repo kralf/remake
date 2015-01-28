@@ -1,3 +1,9 @@
+remake (1:0.7.1-279) lucid; urgency=low
+
+  * Revised README for github markdown
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 28 Jan 2015 08:06:00 +0100
+ 
 remake (1:0.7.1-278) lucid; urgency=low
 
   * Fixed another bug in remake_remake_debian_find_package() which would cause

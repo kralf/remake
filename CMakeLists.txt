@@ -18,6 +18,7 @@ remake_project(
   HOME "http://github.com/kralf/remake"
   LICENSE "GNU Lesser General Public License (LGPL)"
   INSTALL /usr
+  README README.md
 )
 
 remake_add_directories(
