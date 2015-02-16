@@ -8,7 +8,7 @@ A set of CMake macros for restructuring GNU Automake/Autoconf projects.
 
 **Maintainer:** Ralf Kaestner <ralf.kaestner@gmail.com>
 
-**Licsense:** GNU Lesser General Public License (LGPL)
+**License:** GNU Lesser General Public License (LGPL)
 
 **Operating system(s):** Debian-based Linux
 

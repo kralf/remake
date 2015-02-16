@@ -1,3 +1,9 @@
+remake (1:0.7.1-282) lucid; urgency=low
+
+  * Updated README.md
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 16 Feb 2015 16:53:00 +0100
+ 
 remake (1:0.7.1-281) lucid; urgency=low
 
   * Updated README.md
