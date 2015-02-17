@@ -1,3 +1,17 @@
+remake (1:0.7.1-283) lucid; urgency=low
+
+  * Revised remake_ros_pack_deb():
+    + Removed definition of an extra Debian package (named after the project)
+      for installing the default component
+    + Now takes the name of a ROS package for installing the default component
+      alongside with the package content
+  * Revised remake_ros_distribute_deb():
+    + Does not anymore generate versions which comprise the ROS distribution
+      and the Debian distribution name (only uses the Debian distribution name)
+    + Now accepts an if-expression to enable/disable distributions
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 17 Feb 2015 14:34:00 +0100
+ 
 remake (1:0.7.1-282) lucid; urgency=low
 
   * Updated README.md

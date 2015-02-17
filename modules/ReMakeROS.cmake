@@ -294,7 +294,7 @@ endmacro(remake_ros_find_stack)
 #     ROS "fuerte" and earlier distributions, stacks may only specify
 #     dependencies on other stacks.
 #   \optional[value] CONFIGURATION_DESTINATION:dir The optional destination
-#     directory of the stack configuration files, defaulting to etc. Note
+#     directory of the stack configuration files, defaulting to config. Note
 #     that a relative-path destination will be prefixed with the root
 #     install destination of the stack.
 #   \optional[value] DOCUMENTATION_DESTINATION:dir The optional destination
@@ -310,7 +310,7 @@ macro(remake_ros_stack ros_name)
   remake_set(ros_description SELF DEFAULT "${ros_name} stack")
   remake_set(ros_sources SELF DEFAULT ${ros_name})
   remake_set(ros_depends SELF DEFAULT ros ros_comm)
-  remake_set(ros_configuration_destination SELF DEFAULT etc)
+  remake_set(ros_configuration_destination SELF DEFAULT config)
   remake_set(ros_documentation_destination SELF DEFAULT docs)
 
   remake_ros()
@@ -783,7 +783,7 @@ endmacro(remake_ros_find_package)
 #     relative-path destination will be prefixed with the root install
 #     destination of the package.
 #   \optional[value] CONFIGURATION_DESTINATION:dir The optional destination
-#     directory of the package configuration files, defaulting to etc. Note
+#     directory of the package configuration files, defaulting to config. Note
 #     that a relative-path destination will be prefixed with the root install
 #     destination of the package.
 #   \optional[value] DOCUMENTATION_DESTINATION:dir The optional destination
@@ -806,7 +806,7 @@ macro(remake_ros_package ros_name)
   remake_set(ros_sources SELF DEFAULT ${ros_name})
   remake_set(ros_executable_destination SELF DEFAULT bin)
   remake_set(ros_script_destination SELF DEFAULT bin)  
-  remake_set(ros_configuration_destination SELF DEFAULT etc)
+  remake_set(ros_configuration_destination SELF DEFAULT config)
   remake_set(ros_documentation_destination SELF DEFAULT docs)
 
   remake_ros()
@@ -2228,24 +2228,28 @@ endmacro(remake_ros_package_python_distribute)
 #   ROS meta package or stack. It however installs dependencies between
 #   the Debian packages such as to ensure the correct deployment of all ROS
 #   packages belonging to a ROS meta-package or stack. Secondly, the macro
-#   defines an additional Debian packages named after the ReMake project.
-#   This package installs the project's default component which usually
-#   contains the license file, the changelog, and similar distribution-relevant
-#   files. The macro does however follow the ROS packaging conventions in
-#   not separating runtime and development files. It combines all install
-#   components associated with a ROS package into one monolithic Debian
-#   package for that ROS package. Thus, the development headers and Python 
-#   modules may be deployed together with the runtime.
+#   allows for specifying the name of the ROS package, meta-package, or stack
+#   which will install the project's default component. Usually, this default
+#   component contains the license file, the changelog, and similar
+#   distribution-relevant files. The macro does however follow the ROS
+#   packaging conventions in not separating runtime and development files.
+#   It combines all install components associated with a ROS package into
+#   one monolithic Debian package for that ROS package. Thus, the development
+#   headers and Python modules may be deployed together with the runtime.
+#   \optional[value] DEFAULT:name The optional name of an already defined ROS
+#     package, meta-package, or stack which will install the project's default
+#     component. If this argument is omitted, the distribution-relevant files
+#     will not be packaged.
 #   \optional[list] EXTRA:glob An optional list of glob expressions matching
 #     extra control information files such as preinst, postinst, prerm, and
 #     postrm to be included in the control section of the Debian package
 #     named after the ReMake project. See ReMakePack for details.
 macro(remake_ros_pack_deb)
-  remake_arguments(PREFIX ros_ LIST EXTRA ${ARGN})
+  remake_arguments(PREFIX ros_ VAR DEFAULT LIST EXTRA ${ARGN})
   
   remake_ros()
 
-  remake_unset(ros_pkg_components)
+  remake_unset(ros_pkg_components ros_default_component)
   if(${ROS_DISTRIBUTION} STRLESS groovy)
     remake_project_get(ROS_STACKS OUTPUT ros_stacks)
     foreach(ros_stack ${ros_stacks})
@@ -2263,6 +2267,9 @@ macro(remake_ros_pack_deb)
       remake_var_name(ros_var ${ros_component} MANIFEST)
       remake_set(${ros_var} ${REMAKE_ROS_STACK_MANIFEST})
       remake_list_push(ros_pkg_components ${ros_component})
+      if(ros_stack STREQUAL "${ros_default}")
+        remake_set(ros_default_component ${ros_component})
+      endif(ros_stack STREQUAL "${ros_default}")
     endforeach(ros_stack)
   endif(${ROS_DISTRIBUTION} STRLESS groovy)
 
@@ -2285,9 +2292,11 @@ macro(remake_ros_pack_deb)
     remake_var_name(ros_var ${ros_component} MANIFEST)
     remake_set(${ros_var} ${REMAKE_ROS_PACKAGE_MANIFEST})
     remake_list_push(ros_pkg_components ${ros_component})
+    if(ros_package STREQUAL "${ros_default}")
+      remake_set(ros_default_component ${ros_component})
+    endif(ros_package STREQUAL "${ros_default}")
   endforeach(ros_package)
 
-  remake_unset(ros_pkg_main_deps)
   foreach(ros_pkg_component ${ros_pkg_components})
     remake_var_name(ros_var ${ros_pkg_component} INTERNAL_RUN_DEPENDS)
     remake_set(ros_run_deps_int FROM ${ros_var})
@@ -2336,7 +2345,13 @@ macro(remake_ros_pack_deb)
         ros_pkg_dev_component_empty)
     endif(ros_pkg_meta)
     
-    remake_unset(ros_pkg_extra_components)
+    remake_unset(ros_pkg_extra_components ros_pkg_extra)
+    if(ros_pkg_component STREQUAL "${ros_default_component}")
+      remake_list_push(ros_pkg_extra_components ${REMAKE_DEFAULT_COMPONENT})
+      if(ros_extra)
+        remake_set(ros_pkg_extra EXTRA ${ros_extra})
+      endif(ros_extra)
+    endif(ros_pkg_component STREQUAL "${ros_default_component}")
     if(NOT ros_pkg_python_component_empty)
       remake_list_push(ros_pkg_extra_components ${ros_pkg_python_component})
     endif(NOT ros_pkg_python_component_empty)
@@ -2350,26 +2365,18 @@ macro(remake_ros_pack_deb)
         COMPONENT ${ros_pkg_component}
         EXTRA_COMPONENTS ${ros_pkg_extra_components}
         DESCRIPTION "${ros_pkg_description}"
-        DEPENDS ${ros_pkg_deps})
+        DEPENDS ${ros_pkg_deps}
+        ${ros_pkg_extra})
     else(ros_pkg_extra_components)
       remake_pack_deb(
         COMPONENT ${ros_pkg_component}
         DESCRIPTION "${ros_pkg_description}"
-        DEPENDS ${ros_pkg_deps})
+        DEPENDS ${ros_pkg_deps}
+        ${ros_pkg_extra})
     endif(ros_pkg_extra_components)
     remake_component_get(${ros_pkg_component} FILENAME
       OUTPUT ros_pkg_filename)
-    remake_list_push(ros_pkg_main_deps ${ros_pkg_filename})
   endforeach(ros_pkg_component)
-
-  if(ros_extra)
-    remake_pack_deb(
-      DEPENDS ${ros_pkg_main_deps}
-      EXTRA ${ros_extra})
-  else(ros_extra)
-    remake_pack_deb(
-      DEPENDS ${ros_pkg_main_deps})
-  endif(ros_extra)  
 endmacro(remake_ros_pack_deb)
 
 ### \brief Distribute a ReMakeROS project according to the Debian standards.
@@ -2377,83 +2384,78 @@ endmacro(remake_ros_pack_deb)
 #   under the Debian standards. It acquires all the information necessary
 #   from the defined ROS packages, meta-packages, or stacks. For each of
 #   them, the build dependencies are evaluated and passed into the Debian
-#   source packaging macro remake_distribute_deb(). The distribution name
-#   itself is obtained by combining ${ROS_DISTRIBUTION} and the specified
-#   name of the Debian distribution. Further, the macro takes care of passing
-#   ${ROS_DISTRIBUTION} along with the default variables to the configuration
-#   stage of the source package distribution. See ReMakeDistribute for
-#   further information.
-#   \optional[value] DISTRIBUTION:distribution The name of the Debian
-#     distribution for which the packages should be built, defaults to the
-#     output of lsb_release.
+#   source packaging macro remake_distribute_deb(). Thereby, the macro
+#   takes care of passing ${ROS_DISTRIBUTION} along with the default
+#   variables to the configuration stage of the source package distribution.
+#   See ReMakeDistribute for further information.
 #   \optional[list] arg An optional list of additional arguments which shall
 #     be passed to remake_distribute_deb().
+#   \optional[list] IF:expr An optional if-expression which must evaluate
+#     to true for this ReMakeROS project to be distributed with the specified
+#     marcro arguments.
 macro(remake_ros_distribute_deb)
-  remake_arguments(PREFIX ros_ VAR DISTRIBUTION ARGN args ${ARGN})
-  execute_process(COMMAND lsb_release -c -s
-    OUTPUT_VARIABLE ros_release OUTPUT_STRIP_TRAILING_WHITESPACE)
-  remake_set(ros_distribution SELF DEFAULT ${ros_release})
+  remake_arguments(PREFIX ros_ LIST IF ARGN args ${ARGN})
 
   remake_ros()
 
-  remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
-  remake_unset(ros_dependencies ros_extra_build_deps)
-  foreach(ros_package ${ros_packages})
-    remake_ros_package_get(${ros_package} EXTERNAL_BUILD_DEPENDS
-      OUTPUT ros_depends)
-    remake_list_push(ros_dependencies ${ros_depends})
-    remake_ros_package_get(${ros_package} EXTRA_BUILD_DEPENDS
-      OUTPUT ros_extra_depends)
-    remake_list_push(ros_extra_build_deps ${ros_extra_depends})
-  endforeach(ros_package)
+  if(${ros_if})
+    remake_project_get(ROS_PACKAGES OUTPUT ros_packages)
+    remake_unset(ros_dependencies ros_extra_build_deps)
+    foreach(ros_package ${ros_packages})
+      remake_ros_package_get(${ros_package} EXTERNAL_BUILD_DEPENDS
+        OUTPUT ros_depends)
+      remake_list_push(ros_dependencies ${ros_depends})
+      remake_ros_package_get(${ros_package} EXTRA_BUILD_DEPENDS
+        OUTPUT ros_extra_depends)
+      remake_list_push(ros_extra_build_deps ${ros_extra_depends})
+    endforeach(ros_package)
 
-  remake_list_remove_duplicates(ros_dependencies)
-  remake_list_remove_duplicates(ros_extra_build_deps)
+    remake_list_remove_duplicates(ros_dependencies)
+    remake_list_remove_duplicates(ros_extra_build_deps)
 
-  remake_set(ros_build_deps ${ros_dependencies})
-  foreach(ros_build_dep ${ros_dependencies})
-    remake_set(ros_python_command
-      "from rospkg import rospack"
-      "pack = rospack.RosPack()"
-      "deps = pack.get_depends('${ros_build_dep}', implicit=True)"
-      "print str.join(' ', deps)")
-    string(REGEX REPLACE ";" "\n" ros_python_command
-      "${ros_python_command}")
-    remake_ros_command(
-      python -c \"${ros_python_command}\"
-      OUTPUT ros_command)
-    execute_process(
-      COMMAND ${ros_command}
-      RESULT_VARIABLE ros_result
-      OUTPUT_VARIABLE ros_build_dep_ext
-      ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(ros_result)
-      message(FATAL_ERROR
-        "ROS build dependencies for ${ros_build_dep} could not be determined.")
-    endif(ros_result)
-    string(REGEX REPLACE " " ";" ros_build_dep_ext "${ros_build_dep_ext}")
+    remake_set(ros_build_deps ${ros_dependencies})
+    foreach(ros_build_dep ${ros_dependencies})
+      remake_set(ros_python_command
+        "from rospkg import rospack"
+        "pack = rospack.RosPack()"
+        "deps = pack.get_depends('${ros_build_dep}', implicit=True)"
+        "print str.join(' ', deps)")
+      string(REGEX REPLACE ";" "\n" ros_python_command
+        "${ros_python_command}")
+      remake_ros_command(
+        python -c \"${ros_python_command}\"
+        OUTPUT ros_command)
+      execute_process(
+        COMMAND ${ros_command}
+        RESULT_VARIABLE ros_result
+        OUTPUT_VARIABLE ros_build_dep_ext
+        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+      if(ros_result)
+        message(FATAL_ERROR
+          "ROS build dependencies for ${ros_build_dep} could not be determined.")
+      endif(ros_result)
+      string(REGEX REPLACE " " ";" ros_build_dep_ext "${ros_build_dep_ext}")
+      
+      remake_list_push(ros_build_deps ${ros_build_dep_ext})
+    endforeach(ros_build_dep)
+
+    remake_list_remove_duplicates(ros_build_deps)
+    remake_unset(ros_pkg_deps)
     
-    remake_list_push(ros_build_deps ${ros_build_dep_ext})
-  endforeach(ros_build_dep)
-
-  remake_list_remove_duplicates(ros_build_deps)
-  remake_unset(ros_pkg_deps)
-  
-  foreach(ros_build_dep_ext ${ros_build_deps})
-    remake_ros_package_resolve_deb(${ros_build_dep_ext} ros_pkg_dep)
-    if(NOT ros_pkg_dep)
-      message(FATAL_ERROR
-        "ROS build dependency ${ros_build_dep_ext} could not be resolved.")
-    endif(NOT ros_pkg_dep)
-              
-    remake_list_push(ros_pkg_deps ${ros_pkg_dep})
-  endforeach(ros_build_dep_ext)
-  
-  remake_distribute_deb(
-    DISTRIBUTION ${ros_distribution}
-    ALIAS ${ros_distribution}+${ROS_DISTRIBUTION}
-    DEPENDS ${ros_pkg_deps} ${ros_extra_build_deps}
-    PASS CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH
-      ROS_DISTRIBUTION
-    ${ros_args})
+    foreach(ros_build_dep_ext ${ros_build_deps})
+      remake_ros_package_resolve_deb(${ros_build_dep_ext} ros_pkg_dep)
+      if(NOT ros_pkg_dep)
+        message(FATAL_ERROR
+          "ROS build dependency ${ros_build_dep_ext} could not be resolved.")
+      endif(NOT ros_pkg_dep)
+                
+      remake_list_push(ros_pkg_deps ${ros_pkg_dep})
+    endforeach(ros_build_dep_ext)
+    
+    remake_distribute_deb(
+      DEPENDS ${ros_pkg_deps} ${ros_extra_build_deps}
+      PASS CMAKE_BUILD_TYPE CMAKE_INSTALL_PREFIX CMAKE_INSTALL_RPATH
+        ROS_DISTRIBUTION
+      ${ros_args})
+  endif(${ros_if})
 endmacro(remake_ros_distribute_deb)
