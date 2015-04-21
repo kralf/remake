@@ -1,3 +1,10 @@
+remake (1:0.7.1-285) lucid; urgency=low
+
+  * Added regular expression mangling to remake_debian_find_package() to
+    prevent errors in the case of a package name containing + characters
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 21 Apr 2015 11:19:00 +0100
+ 
 remake (1:0.7.1-284) lucid; urgency=low
 
   * Added CONFLICTS argument to remake_ros_pack_deb()
