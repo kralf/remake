@@ -2240,12 +2240,16 @@ endmacro(remake_ros_package_python_distribute)
 #     package, meta-package, or stack which will install the project's default
 #     component. If this argument is omitted, the distribution-relevant files
 #     will not be packaged.
+#   \optional[list] CONFLICTS:pkg An optional list of Debian packages that are
+#     directly inscribed into the manifest of the Debian package installing
+#     the project's default component and suspected to conflict with that
+#     Debian package. See ReMakePack for details.
 #   \optional[list] EXTRA:glob An optional list of glob expressions matching
 #     extra control information files such as preinst, postinst, prerm, and
 #     postrm to be included in the control section of the Debian package
-#     named after the ReMake project. See ReMakePack for details.
+#     installing the project's default component. See ReMakePack for details.
 macro(remake_ros_pack_deb)
-  remake_arguments(PREFIX ros_ VAR DEFAULT LIST EXTRA ${ARGN})
+  remake_arguments(PREFIX ros_ VAR DEFAULT LIST CONFLICTS LIST EXTRA ${ARGN})
   
   remake_ros()
 
@@ -2345,9 +2349,12 @@ macro(remake_ros_pack_deb)
         ros_pkg_dev_component_empty)
     endif(ros_pkg_meta)
     
-    remake_unset(ros_pkg_extra_components ros_pkg_extra)
+    remake_unset(ros_pkg_extra_components ros_pkg_conflicts ros_pkg_extra)
     if(ros_pkg_component STREQUAL "${ros_default_component}")
       remake_list_push(ros_pkg_extra_components ${REMAKE_DEFAULT_COMPONENT})
+      if(ros_conflicts)
+        remake_set(ros_pkg_conflicts CONFLICTS ${ros_conflicts})
+      endif(ros_conflicts)
       if(ros_extra)
         remake_set(ros_pkg_extra EXTRA ${ros_extra})
       endif(ros_extra)
@@ -2366,13 +2373,13 @@ macro(remake_ros_pack_deb)
         EXTRA_COMPONENTS ${ros_pkg_extra_components}
         DESCRIPTION "${ros_pkg_description}"
         DEPENDS ${ros_pkg_deps}
-        ${ros_pkg_extra})
+        ${ros_pkg_conflicts} ${ros_pkg_extra})
     else(ros_pkg_extra_components)
       remake_pack_deb(
         COMPONENT ${ros_pkg_component}
         DESCRIPTION "${ros_pkg_description}"
         DEPENDS ${ros_pkg_deps}
-        ${ros_pkg_extra})
+        ${ros_pkg_conflicts} ${ros_pkg_extra})
     endif(ros_pkg_extra_components)
     remake_component_get(${ros_pkg_component} FILENAME
       OUTPUT ros_pkg_filename)

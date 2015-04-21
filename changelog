@@ -1,3 +1,9 @@
+remake (1:0.7.1-284) lucid; urgency=low
+
+  * Added CONFLICTS argument to remake_ros_pack_deb()
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 21 Apr 2015 11:12:00 +0100
+ 
 remake (1:0.7.1-283) lucid; urgency=low
 
   * Revised remake_ros_pack_deb():
