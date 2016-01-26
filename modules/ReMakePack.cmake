@@ -174,7 +174,7 @@ endmacro(remake_pack_binary)
 #   \required[value] generator The generator to be used for creating the
 #     source package. See the CPack documentation for valid generators.
 #   \optional[value] NAME:name The name of the source package to be
-#     generated, defaults to ${REMAKE_PROJECT_FILENAME}.
+#     generated, defaults to ${REMAKE_PROJECT_NAME}.
 #   \optional[value] VERSION:version The version of the source package to
 #     be generated, defaults to the ${REMAKE_PROJECT_VERSION}.
 #   \optional[list] EXCLUDE:pattern An optional list of patterns matching
@@ -190,7 +190,7 @@ macro(remake_pack_source pack_generator)
     remake_target(${REMAKE_PACK_ALL_SOURCE_TARGET})
   endif(NOT TARGET ${REMAKE_PACK_ALL_SOURCE_TARGET})
 
-  remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_FILENAME})
+  remake_set(pack_name SELF DEFAULT ${REMAKE_PROJECT_NAME})
   remake_set(pack_version SELF DEFAULT ${REMAKE_PROJECT_VERSION})
   remake_file(pack_config
     ${REMAKE_PACK_DIR}/${pack_generator}/all.cpack)
@@ -511,7 +511,7 @@ macro(remake_pack_source_archive)
   remake_set(pack_generator SELF DEFAULT TGZ)
 
   remake_file_name(pack_file
-    ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_FILENAME_VERSION})
+    ${REMAKE_PROJECT_NAME}-${REMAKE_PROJECT_FILENAME_VERSION})
 
   remake_set(CPACK_SOURCE_PACKAGE_FILE_NAME ${pack_file})
   remake_pack_source(${pack_generator} ${EXCLUDE})

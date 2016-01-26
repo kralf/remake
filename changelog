@@ -1,3 +1,10 @@
+remake (1:0.7.1-288) lucid; urgency=low
+
+  * Revised remake_distribute_deb() and ReMakePack macros to use the project
+    name rather than the project filename for creating the source distribution
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 10:10:00 +0100
+ 
 remake (1:0.7.1-287) lucid; urgency=low
 
   * Added parameter to git2debcl which control the number of maximum

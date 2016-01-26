@@ -153,7 +153,7 @@ macro(remake_distribute_deb)
   string(REGEX REPLACE "[ ;]+" ";" distribute_changelog_parameters
     ${distribute_changelog_header})
   list(REMOVE_AT distribute_changelog_parameters 2)
-  remake_set(distribute_parameters ${REMAKE_PROJECT_FILENAME}
+  remake_set(distribute_parameters ${REMAKE_PROJECT_NAME}
     "(${REMAKE_PROJECT_VERSION})" "urgency=${distribute_urgency}")
 
   if(NOT distribute_force_consistency)
@@ -166,7 +166,7 @@ macro(remake_distribute_deb)
 
   remake_set(distribute_version
     "${REMAKE_PROJECT_VERSION}~${distribute_alias}")
-  remake_set(distribute_changelog_parameters ${REMAKE_PROJECT_FILENAME}
+  remake_set(distribute_changelog_parameters ${REMAKE_PROJECT_NAME}
     "(${distribute_version})" "${distribute_distribution},"
     "urgency=${distribute_urgency}")
   string(REGEX REPLACE ";" " " distribute_changelog_header
@@ -214,7 +214,7 @@ macro(remake_distribute_deb)
     endforeach(distribute_var)
 
     remake_set(distribute_control_source
-      "Source: ${REMAKE_PROJECT_FILENAME}"
+      "Source: ${REMAKE_PROJECT_NAME}"
       "Section: ${distribute_section}"
       "Priority: ${distribute_priority}"
       "Maintainer: ${REMAKE_PROJECT_ADMIN} <${REMAKE_PROJECT_CONTACT}>"
@@ -409,7 +409,7 @@ macro(remake_distribute_deb)
     endif(distribute_release_build)
 
     remake_file_name(distribute_archive
-      ${REMAKE_PROJECT_FILENAME}-${REMAKE_PROJECT_FILENAME_VERSION})
+      ${REMAKE_PROJECT_NAME}-${REMAKE_PROJECT_FILENAME_VERSION})
     remake_target_add_command(${distribute_target}
       COMMAND tar -xzf ${distribute_archive}.tar.gz -C ${distribute_build_path}
       COMMENT "Extracting ${REMAKE_PROJECT_NAME} source package")
@@ -430,7 +430,7 @@ macro(remake_distribute_deb)
       remake_target_add_command(${distribute_target}
         COMMAND echo -n "${distribute_prompt} " && read REPLY &&
           eval test \$REPLY = y VERBATIM)
-      remake_file_name(distribute_file ${REMAKE_PROJECT_FILENAME}
+      remake_file_name(distribute_file ${REMAKE_PROJECT_NAME}
         ${REMAKE_PROJECT_FILENAME_VERSION}~${distribute_alias}
         source.changes)
       remake_target_add_command(${distribute_target}
