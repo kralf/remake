@@ -22,7 +22,7 @@
 
 use Getopt::Std;
 
-getopts("hqo:c:nNp:v:V:r:d:u:a:w:");
+getopts("hqo:c:nm:Np:v:V:r:d:u:a:w:");
 
 use Cwd;
 use File::Find;
@@ -46,6 +46,7 @@ my $cl_urgency = $opt_u;
 my $cl_width = $opt_w;
 my $cl_help = $opt_h;
 my $cl_quiet = $opt_q;
+my $cl_max_parents = $opt_m;
 my $cl_renumber = $opt_n;
 my $cl_number = $opt_N;
 
@@ -78,6 +79,7 @@ sub print_help {
   print_stdopt "-q", "do not generate any output [false]";
   print_stdopt "-o FILE|-", "optional output file or STDOUT [changelog]";
   print_stdopt "-c [COMMIT1:]COMMIT2", "first and last commit [TAIL:HEAD]";
+  print_stdopt "-m [NUM]", "use commits with at most that many parents [0]";
   print_stdopt "-n", "renumber commits [false]";
   print_stdopt "-N", "number project revision by commit [false]";
   print_stdopt "-p NAME", "project name [guess from repository]";
@@ -103,7 +105,7 @@ sub parse_git {
   print_stderr "$generator: Repository root is $$repository{root}\n";
 
   $lines =
-    `git rev-list --max-parents=0 HEAD -- $$repository{path} 2> /dev/null` or
+    `git rev-list --max-parents=$cl_max_parents HEAD -- $$repository{path} 2> /dev/null` or
     die "Error: $$repository{path} is not a working copy\n";
   @tails = split(/\n/, $lines);
   $tail = $tails[-1];
@@ -277,6 +279,10 @@ if ($cl_commits) {
   elsif ($cl_commits =~ /^[0-9a-f]+$/) {
     $repository{head} = $cl_commits;
   }
+}
+
+if ($cl_max_parents eq "") {
+  $cl_max_parents = 0;
 }
 
 if ($cl_project) {
