@@ -8,7 +8,7 @@ set(
 include(ReMake)
 
 remake_project(
-  ReMake
+  remake
   VERSION 1:0.7.1
   RELEASE beta
   SUMMARY "A set of CMake macros for restructuring GNU Automake/Autoconf projects."
