@@ -1,3 +1,9 @@
+remake (1:0.7.1-290) lucid; urgency=low
+
+  * Removed lucid source distribution
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 10:12:00 +0100
+ 
 remake (1:0.7.1-289) lucid; urgency=low
 
   * Renamed project for consistency

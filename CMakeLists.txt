@@ -43,13 +43,6 @@ remake_pack_deb(
 )
 
 remake_distribute_deb(
-  DISTRIBUTION lucid
-  SECTION devel
-  UPLOAD ppa:kralf/asl
-  DEPENDS groff
-  PASS CMAKE_BUILD_TYPE REMAKE_GIT_REVISION
-)
-remake_distribute_deb(
   DISTRIBUTION precise
   SECTION devel
   UPLOAD ppa:kralf/asl
