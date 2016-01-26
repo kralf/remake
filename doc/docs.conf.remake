@@ -16,7 +16,7 @@ $man_section = 3;
 
 $find_pattern = '^ReMake[^.]*\.cmake$';
 $source_pattern = '\.cmake$';
-$name_pattern = '^'.$project_name.'(\w+)$';
+$name_pattern = '^ReMake(\w+)$';
 $comment_pattern = '#\s*(.*?)\s*$';
 $block_pattern = '^#+\s+(.*?)\s*$';
 $directive_pattern = '^\\\([^\s]+)\s+(.*)\s*$';

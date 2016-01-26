@@ -1,3 +1,10 @@
+remake (1:0.7.1-291) lucid; urgency=low
+
+  * Fixed bug in gendocs configuration which was caused by renaming the
+    project
+  
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 14:53:00 +0100
+ 
 remake (1:0.7.1-290) lucid; urgency=low
 
   * Removed lucid source distribution
