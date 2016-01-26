@@ -447,12 +447,14 @@ macro(remake_add_executables)
   remake_arguments(PREFIX remake_ OPTION TESTING VAR INSTALL VAR COMPONENT
     VAR PREFIX VAR SUFFIX ARGN globs LIST LINK LIST FORCE_LINK ${ARGN})
   remake_set(remake_globs SELF DEFAULT *.c DEFAULT *.cpp)
+  remake_set(remake_common_args ${TESTING} ${INSTALL} ${COMPONENT}
+    ${PREFIX} ${SUFFIX} ${LINK} ${FORCE_LINK})
 
   remake_file_glob(remake_sources ${remake_globs})
   foreach(remake_source ${remake_sources})
     get_filename_component(remake_name ${remake_source} NAME_WE)
-    remake_add_executable(${remake_name} ${remake_source} ${TESTING}
-      ${INSTALL} ${COMPONENT} ${PREFIX} ${SUFFIX} ${LINK} ${FORCE_LINK})
+    remake_add_executable(${remake_name} ${remake_source}
+      ${remake_common_args})
   endforeach(remake_source)
 endmacro(remake_add_executables)
 
