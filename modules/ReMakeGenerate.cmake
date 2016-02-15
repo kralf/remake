@@ -18,11 +18,6 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeFile)
-include(ReMakeComponent)
-
-include(ReMakePrivate)
-
 ### \brief ReMake code generation macros
 #   The ReMake code generation macros define additional targets for the
 #   automated generation of source code.
@@ -30,9 +25,16 @@ include(ReMakePrivate)
 #   Support is provided for major lexicographic and parser generators,
 #   such as Flex and Bison.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_GENERATE_CMAKE)
   remake_set(REMAKE_GENERATE_CMAKE ON)
+else(NOT DEFINED REMAKE_GENERATE_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_GENERATE_CMAKE)
+
+include(ReMakeFile)
+include(ReMakeComponent)
 
 ### \brief Add Fast Lexical Analyzer (Flex) sources for a target.
 #   This macro specifies code generation rules for a list of Flex sources.

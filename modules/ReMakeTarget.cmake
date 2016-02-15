@@ -18,32 +18,34 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
 ### \brief ReMake target macros
-#   The ReMake target module provides useful workarounds addressing some 
+#   The ReMake target module provides useful workarounds addressing some
 #   grave CMake limitations. In CMake, top-level target definition only
-#   behaves correctly in the top-level source directory. The ReMake target 
+#   behaves correctly in the top-level source directory. The ReMake target
 #   macros are specifically designed to also work in directories below the
 #   top-level.
+
+include(ReMakePrivate)
 
 if(NOT DEFINED REMAKE_TARGET_CMAKE)
   remake_set(REMAKE_TARGET_CMAKE ON)
 
   remake_set(REMAKE_TARGET_DIR ReMakeTargets)
   remake_file_rmdir(${REMAKE_TARGET_DIR} TOPLEVEL)
+else(NOT DEFINED REMAKE_TARGET_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_TARGET_CMAKE)
 
 ### \brief Define a new top-level target.
 #   The macro creates a top-level target by calling CMake's add_custom_target()
 #   with the provided target name and all additional arguments.
-#   If any commands have been stored for that target, these commands will 
+#   If any commands have been stored for that target, these commands will
 #   automatically be added as custom build rules.
 #   \required[value] name The name of the target to be created.
 #   \optional[option] NON_EMPTY With this option being present, the target will
 #     not be defined if it is empty, i.e. if no commands have been added to
 #     this target by a previous call to remake_target_add_command().
-#   \optional[list] arg The arguments to be passed on to CMake's 
+#   \optional[list] arg The arguments to be passed on to CMake's
 #     add_custom_target() macro.
 macro(remake_target target_name)
   remake_arguments(PREFIX target_ OPTION NON_EMPTY ARGN args ${ARGN})
@@ -84,10 +86,10 @@ endmacro(remake_target_name)
 
 ### \brief Add custom build command to a top-level target.
 #   This macro adds a custom build command to a target. Whereas CMake's
-#   add_custom_command() only behaves correctly in the top-level source 
-#   directory, this macro is designed to also work in directories below the 
+#   add_custom_command() only behaves correctly in the top-level source
+#   directory, this macro is designed to also work in directories below the
 #   top-level. Therefore, build rules are stored for later collection in a
-#   temporary file ${TARGET_NAME}.commands in 
+#   temporary file ${TARGET_NAME}.commands in
 #   ${REMAKE_FILE_DIR}/${REMAKE_TARGET_DIR}. A subsequent call to
 #   remake_target() will automatically collect and add these rules.
 #   Note that CMake currently does not support the definition of file-level
@@ -95,7 +97,7 @@ endmacro(remake_target_name)
 #   macro will create a corresponding top-level output target with a custom
 #   command driving the build.
 #   \required[value] name The name of the top-level target to add the build
-#     rule to. 
+#     rule to.
 #   \required[list] args The arguments to be passed to CMake's
 #     add_custom_command() during collection.
 #   \optional[list] OUTPUT:filename The optional list of output files created
@@ -142,13 +144,13 @@ endmacro(remake_target_add_command)
 
 ### \brief Add sources to a target.
 #   This macro does not actually add sources to an already defined top-level
-#   target, but appends a list of source files to a variable named 
+#   target, but appends a list of source files to a variable named
 #   ${TARGET}_SOURCES. Thus, the macro may be used to circumnavigate CMake's
 #   deficiency on modifying an existing target's SOURCES property. Note that
 #   the list of sources needs to be defined before the actual top-level
 #   target and can later be recovered by calling remake_target_get_sources().
 #   Also, be aware of the scope of the ${TARGET}_SOURCES variable.
-#   \required[value] name The name of the target to add the sources to. 
+#   \required[value] name The name of the target to add the sources to.
 #   \required[list] source A list of source filenames to be appended to
 #     the target's sources.
 macro(remake_target_add_sources target_name)
@@ -158,7 +160,7 @@ macro(remake_target_add_sources target_name)
 endmacro(remake_target_add_sources)
 
 ### \brief Retrieve sources for a target.
-#   This macro retrieves a list of source files from a variable named 
+#   This macro retrieves a list of source files from a variable named
 #   ${TARGET}_SOURCES, usually defined by remake_target_add_sources().
 #   \required[value] variable The name of a variable to be assigned the list
 #     of sources for the target.

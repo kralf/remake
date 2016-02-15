@@ -18,20 +18,23 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeComponent)
-include(ReMakeProject)
-
-include(ReMakePrivate)
-
 ### \brief ReMake Git macros
 #   The ReMake Git module provides useful tools for Git-based projects.
+
+include(ReMakePrivate)
+include(ReMakeFind)
 
 if(NOT DEFINED REMAKE_GIT_CMAKE)
   remake_set(REMAKE_GIT_CMAKE ON)
 
   remake_set(REMAKE_GIT_DIR ReMakeGit)
   remake_find_executable(git PACKAGE Git QUIET OPTIONAL)
+else(NOT DEFINED REMAKE_GIT_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_GIT_CMAKE)
+
+include(ReMakeComponent)
+include(ReMakeProject)
 
 ### \brief Generate a sequential revision number.
 #   This macro attempts to generate a sequential revision number by counting

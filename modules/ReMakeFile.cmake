@@ -18,19 +18,21 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeList)
-
-include(ReMakePrivate)
-
 ### \brief ReMake file macros
 #   The ReMake file macros are a set of helper macros to simplify
 #   file operations in ReMake.
+
+include(ReMakePrivate)
 
 if(NOT DEFINED REMAKE_FILE_CMAKE)
   remake_set(REMAKE_FILE_CMAKE ON)
 
   remake_set(REMAKE_FILE_DIR ReMakeFiles)
+else(NOT DEFINED REMAKE_FILE_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_FILE_CMAKE)
+
+include(ReMakeList)
 
 ### \brief Define a ReMake file.
 #   This macro creates a variable to hold the ReMake-compliant path to a

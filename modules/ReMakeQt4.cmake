@@ -18,14 +18,16 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
 ### \brief ReMake Qt4 macros
 #   The ReMake Qt4 macros provide seamless integration of Qt4 meta-object
 #   and user interface file processing with ReMake build targets.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_QT4_CMAKE)
   remake_set(REMAKE_QT4_CMAKE ON)
+else(NOT DEFINED REMAKE_QT4_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_QT4_CMAKE)
 
 ### \brief Configure Qt4 meta-object processing.
@@ -37,7 +39,7 @@ endif(NOT DEFINED REMAKE_QT4_CMAKE)
 #     modules.
 macro(remake_qt4)
   remake_arguments(PREFIX qt4_ LIST REQUIRED ${ARGN})
-  
+
   if(NOT DEFINED QT4_FOUND)
     if(qt4_required)
       remake_find_package(Qt4 REQUIRED ${qt4_required} QUIET)
@@ -47,7 +49,7 @@ macro(remake_qt4)
   else(NOT DEFINED QT4_FOUND)
     include(FindQt4)
   endif(NOT DEFINED QT4_FOUND)
-  
+
   if(DEFINED QT4_FOUND AND NOT DEFINED QT4_MOC)
     remake_project_set(QT4_MOC ${QT4_FOUND} CACHE BOOL
       "Process Qt4 meta-objects.")

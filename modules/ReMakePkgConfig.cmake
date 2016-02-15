@@ -18,10 +18,6 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-include(ReMakeFile)
-include(ReMakeComponent)
-
 ### \brief ReMake pkg-config support
 #   The ReMake pkg-config macros provide support for generating pkg-config
 #   files from ReMake projects. Such files are particularly useful when
@@ -31,12 +27,19 @@ include(ReMakeComponent)
 #   variable values to the build commands of its dependent library or
 #   executable targets. See ReMakeFind for additional details.
 
+include(ReMakePrivate)
+include(ReMakeFile)
+
 if(NOT DEFINED REMAKE_PKG_CONFIG_CMAKE)
   remake_set(REMAKE_PKG_CONFIG_CMAKE ON)
 
   remake_set(REMAKE_PKG_CONFIG_DIR ReMakePkgConfig)
   remake_file_rmdir(${REMAKE_PKG_CONFIG_DIR} TOPLEVEL)
+else(NOT DEFINED REMAKE_PKG_CONFIG_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_PKG_CONFIG_CMAKE)
+
+include(ReMakeComponent)
 
 ### \brief Configure ReMake pkg-config support.
 #   This macro discovers the pkg-config executable and configures pkg-config
@@ -116,7 +119,7 @@ macro(remake_pkg_config_generate)
     OUTPUT pkg_config_filename_default)
   remake_set(pkg_config_filename SELF DEFAULT
     ${pkg_config_filename_default}.pc)
-    
+
   remake_pkg_config()
 
   remake_file(pkg_config_file

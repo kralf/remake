@@ -18,21 +18,24 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeComponent)
-include(ReMakeProject)
-
-include(ReMakePrivate)
-
 ### \brief ReMake Subversion macros
 #   The ReMake Subversion module provides useful tools for Subversion-based
 #   projects.
+
+include(ReMakePrivate)
+include(ReMakeFind)
 
 if(NOT DEFINED REMAKE_SVN_CMAKE)
   remake_set(REMAKE_SVN_CMAKE ON)
 
   remake_set(REMAKE_SVN_DIR ReMakeSVN)
   remake_find_package(Subversion QUIET OPTIONAL)
+else(NOT DEFINED REMAKE_SVN_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_SVN_CMAKE)
+
+include(ReMakeComponent)
+include(ReMakeProject)
 
 ### \brief Retrieve the Subversion head revision.
 #   This macro retrieves the Subversion head revision of the working directory.

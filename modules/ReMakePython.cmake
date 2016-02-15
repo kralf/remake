@@ -18,15 +18,14 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeFile)
-include(ReMakeComponent)
-
-include(ReMakePrivate)
-
 ### \brief ReMake Python macros
 #   The ReMake Python macros provide convenient targets for the distribution
 #   of Python modules and extensions using generators such as the Simplified
 #   Wrapper and Interface Generator (SWIG).
+
+include(ReMakePrivate)
+include(ReMakeProject)
+include(ReMakeFile)
 
 if(NOT DEFINED REMAKE_PYTHON_CMAKE)
   remake_set(REMAKE_PYTHON_CMAKE ON)
@@ -42,7 +41,11 @@ if(NOT DEFINED REMAKE_PYTHON_CMAKE)
 
   remake_project_unset(PYTHON_DISTRIBUTIONS CACHE)
   remake_project_unset(PYTHON_PACKAGES CACHE)
+else(NOT DEFINED REMAKE_PYTHON_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_PYTHON_CMAKE)
+
+include(ReMakeComponent)
 
 ### \brief Configure Python package distribution.
 #   This macro discovers the Python installation and configures Python
@@ -75,7 +78,7 @@ macro(remake_python)
           CACHE PATH "Install destination of Python modules.")
       endif(NOT python_result)
     endif(NOT PYTHON_MODULE_DESTINATION)
-    
+
     remake_file_mkdir(${REMAKE_PYTHON_DISTRIBUTION_DIR} TOPLEVEL)
   endif(PYTHON_FOUND)
 endmacro(remake_python)

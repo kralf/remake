@@ -18,8 +18,6 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
 ### \brief ReMake branch macros
 #   Branching is a central concept in ReMake. A branch is defined along
 #   with a list of dependencies that is automatically resolved by ReMake.
@@ -32,10 +30,14 @@ include(ReMakePrivate)
 #   Note that dependent branches are generally required to be defined from
 #   the same source tree directory, i.e. the same CMakeLists.txt file.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_BRANCH_CMAKE)
   remake_set(REMAKE_BRANCH_CMAKE ON)
 
   remake_set(REMAKE_BRANCH_TARGET_SUFFIX branch)
+else(NOT DEFINED REMAKE_BRANCH_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_BRANCH_CMAKE)
 
 ### \brief Define a ReMake branch.

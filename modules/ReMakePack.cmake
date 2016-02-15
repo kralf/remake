@@ -18,13 +18,11 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-include(ReMakeComponent)
-include(ReMakeDebian)
-
 ### \brief ReMake packaging macros
 #   The ReMake packaging macros have been designed to provide simple and
 #   transparent package generation using CMake's CPack module.
+
+include(ReMakePrivate)
 
 if(NOT DEFINED REMAKE_PACK_CMAKE)
   remake_set(REMAKE_PACK_CMAKE ON)
@@ -44,7 +42,12 @@ if(NOT DEFINED REMAKE_PACK_CMAKE)
   remake_file_rmdir(${REMAKE_PACK_SOURCE_DIR})
   remake_file_mkdir(${REMAKE_PACK_DIR})
   remake_file_mkdir(${REMAKE_PACK_SOURCE_DIR})
+else(NOT DEFINED REMAKE_PACK_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_PACK_CMAKE)
+
+include(ReMakeComponent)
+include(ReMakeDebian)
 
 ### \brief Generate binary packages from a ReMake project component.
 #   This macro generally configures binary package generation for a
@@ -228,230 +231,13 @@ endmacro(remake_pack_source)
 
 ### \brief Generate a binary Debian package from a ReMake project component.
 #   This macro configures package generation using CPack's DEB generator
-#   for binary Debian packages. It acquires all the information necessary
-#   from the current project and component settings and the arguments passed.
-#   In addition to creating a component-specific package build target through
-#   remake_pack(), the macro adds simplified package install and uninstall
-#   targets. Project-internal dependencies between these targets are
-#   automatically resolved. Also, the macro provides automated resolution of
-#   dependencies on packages installed on the build system.
-#   \optional[value] ARCH:architecture The package architecture that
-#     is inscribed into the package manifest, defaults to
-#     ${REMAKE_DEBIAN_ARCHITECTURE}.
-#   \optional[value] COMPONENT:component The name of the install component to
-#     generate the Debian package from, defaults to ${REMAKE_DEFAULT_COMPONENT}.
-#     Note that following Debian conventions, the component name is used as
-#     suffix to the package name. However, a component name matching
-#     ${REMAKE_DEFAULT_COMPONENT} results in an empty suffix.
-#   \optional[list] EXTRA_COMPONENTS:component An optional list of additional
-#     install components to generate the Debian package from.
-#   \optional[value] DESCRIPTION:string An optional description of the
-#     install component that is appended to the project summary when
-#     generating the Debian package description.
-#   \optional[list] DEPENDS:pkg An optional list of mandatory package
-#     dependencies that are matched and inscribed into the package manifest.
-#     The format of a dependency should comply to Debian conventions, meaning
-#     that an entry is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
-#     requires each dependency to match against another binary package
-#     defined in a previous call to remake_pack_deb() or an installed
-#     package reported by dpkg on the build system. In the first case,
-#     the version of the dependency should be omitted as it will be equated
-#     with ${REMAKE_PROJECT_VERSION}. In the second case, the dependency
-#     may be passed as regular expression. Failure to match such expression
-#     will result in a fatal error.
-#   \optional[list] PREDEPENDS:pkg An optional list of mandatory package
-#     dependencies that are matched and inscribed into the package manifest.
-#     Pre-dependencies are similar to regular dependencies, except that the
-#     packaging system will be told to complete the installation of these
-#     packages before attempting to install the defined package. The format
-#     of a pre-dependency should comply to Debian conventions, meaning
-#     that an entry is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
-#     requires each pre-dependency to match against another binary package
-#     defined in a previous call to remake_pack_deb() or an installed
-#     package reported by dpkg on the build system. In the first case,
-#     the version of the pre-dependency should be omitted as it will be
-#     equated with ${REMAKE_PROJECT_VERSION}. In the second case, the
-#     pre-dependency may be passed as regular expression. Failure to match
-#     such expression will result in a fatal error.
-#   \optional[list] RECOMMENDS:pkg An optional list of recommended packages
-#     that are directly inscribed into the package manifest. The format of a
-#     recommendation should comply to Debian conventions, meaning that
-#     an entry is of the form ${PACKAGE} [(>= ${VERSION})]. As opposed to
-#     mandatory dependencies, recommended packages are not matched against
-#     the names of packages installed on the build system or defined in a
-#     previous call to remake_pack_deb(). Therefore, a recommendation
-#     should generally be precise. As this is often difficult when
-#     attempting to build binary packages for several distributions, use
-#     of the DEPENDS argument is strongly encouraged. Note that recommended
-#     packages would generally be installed together with the defined package
-#     in all but unusual cases.
-#   \optional[list] SUGGESTS:pkg An optional list of suggested packages
-#     that are directly inscribed into the package manifest. The format of a
-#     suggestion should comply to Debian conventions, meaning that
-#     an entry is of the form ${PACKAGE} [(>= ${VERSION})]. Suggested packages
-#     are not matched against the names of packages installed on the build
-#     system or defined in a previous call to remake_pack_deb(). They may
-#     perhaps enhance the usefulness of the defined package, but not installing
-#     is perfectly reasonable.
-#   \optional[list] ENHANCES:pkg An optional list of packages that are
-#     directly inscribed into the package manifest and meant to be enhanced
-#     by the defined package. The format of an enhancement should comply to
-#     Debian conventions and thus be of the form ${PACKAGE} [(>= ${VERSION})].
-#     Enhanced packages are not matched against the names of packages installed
-#     on the build system. They declare the opposite relationship to suggested
-#     packages.
-#   \optional[list] BREAKS:pkg An optional list of packages that are
-#     directly inscribed into the package manifest and suspected to be broken
-#     by the defined package. The format of a break should comply to Debian
-#     conventions and thus be of the form ${PACKAGE} [(>= ${VERSION})].
-#   \optional[list] CONFLICTS:pkg An optional list of packages that are
-#     directly inscribed into the package manifest and suspected to conflict
-#     with the defined package. The format of a conflict should comply to
-#     Debian conventions and thus be of the form ${PACKAGE} [(>= ${VERSION})].
-#     Conflicting packages generally pose stronger restrictions on package
-#     handling than breaks.
-#   \optional[list] REPLACES:pkg An optional list of packages that are
-#     directly inscribed into the package manifest and suspected to contain
-#     files which may be overwritten by the defined package. The format of a
-#     replacement should comply to Debian conventions and thus be of the form
-#     ${PACKAGE} [(>= ${VERSION})].
-#   \optional[list] PROVIDES:pkg An optional list of virtual packages that are
-#     directly inscribed into the package manifest. The mentioning of a virtual
-#     package should comply to Debian conventions and thus only contain the
-#     virtual package's name.
-#   \optional[list] EXTRA:glob An optional list of glob expressions matching
-#     extra control information files such as preinst, postinst, prerm, and
-#     postrm to be included in the Debian package's control section. The macro
-#     calls remake_file_configure() to substitute variables within the files,
-#     thereby replacing CMake's list separators by shell-compliant space
-#     characters. See ReMakeFile for details.
+#   for binary Debian packages.  It is currently deprecated but kept for
+#   backward compatibility and simply invokes remake_debian_pack(),
+#   forwarding all arguments.
+#   \required[list] arg The arguments to be passed on to remake_debian_pack().
+#     See ReMakePack for details.
 macro(remake_pack_deb)
-  remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT LIST EXTRA_COMPONENTS
-    VAR DESCRIPTION LIST DEPENDS LIST PREDEPENDS LIST RECOMMENDS LIST SUGGESTS
-    LIST ENHANCES LIST BREAKS LIST CONFLICTS LIST REPLACES LIST PROVIDES
-    LIST EXTRA ARGN depends ${ARGN})
-  remake_set(pack_component SELF DEFAULT ${REMAKE_DEFAULT_COMPONENT})
-  remake_set(pack_arch SELF DEFAULT ${REMAKE_DEBIAN_ARCHITECTURE})
-
-  remake_component_get(${pack_component} BUILD OUTPUT pack_build)
-  if(pack_build)
-    if(NOT TARGET ${REMAKE_PACK_INSTALL_ALL_TARGET})
-      remake_target(${REMAKE_PACK_INSTALL_ALL_TARGET})
-    endif(NOT TARGET ${REMAKE_PACK_INSTALL_ALL_TARGET})
-    if(NOT TARGET ${REMAKE_PACK_UNINSTALL_ALL_TARGET})
-      remake_target(${REMAKE_PACK_UNINSTALL_ALL_TARGET})
-    endif(NOT TARGET ${REMAKE_PACK_UNINSTALL_ALL_TARGET})
-
-    remake_component_get(${pack_component} FILENAME OUTPUT pack_name)
-    remake_file_name(pack_file ${pack_name} ${REMAKE_PROJECT_FILENAME_VERSION}
-      ${pack_arch})
-
-    remake_unset(pack_binary_deps pack_binary_predeps)
-    remake_unset(pack_component_deps)
-    remake_unset(pack_deb_packages)
-    remake_unset(pack_binary_prefix)
-    foreach(pack_dependency ${pack_depends} / ${pack_predepends})
-      if(NOT pack_dependency STREQUAL "/")
-        remake_debian_resolve_package("${pack_dependency}"
-          OUTPUT pack_component_dep)
-
-        if(pack_component_dep)
-          remake_list_push(pack_component_deps ${pack_component_dep})
-          remake_component_get(${pack_component_dep} FILENAME
-            OUTPUT pack_name_dep)
-          remake_set(pack_version_dep SELF DEFAULT "= ${REMAKE_PROJECT_VERSION}")
-          remake_debian_compose_package(${pack_name_dep}
-            VERSION ${pack_version_dep} OUTPUT pack_dependency)
-        else(pack_component_dep)
-          remake_debian_find_package("${pack_dependency}" OUTPUT pack_deb_found)
-
-          list(LENGTH pack_deb_found pack_deb_length)
-          if(NOT pack_deb_length)
-            remake_set(pack_deb_message
-              "No package on build system matches dependency")
-            message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
-          elseif(pack_deb_length GREATER 1)
-            remake_set(pack_deb_message
-              "Multiple packages on build system match dependency")
-            message(FATAL_ERROR "${pack_deb_message} ${pack_dependency}")
-          else(NOT pack_deb_length)
-            remake_set(pack_dependency ${pack_deb_found})
-          endif(NOT pack_deb_length)
-        endif(pack_component_dep)
-
-        remake_list_push(pack_binary_${pack_binary_prefix}deps
-          ${pack_dependency})
-      else(NOT pack_dependency STREQUAL "/")
-        remake_set(pack_binary_prefix "pre")
-      endif(NOT pack_dependency STREQUAL "/")
-    endforeach(pack_dependency)
-
-    string(REPLACE ";" ", " pack_binary_deps "${pack_binary_deps}")
-    string(REPLACE ";" ", " pack_recommends "${pack_recommends}")
-    remake_file_configure(${pack_extra} LIST_SEPARATOR " " OUTPUT pack_extra)
-    remake_set(CPACK_DEBIAN_PACKAGE_DEPENDS ${pack_binary_deps})
-    remake_set(CPACK_DEBIAN_PACKAGE_PREDEPENDS ${pack_binary_predeps})
-    remake_set(CPACK_DEBIAN_PACKAGE_RECOMMENDS ${pack_recommends})
-    remake_set(CPACK_DEBIAN_PACKAGE_SUGGESTS ${pack_suggests})
-    remake_set(CPACK_DEBIAN_PACKAGE_ENHANCES ${pack_enhances})
-    remake_set(CPACK_DEBIAN_PACKAGE_BREAKS ${pack_breaks})
-    remake_set(CPACK_DEBIAN_PACKAGE_CONFLICTS ${pack_conflicts})
-    remake_set(CPACK_DEBIAN_PACKAGE_REPLACES ${pack_replaces})
-    remake_set(CPACK_DEBIAN_PACKAGE_PROVIDES ${pack_provides})
-    remake_set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA ${pack_extra})
-    remake_set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${pack_arch})
-    remake_set(CPACK_PACKAGE_FILE_NAME ${pack_file})
-
-    remake_pack_binary(DEB
-      COMPONENT ${pack_component}
-      ${EXTRA_COMPONENTS}
-      NAME ${pack_name}
-      ${DESCRIPTION})
-
-    remake_target_name(pack_target ${pack_prefix}
-      ${REMAKE_PACK_BINARY_TARGET_SUFFIX})
-    remake_target_name(pack_install_target ${pack_prefix}
-      ${REMAKE_PACK_INSTALL_TARGET_SUFFIX})
-    remake_target(${pack_install_target}
-      COMMAND sudo ${DPKG_EXECUTABLE} --install ${pack_file}.deb
-      COMMENT "Installing ${pack_name} package")
-    add_dependencies(${pack_install_target} ${pack_target})
-    add_dependencies(${REMAKE_PACK_INSTALL_ALL_TARGET} ${pack_install_target})
-
-    remake_target_name(pack_uninstall_target ${pack_prefix}
-      ${REMAKE_PACK_UNINSTALL_TARGET_SUFFIX})
-    remake_target(${pack_uninstall_target}
-      COMMAND sudo ${DPKG_EXECUTABLE} --remove ${pack_name}
-      COMMENT "Uninstalling ${pack_name} package")
-    add_dependencies(${REMAKE_PACK_UNINSTALL_ALL_TARGET}
-      ${pack_uninstall_target})
-    remake_target_get_dependencies(pack_uninstall_target_deps
-      ${pack_uninstall_target})
-    if(pack_uninstall_target_deps)
-      add_dependencies(${pack_uninstall_target} ${pack_uninstall_target_deps})
-    endif(pack_uninstall_target_deps)
-
-    foreach(pack_component_dep ${pack_component_deps})
-      if(pack_component_dep STREQUAL REMAKE_DEFAULT_COMPONENT)
-        remake_unset(pack_prefix_dep)
-      else(pack_component_dep STREQUAL REMAKE_DEFAULT_COMPONENT)
-        remake_set(pack_prefix_dep ${pack_component_dep})
-      endif(pack_component_dep STREQUAL REMAKE_DEFAULT_COMPONENT)
-
-      remake_target_name(pack_install_target_dep ${pack_prefix_dep}
-        ${REMAKE_PACK_INSTALL_TARGET_SUFFIX})
-      remake_target_name(pack_uninstall_target_dep ${pack_prefix_dep}
-        ${REMAKE_PACK_UNINSTALL_TARGET_SUFFIX})
-
-      add_dependencies(${pack_install_target} ${pack_install_target_dep})
-      if(TARGET ${pack_uninstall_target_dep})
-        add_dependencies(${pack_uninstall_target_dep} ${pack_uninstall_target})
-      else(TARGET ${pack_uninstall_target_dep})
-        remake_target_add_dependencies(${pack_uninstall_target_dep}
-          ${pack_uninstall_target})
-      endif(TARGET ${pack_uninstall_target_dep})
-    endforeach(pack_component_dep)
-  endif(pack_build)
+  remake_debian_pack(${ARGN})
 endmacro(remake_pack_deb)
 
 ### \brief Generate a binary archive from a ReMake project component.

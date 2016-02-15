@@ -18,10 +18,10 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
 ### \brief ReMake version information
 #   The ReMake version module only holds the current version of ReMake.
+
+include(ReMakePrivate)
 
 if(NOT DEFINED REMAKE_VERSION_CMAKE)
   remake_set(REMAKE_VERSION_CMAKE ON)
@@ -30,4 +30,6 @@ if(NOT DEFINED REMAKE_VERSION_CMAKE)
   remake_set(REMAKE_MINOR ${REMAKE_PROJECT_MINOR})
   remake_set(REMAKE_PATCH ${REMAKE_PROJECT_PATCH})
   remake_set(REMAKE_VERSION ${REMAKE_PROJECT_VERSION})
+else(NOT DEFINED REMAKE_VERSION_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_VERSION_CMAKE)

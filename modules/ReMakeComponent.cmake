@@ -18,8 +18,6 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
 ### \brief ReMake component macros
 #   The ReMake component module provides basic functionalities for managing
 #   component-based project structures.
@@ -29,12 +27,16 @@ include(ReMakePrivate)
 #   \variable REMAKE_COMPONENT The name of the install component being
 #     active within the current CMake scope.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_COMPONENT_CMAKE)
   remake_set(REMAKE_COMPONENT_CMAKE ON)
 
   remake_set(REMAKE_COMPONENT_TARGET_SUFFIX component)
   remake_set(REMAKE_COMPONENT_DEVEL_SUFFIX dev)
   remake_set(REMAKE_COMPONENT_TESTING_SUFFIX test)
+else(NOT DEFINED REMAKE_COMPONENT_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_COMPONENT_CMAKE)
 
 ### \brief Define a new ReMake component.
@@ -99,7 +101,7 @@ macro(remake_component component_name)
       CACHE INTERNAL "Install components defined by the project.")
 
     remake_component_unset(${component_name} LIBRARIES CACHE)
-    
+
     if(component_default)
       remake_set(REMAKE_DEFAULT_COMPONENT ${component_name})
       remake_component_set(${component_name} EMPTY ON CACHE INTERNAL
@@ -296,14 +298,14 @@ macro(remake_component_get component_name component_var)
     remake_set(component_output SELF DEFAULT ${component_var})
 
     remake_project_get(${component_global_var} OUTPUT ${component_output})
-    
+
     if(DEFINED ${component_output})
       if(component_destination)
         if(${component_output})
           if(NOT IS_ABSOLUTE ${${component_output}})
             remake_list_push(component_outputs ${component_output})
             remake_component_get(${component_name} INSTALL_PREFIX)
-            remake_list_pop(component_outputs component_output)            
+            remake_list_pop(component_outputs component_output)
             get_filename_component(${component_output}
               ${INSTALL_PREFIX}/${${component_output}} ABSOLUTE)
           endif(NOT IS_ABSOLUTE ${${component_output}})
@@ -575,7 +577,7 @@ macro(remake_component_install)
       string(REGEX REPLACE "^(.*TARGETS;[^A-Z]+.*);PLUGIN(.*)$"
         "\\1;LIBRARY\\2" component_install_args "${component_install_args}")
     endif("${component_install_args}" MATCHES "^.*TARGETS;[^A-Z]+.*;PLUGIN.*$")
-        
+
     if(component_install_dest)
       string(REGEX REPLACE ";DESTINATION;[^;]+"
         ";DESTINATION;${component_install_dest}"
@@ -585,7 +587,7 @@ macro(remake_component_install)
       remake_list_push(component_install_args
         COMPONENT ${component_name})
     endif(NOT "${component_install_args}" MATCHES ".*;COMPONENT;.*")
-    
+
     install(${component_install_args})
   endif(component_build)
 endmacro(remake_component_install)

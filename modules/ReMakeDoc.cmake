@@ -18,15 +18,8 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
-include(ReMakeProject)
-include(ReMakeFile)
-include(ReMakeComponent)
-include(ReMakeDebian)
-
 ### \brief ReMake documentation macros
-#   The ReMake documentation module has been designed for simple and 
+#   The ReMake documentation module has been designed for simple and
 #   transparent intergration of project documentation tasks with CMake.
 #
 #   It provides support for major document generators, such as Doxygen and
@@ -36,31 +29,40 @@ include(ReMakeDebian)
 #     generated.
 #   \variable REMAKE_DOC_OUTPUTS The list of document output directories,
 #     one directory for each type in ${REMAKE_DOC_TYPES}.
-#   \variable REMAKE_DOC_DESTINATIONS The list of document install 
+#   \variable REMAKE_DOC_DESTINATIONS The list of document install
 #     destinations, one destination directory for each type in
 #     ${REMAKE_DOC_TYPES}.
-#   \variable REMAKE_DOC_CONFIGURATION_DIR The directory containing the 
+#   \variable REMAKE_DOC_CONFIGURATION_DIR The directory containing the
 #     project document configuration.
+
+include(ReMakePrivate)
 
 if(NOT DEFINED REMAKE_DOC_CMAKE)
   remake_set(REMAKE_DOC_CMAKE ON)
 
   remake_set(REMAKE_DOC_COMPONENT_SUFFIX doc)
+else(NOT DEFINED REMAKE_DOC_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_DOC_CMAKE)
+
+include(ReMakeProject)
+include(ReMakeFile)
+include(ReMakeComponent)
+include(ReMakeDebian)
 
 ### \brief Configure ReMake documentation task support.
 #   This macro initializes all the ReMake documentation task variables from
-#   the arguments provided or from default values. It should be called in the 
+#   the arguments provided or from default values. It should be called in the
 #   project root's CMakeLists.txt file, before any other documentation macro.
-#   \required[list] type Defines the types of documentation to be generated 
-#     by all documentation macros. Common document types are man, html, latex, 
-#     etc. Note that the types provided here must be supported by all 
+#   \required[list] type Defines the types of documentation to be generated
+#     by all documentation macros. Common document types are man, html, latex,
+#     etc. Note that the types provided here must be supported by all
 #     generators used throughout the project.
 #   \optional[list] OUTPUT:dir An optional list of output directories, one
 #     for each document type, that is passed to the document generator. The
 #     directories define relative paths below ${CMAKE_CURRENT_BINARY_DIR} and
 #     default to a filename conversion of the respective document type.
-#   \optional[list] INSTALL:dir An optional list of directories defining the 
+#   \optional[list] INSTALL:dir An optional list of directories defining the
 #     install destintations for the given document types. All directories
 #     default to the project's ${DOCUMENTATION_DESTINATION}. See
 #     remake_doc_install() for details.
@@ -108,8 +110,8 @@ macro(remake_doc)
 endmacro(remake_doc)
 
 ### \brief Evaluate support for the documentation types requested.
-#   This macro is a helper macro to evaluate generator support for the 
-#   documentation types requested. It emits a fatal error message if a 
+#   This macro is a helper macro to evaluate generator support for the
+#   documentation types requested. It emits a fatal error message if a
 #   generator lacks support for any of the types. Note that the macro
 #   gets invoked by the generator-specific macros defined in this module.
 #   It should not be called directly from a CMakeLists.txt file.
@@ -122,7 +124,7 @@ macro(remake_doc_support doc_generator)
   remake_var_name(doc_types_var REMAKE_DOC ${doc_generator} TYPES)
 
   remake_set(${doc_supported_types_var} ${ARGN})
-  remake_list_contains(${doc_supported_types_var} ${REMAKE_DOC_TYPES} 
+  remake_list_contains(${doc_supported_types_var} ${REMAKE_DOC_TYPES}
     CONTAINED ${doc_types_var})
 
   if(NOT ${doc_types_var})
@@ -204,7 +206,7 @@ endmacro(remake_doc_configure)
 #   This macro defines documentation build and install rules for the Doxygen
 #   generator. It configures a list of Doxygen configuration files using
 #   remake_file_configure() and adds generator commands to the component
-#   target. See ReMakeFile for details on file configuration, the ReMakeDoc 
+#   target. See ReMakeFile for details on file configuration, the ReMakeDoc
 #   variable listing and ReMakeProject for useful configuration variables.
 #   \required[list] glob A list of glob expressions resolving to Doxygen
 #     configuration files. Note that each file gets configured and processed
@@ -257,7 +259,7 @@ macro(remake_doc_doxygen)
     remake_doc_support(doxygen ${doc_types})
     remake_list_push(REMAKE_DOC_DOXYGEN_SUPPORTED_TYPES man)
     remake_list_remove_duplicates(REMAKE_DOC_DOXYGEN_SUPPORTED_TYPES)
-    
+
     remake_file_glob(doc_input_dirs DIRECTORIES ${doc_input})
     remake_file_glob(doc_input_files ${doc_patterns} RECURSE ${doc_input_dirs})
     string(REPLACE ";" " " REMAKE_DOC_INPUT "${doc_input_dirs}")
@@ -307,7 +309,7 @@ endmacro(remake_doc_doxygen)
 #   \required[list] glob A list of glob expressions resolving to groff input
 #     files. The files must contain formatted input that can be interpreted
 #     by the named groff macro.
-#   \optional[value] MACRO:macro The groff macro to be used for interpreting 
+#   \optional[value] MACRO:macro The groff macro to be used for interpreting
 #     the input, defaults to man.
 #   \optional[value] OUTPUT:dirname An optional directory name that
 #     identifies the base output directory for groff, defaults to
@@ -395,7 +397,7 @@ endmacro(remake_doc_groff)
 #     interpreting the input, defaults to docbook.
 #   \optional[value] MAN_SECTION:section The man section to be assumed for
 #     generating documentation using the man backend, defaults to 1. Note
-#     that during the configuration stage, the man section is accessible 
+#     that during the configuration stage, the man section is accessible
 #     via the JADE_MAN_SECTION variable.
 #   \optional[value] OUTPUT:dirname An optional directory name that
 #     identifies the base output directory for Jade, defaults to
@@ -414,7 +416,7 @@ macro(remake_doc_jade)
   remake_set(doc_frontend SELF DEFAULT docbook)
   remake_set(doc_output SELF DEFAULT ${CMAKE_CURRENT_BINARY_DIR})
   remake_set(doc_man_section SELF DEFAULT 1)
-  
+
   if(NOT DEFINED JW_FOUND)
     remake_find_executable(jw)
   endif(NOT DEFINED JW_FOUND)
@@ -445,7 +447,7 @@ macro(remake_doc_jade)
           remake_set(doc_output_path ${doc_output_dir})
           remake_set(doc_output_file
             ${doc_output_path}/${doc_name}.${doc_extension})
-              
+
           if(${doc_type} STREQUAL "html")
             remake_list_push(doc_command -V %root-filename%=${doc_name})
           elseif(${doc_type} STREQUAL "man")
@@ -454,7 +456,7 @@ macro(remake_doc_jade)
             remake_set(doc_output_file
               "${doc_output_path}/${doc_name}.${doc_man_section}")
           endif(${doc_type} STREQUAL "html")
-          
+
           if(doc_commands)
             remake_list_push(doc_commands "&&")
           endif(doc_commands)
@@ -487,7 +489,7 @@ endmacro(remake_doc_jade)
 #   This macro defines documentation build and install rules for generators
 #   which represent executable targets in the project and which know how
 #   to generate their documentation themselves.
-#   \required[list] target A list of target names referring to valid 
+#   \required[list] target A list of target names referring to valid
 #     executable targets in the project. For each generator target, the
 #     corresponding executable gets called with the provided list of command
 #     line arguments and is expected to produce a file whose name corresponds
@@ -506,7 +508,7 @@ endmacro(remake_doc_jade)
 #     set to the alternative. Further, a prefix-stripped and filename
 #     extension-stripped library name conversion of the current alternative
 #     may be substituted in the output filename for the special placeholder
-#     %ALTERNATIVE%. Targets may thus generate specific documentation for 
+#     %ALTERNATIVE%. Targets may thus generate specific documentation for
 #     different alternatives of a library they depend on. See ReMakeDebian
 #     for additional information.
 #   \optional[value] OUTPUT_DIRECTORY:dirname An optional directory name that
@@ -519,13 +521,13 @@ endmacro(remake_doc_jade)
 #     to the output directory. As output filenames must be unique, i.e.,
 #     target-specific and type-specific, the placeholders %TARGET%,
 #     %EXECUTABLE%, %TYPE%, and %ALTERNATIVE% may be used. The full-path
-#     target-specific and type-specific output filenames may further be 
+#     target-specific and type-specific output filenames may further be
 #     substituted for the command-line placeholder %OUTPUT%.
 #   \optional[option] MAKE_DIRECTORIES As some target generators may expect
 #     their output directories to exist, this option causes the macro to
 #     create these directories during the configuration stage of CMake.
 #   \optional[list] TYPES:type The optional list of document types generated
-#     by the target executables, defaults to ${REMAKE_DOC_TYPES}. For each 
+#     by the target executables, defaults to ${REMAKE_DOC_TYPES}. For each
 #     document type requested, the executables get called with the provided
 #     list of command line arguments and are expected to produce a file whose
 #     name corresponds to the specified output filename. The current document
@@ -550,7 +552,7 @@ macro(remake_doc_targets)
     remake_debian_get_alternatives(${doc_link_alternatives}
       OUTPUT doc_alternatives)
   endif(doc_link_alternatives)
-  
+
   remake_unset(doc_install_types)
   foreach(doc_target ${doc_targets})
     remake_doc_support(${doc_target} ${doc_types})
@@ -569,7 +571,7 @@ macro(remake_doc_targets)
       string(REPLACE "%TARGET%" "${doc_target}" doc_output ${doc_output})
       string(REPLACE "%EXECUTABLE%" "${doc_target_executable}" doc_output
         ${doc_output})
-      
+
       remake_set(doc_type_args ${doc_args})
       remake_list_replace(doc_type_args %TYPE% REPLACE ${doc_type} VERBATIM)
       remake_list_replace(doc_type_args %TARGET% REPLACE ${doc_target}
@@ -581,19 +583,19 @@ macro(remake_doc_targets)
         foreach(doc_alternative ${doc_alternatives})
           get_filename_component(doc_alternative_we ${doc_alternative} NAME_WE)
           string(REGEX REPLACE "^${CMAKE_SHARED_LIBRARY_PREFIX}" "" doc_alt
-            ${doc_alternative_we})                  
+            ${doc_alternative_we})
           string(REPLACE "%ALTERNATIVE%" "${doc_alt}" doc_output_alt
             ${doc_output})
-          
+
           remake_set(doc_type_args_alt ${doc_type_args})
           remake_list_replace(doc_type_args_alt %OUTPUT% REPLACE
             ${doc_output_alt} VERBATIM)
-          
+
           if(doc_make_directories)
             get_filename_component(doc_output_path ${doc_output_alt} PATH)
             remake_file_mkdir(${doc_output_path})
           endif(doc_make_directories)
-          
+
           file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR}
             ${doc_output_alt})
           remake_set(LD_PRELOAD ${doc_alternative})
@@ -609,12 +611,12 @@ macro(remake_doc_targets)
       else(doc_alternatives)
         remake_list_replace(doc_type_args %OUTPUT% REPLACE ${doc_output}
           VERBATIM)
-          
+
         if(doc_make_directories)
           get_filename_component(doc_output_path ${doc_output} PATH)
           remake_file_mkdir(${doc_output_path})
         endif(doc_make_directories)
-          
+
         file(RELATIVE_PATH doc_relative ${CMAKE_BINARY_DIR} ${doc_output})
         remake_doc_generate(${doc_target} ${doc_type}
           COMMAND ${doc_target_location} ${doc_type_args}
@@ -638,11 +640,11 @@ endmacro(remake_doc_targets)
 
 ### \brief Generate documentation using a custom generator.
 #   This macro defines documentation build and install rules for a custom
-#   generator, such as a script. It adds the provided generator command to 
+#   generator, such as a script. It adds the provided generator command to
 #   the component target.
 #   \required[value] generator The name of the custom generator.
 #   \required[value] command The command that executes the custom generator.
-#     Assuming that the generator is provided with the sources, the working 
+#     Assuming that the generator is provided with the sources, the working
 #     directory for this command defaults to ${CMAKE_CURRENT_SOURCE_DIR}.
 #     Placeholders may be used for command-line substitution of arguments
 #     to the generator command. Details are provided with the corresponding
@@ -659,7 +661,7 @@ endmacro(remake_doc_targets)
 #     document type. The type-specific output directories may be substituted
 #     for the command-line placeholder %OUTPUT%.
 #   \optional[list] TYPES:type The optional list of document types generated
-#     by the custom generator, defaults to ${REMAKE_DOC_TYPES}. For each 
+#     by the custom generator, defaults to ${REMAKE_DOC_TYPES}. For each
 #     document type requested, the generator gets called with the provided
 #     list of command line arguments. The current document type may be
 #     substituted in this list for the command-line placeholder %TYPE%.
@@ -744,7 +746,7 @@ macro(remake_doc_generate doc_generator doc_type)
   if(doc_generate_env)
     string(REPLACE ";" ";&&;" doc_generate_env "${doc_generate_env}")
   endif(doc_generate_env)
-  
+
   remake_component_target_name(doc_as_target ${doc_generator} ${doc_type})
   remake_component_add_command(
     COMMAND ${doc_generate_env} ${doc_command}

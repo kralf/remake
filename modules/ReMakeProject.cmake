@@ -18,11 +18,6 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeFile)
-include(ReMakeComponent)
-
-include(ReMakePrivate)
-
 ### \brief ReMake project macros
 #   The ReMake project macros are required by most processing macros in
 #   ReMake. They maintain the environment necessary for initializing default
@@ -77,11 +72,18 @@ include(ReMakePrivate)
 #   \variable REMAKE_PROJECT_MODULE_DIR The directory containing the project's
 #     custom CMake modules.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_PROJECT_CMAKE)
   remake_set(REMAKE_PROJECT_CMAKE ON)
 
   remake_set(REMAKE_PROJECT_CHANGELOG_TARGET project_changelog)
+else(NOT DEFINED REMAKE_PROJECT_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_PROJECT_CMAKE)
+
+include(ReMakeFile)
+include(ReMakeComponent)
 
 ### \brief Define a ReMake project.
 #   This macro initializes all the ReMake project variables from the

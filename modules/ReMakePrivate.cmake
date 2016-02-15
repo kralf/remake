@@ -40,6 +40,8 @@ if(NOT DEFINED REMAKE_PRIVATE_CMAKE)
     set(REMAKE_CACHE_INITIALIZED ON CACHE INTERNAL
       "ReMake cache variables initialized.")
   endif(NOT DEFINED REMAKE_CACHE_INITIALIZED)
+else(NOT DEFINED REMAKE_PRIVATE_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_PRIVATE_CMAKE)
 
 ### \brief Parse ReMake macro arguments.
@@ -52,8 +54,8 @@ endif(NOT DEFINED REMAKE_PRIVATE_CMAKE)
 #   to ON.
 #   If an argument is specified, two output variables are created. For an
 #   existing argument named ${NAME}, the first variable ${name} (a lower-case
-#   conversion of the argument name) is defined to contain the parameters 
-#   passed for this argument. The second variable ${NAME} is of the form 
+#   conversion of the argument name) is defined to contain the parameters
+#   passed for this argument. The second variable ${NAME} is of the form
 #   ${NAME} ${VALUE} and may thus easily be passed on to another macro with
 #   identical argument understanding.
 #   \optional[value] PREFIX:prefix An optional prefix that is prepended to the
@@ -73,7 +75,7 @@ macro(remake_arguments)
   set(private_vars)
   set(private_lists)
   set(private_opts)
-  set(private_argn)  
+  set(private_argn)
   set(private_args)
 
   set(private_push)
@@ -165,7 +167,7 @@ endmacro(remake_arguments)
 ### \brief Generate a ReMake variable name from a list of strings.
 #   This macro is a helper macro to generate valid variable names from
 #   arbitrary strings. It replaces whitespace characters, scores, and CMake
-#   list separators by underscores and performs an upper-case conversion of 
+#   list separators by underscores and performs an upper-case conversion of
 #   the result.
 #   \required[value] variable The name of a variable to be assigned the
 #     generated variable name.
@@ -177,7 +179,7 @@ macro(remake_var_name private_var)
 endmacro(remake_var_name)
 
 ### \brief Find defined variables matching a regular expression.
-#   This macro is a helper macro to discover defined variables matching a 
+#   This macro is a helper macro to discover defined variables matching a
 #   regular expression. It queries the CMake property VARIABLES by calling
 #   get_cmake_property() and performs regular expression matching on the
 #   results.
@@ -198,7 +200,7 @@ endmacro(remake_var_regex)
 
 ### \brief Define the value of a ReMake variable.
 #   This helper macro defines the value of a ReMake variable by calling
-#   CMake's set() macro. Optionally, it allows for setting the variable value 
+#   CMake's set() macro. Optionally, it allows for setting the variable value
 #   from another variable passed by reference. If the variable value is
 #   undefined, the macro may assign a given default value.
 #   \required[value] variable The name of the variable to be defined.
@@ -206,7 +208,7 @@ endmacro(remake_var_regex)
 #     used for setting the variable's value.
 #   \optional[option] SELF If present, this option causes the macro to
 #     ignore external variable assignments. A typical use for this
-#     functionality is to assign default values to otherwise undefined or 
+#     functionality is to assign default values to otherwise undefined or
 #     empty variables.
 #   \optional[option] APPEND This option indicates for the macro to append
 #     the provided value to the currently assigned variable value. In CMake,
@@ -239,11 +241,11 @@ macro(remake_set private_var)
     if(REMAKE_CACHE_INITIALIZED)
       set(private_initialized ON)
     else(REMAKE_CACHE_INITIALIZED)
-      if(${private_var} STREQUAL "CMAKE_INSTALL_PREFIX")
+      if(${private_var} STREQUAL CMAKE_INSTALL_PREFIX)
         if(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
           set(private_initialized ON)
         endif(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-      endif(${private_var} STREQUAL "CMAKE_INSTALL_PREFIX")
+      endif(${private_var} STREQUAL CMAKE_INSTALL_PREFIX)
     endif(REMAKE_CACHE_INITIALIZED)
   endif(private_init)
 

@@ -18,6 +18,24 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
+### \brief ReMake convenience macros
+#   ReMake provides a set of CMake macros that have originally been written to
+#   facilitate the restructuring of GNU Automake/Autoconf projects.
+#
+#   A key feature of ReMake is its branching concept. A branch is defined
+#   along with a list of dependencies that is automatically resolved
+#   by ReMake.
+#
+#   ReMake requires CMake version 2.6.2 or higher.
+
+include(ReMakePrivate)
+
+if(NOT DEFINED REMAKE_CMAKE)
+  remake_set(REMAKE_CMAKE ON)
+else(NOT DEFINED REMAKE_CMAKE)
+  return()
+endif(NOT DEFINED REMAKE_CMAKE)
+
 include(ReMakeProject)
 include(ReMakeBranch)
 include(ReMakeComponent)
@@ -40,22 +58,6 @@ include(ReMakeSVN)
 include(ReMakeGit)
 include(ReMakeTest)
 include(ReMakeVersion OPTIONAL)
-
-include(ReMakePrivate)
-
-### \brief ReMake convenience macros
-#   ReMake provides a set of CMake macros that have originally been written to
-#   facilitate the restructuring of GNU Automake/Autoconf projects.
-#
-#   A key feature of ReMake is its branching concept. A branch is defined
-#   along with a list of dependencies that is automatically resolved
-#   by ReMake.
-#
-#   ReMake requires CMake version 2.6.2 or higher.
-
-if(NOT DEFINED REMAKE_CMAKE)
-  remake_set(REMAKE_CMAKE ON)
-endif(NOT DEFINED REMAKE_CMAKE)
 
 ### \brief Set the minimum required version of ReMake for a module.
 #   In analogy to CMake's cmake_minimum_required() macro, this macro
@@ -382,7 +384,7 @@ macro(remake_add_executable remake_name)
     if(remake_force_link)
       remake_list_push(remake_link -Wl,-no-as-needed ${remake_force_link})
     endif(remake_force_link)
-    
+
     remake_component_build(
       EXECUTABLE ${remake_name}${remake_suffix}
       ${remake_sources} ${remake_target_sources} ${remake_generated}
@@ -469,7 +471,7 @@ endmacro(remake_add_executables)
 #     shall be excluded from the list of header files, defaulting to
 #     CMakeLists.txt.
 #   \optional[option] RECURSE If this option is given, header files will
-#     be searched recursively in and below the directory specified by the 
+#     be searched recursively in and below the directory specified by the
 #     FROM argument. In addtion, for each header the install destination
 #     will be appended by its relative-path location below the search
 #     directory.
@@ -771,7 +773,7 @@ macro(remake_add_files)
         "${remake_globs}")
       string(REPLACE ";" ";EXCLUDE;PATTERN;" remake_files_exclude
         "${remake_exclude}")
-    
+
       remake_component_install(
         DIRECTORY .
         DESTINATION ${remake_install}
@@ -808,7 +810,7 @@ macro(remake_add_directories)
     globs ${ARGN})
   remake_set(remake_component SELF DEFAULT ${REMAKE_COMPONENT})
   remake_set(remake_globs SELF DEFAULT *)
-  
+
   if(remake_if)
     remake_set(remake_option FROM ${remake_if})
   else(remake_if)

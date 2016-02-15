@@ -18,17 +18,19 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
-include(FindPkgConfig)
-
 ### \brief ReMake package and file discovery macros
 #   The ReMake package and file discovery macros provide a useful abstraction
 #   to CMake's native find functionalities.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_FIND_CMAKE)
   remake_set(REMAKE_FIND_CMAKE ON)
+else(NOT DEFINED REMAKE_FIND_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_FIND_CMAKE)
+
+include(FindPkgConfig)
 
 ### \brief Find a package.
 #   This macro calls CMake's find_package() or pkg_check_modules() to find
@@ -99,7 +101,7 @@ macro(remake_find_package find_package)
     else(find_config)
       find_package(${find_package} ${find_args})
     endif(find_config)
-        
+
     remake_find_result(
       ${find_package} ${${find_result_var}}
       TYPE package
@@ -281,7 +283,7 @@ macro(remake_find_result find_package)
     if(find_force_cache)
       remake_set(${find_result_var} OFF CACHE BOOL ${find_description} FORCE)
     endif(find_force_cache)
-  
+
     if(find_name)
       remake_set(find_message
         "Missing ${find_type} ${find_name}!")

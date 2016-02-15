@@ -18,15 +18,12 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeFile)
-include(ReMakeList)
-
-include(ReMakePrivate)
-
 ### \brief ReMake multi-project recursion macros
 #   The ReMake recursion macros extend the CMake build system facilities
 #   into multi-project environments. Recursion support exists for selected
 #   build system types.
+
+include(ReMakePrivate)
 
 if(NOT DEFINED REMAKE_RECURSE_CMAKE)
   remake_set(REMAKE_RECURSE_CMAKE ON)
@@ -41,7 +38,12 @@ if(NOT DEFINED REMAKE_RECURSE_CMAKE)
   remake_set(REMAKE_RECURSE_INSTALL_TARGET_SUFFIX install)
   remake_set(REMAKE_RECURSE_CLEAN_ALL_TARGET recursions_clean)
   remake_set(REMAKE_RECURSE_CLEAN_TARGET_SUFFIX clean)
+else(NOT DEFINED REMAKE_RECURSE_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_RECURSE_CMAKE)
+
+include(ReMakeFile)
+include(ReMakeList)
 
 ### \brief Recurse into a Make project.
 #   This macro adds recursion targets for a classical Makefile-based project.
@@ -265,7 +267,7 @@ macro(remake_recurse recurse_build_system recurse_name recurse_build_path)
       add_dependencies(${recurse_install_target} ${recurse_install_dep})
     endforeach(recurse_install_dep)
     if(recurse_build_target)
-      add_dependencies(${recurse_install_target} ${recurse_build_target})    
+      add_dependencies(${recurse_install_target} ${recurse_build_target})
     endif(recurse_build_target)
     install(CODE "execute_process(COMMAND make ${recurse_install_target}
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR})")

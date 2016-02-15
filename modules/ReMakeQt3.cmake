@@ -18,14 +18,16 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
 ### \brief ReMake Qt3 macros
 #   The ReMake Qt3 macros provide seamless integration of Qt3 meta-object
 #   processing with ReMake build targets.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_QT3_CMAKE)
   remake_set(REMAKE_QT3_CMAKE ON)
+else(NOT DEFINED REMAKE_QT3_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_QT3_CMAKE)
 
 ### \brief Configure Qt3 meta-object processing.
@@ -42,7 +44,7 @@ macro(remake_qt3)
   if(NOT DEFINED QT_FOUND)
     remake_find_package(Qt3 QUIET ALIAS Qt)
   endif(NOT DEFINED QT_FOUND)
-  
+
   if(DEFINED QT_FOUND AND NOT DEFINED QT3_MOC)
     remake_project_set(QT3_MOC ${QT_FOUND} CACHE BOOL
       "Process Qt3 meta-objects.")

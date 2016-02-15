@@ -18,14 +18,16 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakePrivate)
-
 ### \brief ReMake list macros
 #   The ReMake list macros are a set of helper macros to simplify
 #   operations over lists in ReMake.
 
+include(ReMakePrivate)
+
 if(NOT DEFINED REMAKE_LIST_CMAKE)
   remake_set(REMAKE_LIST_CMAKE ON)
+else(NOT DEFINED REMAKE_LIST_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_LIST_CMAKE)
 
 ### \brief Append values to the back of a list.
@@ -40,7 +42,7 @@ endmacro(remake_list_push)
 #   This macro removes a list of values from the front of the list and
 #   assigns the removed values to output variables.
 #   \required[value] list The name of the list to remove the values from.
-#   \required[list] var A list of variables to assign removed list values to. 
+#   \required[list] var A list of variables to assign removed list values to.
 #     The number of variables provided determines the number of elements to
 #     be removed from the list.
 #   \optional[value] SPLIT:value An optional split string that marks the
@@ -59,7 +61,7 @@ macro(remake_list_pop list_name)
       while(${list_name})
         list(GET ${list_name} 0 list_element)
         list(REMOVE_AT ${list_name} 0)
-  
+
         if(list_split)
           if(list_element MATCHES ${list_split})
             break()
@@ -108,7 +110,7 @@ endmacro(remake_list_replace)
 #   \optional[value] ALL:variable The name of an optional output variable that
 #     is set to TRUE only if all the values provided are contained in the list.
 #   \optional[value] ANY:variable The name of an optional output variable that
-#     is set to TRUE only if any of the values provided is contained in the 
+#     is set to TRUE only if any of the values provided is contained in the
 #     list.
 #   \optional[value] CONTAINED:variable The name of an optional variable to
 #     hold the list of values contained in the list.

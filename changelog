@@ -1,56 +1,63 @@
+remake (1:0.7.1-292) lucid; urgency=low
+
+  * Moved remake_pack_deb() and remake_distribute_deb() to ReMakeDebian
+    module, preparing multi-platform refactoring
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 15 Feb 2016 14:53:00 +0100
+
 remake (1:0.7.1-291) lucid; urgency=low
 
   * Fixed bug in gendocs configuration which was caused by renaming the
     project
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 14:53:00 +0100
- 
+
 remake (1:0.7.1-290) lucid; urgency=low
 
   * Removed lucid source distribution
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 10:12:00 +0100
- 
+
 remake (1:0.7.1-289) lucid; urgency=low
 
   * Renamed project for consistency
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 10:11:00 +0100
- 
+
 remake (1:0.7.1-288) lucid; urgency=low
 
   * Revised remake_distribute_deb() and ReMakePack macros to use the project
     name rather than the project filename for creating the source distribution
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 10:10:00 +0100
- 
+
 remake (1:0.7.1-287) lucid; urgency=low
 
   * Added parameter to git2debcl which control the number of maximum
     parent commits
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 09:12:00 +0100
- 
+
 remake (1:0.7.1-286) lucid; urgency=low
 
   * Fixed bug in remake_add_executables() which was caused by overwritten
     parameters
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Jan 2016 07:06:00 +0100
- 
+
 remake (1:0.7.1-285) lucid; urgency=low
 
   * Added regular expression mangling to remake_debian_find_package() to
     prevent errors in the case of a package name containing + characters
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 21 Apr 2015 11:19:00 +0100
- 
+
 remake (1:0.7.1-284) lucid; urgency=low
 
   * Added CONFLICTS argument to remake_ros_pack_deb()
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 21 Apr 2015 11:12:00 +0100
- 
+
 remake (1:0.7.1-283) lucid; urgency=low
 
   * Revised remake_ros_pack_deb():
@@ -62,55 +69,55 @@ remake (1:0.7.1-283) lucid; urgency=low
     + Does not anymore generate versions which comprise the ROS distribution
       and the Debian distribution name (only uses the Debian distribution name)
     + Now accepts an if-expression to enable/disable distributions
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 17 Feb 2015 14:34:00 +0100
- 
+
 remake (1:0.7.1-282) lucid; urgency=low
 
   * Updated README.md
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 16 Feb 2015 16:53:00 +0100
- 
+
 remake (1:0.7.1-281) lucid; urgency=low
 
   * Updated README.md
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 28 Jan 2015 08:53:00 +0100
- 
+
 remake (1:0.7.1-280) lucid; urgency=low
 
   * Updated README.md
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 28 Jan 2015 08:47:00 +0100
- 
+
 remake (1:0.7.1-279) lucid; urgency=low
 
   * Revised README for github markdown
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 28 Jan 2015 08:06:00 +0100
- 
+
 remake (1:0.7.1-278) lucid; urgency=low
 
   * Fixed another bug in remake_remake_debian_find_package() which would cause
     some regular package name expressions to fail matching
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 17 Dec 2014 09:30:00 +0100
- 
+
 remake (1:0.7.1-277) lucid; urgency=low
 
   * Fixed bug in remake_remake_debian_find_package() which would cause
     some regular package name expressions to fail
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 17 Dec 2014 08:50:00 +0100
- 
+
 remake (1:0.7.1-276) lucid; urgency=low
 
   * Added COMMAND_ARGS argument to remake_test_target() and
     remake_test_google() to allow for passing arguments to the
     testing command
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 16 Dec 2014 16:43:00 +0100
- 
+
 remake (1:0.7.1-275) lucid; urgency=low
 
   * Added FORCE_CACHE option to remake_find_result() (prevents
@@ -118,33 +125,33 @@ remake (1:0.7.1-275) lucid; urgency=low
     find_package() macros)
   * Revised remake_find_executable(), remake_find_library(), and
     remake_find_file() to use the FORCE_CACHE option of remake_find_result()
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 25 Nov 2014 13:26:00 +0100
- 
+
 remake (1:0.7.1-274) lucid; urgency=low
 
   * Added new cache variable REMAKE_DISTRIBUTE_RELEASE_BUILD to indicate
     whether a distribution's release build is ongoing
   * Added variable documentation to ReMakeDistribute
-  * remake_test() now redirects stdout to log files only if 
+  * remake_test() now redirects stdout to log files only if
     REMAKE_DISTRIBUTE_RELEASE_BUILD is false (output should thus show up
     in a PPA's build log)
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 17 Nov 2014 07:11:00 +0100
- 
+
 remake (1:0.7.1-273) lucid; urgency=low
 
   * Fixed documentation of remake_test()
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 14 Nov 2014 17:47:00 +0100
- 
+
 remake (1:0.7.1-272) lucid; urgency=low
 
   * Added -V and -r options to remake-git2debcl (for better control over
     version discovery from project sources)
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 14 Nov 2014 17:15:00 +0100
- 
+
 remake (1:0.7.1-271) lucid; urgency=low
 
   * Added remake_test_google() macro
@@ -155,23 +162,23 @@ remake (1:0.7.1-271) lucid; urgency=low
   * Revised remake_add_executable() to reflect latest modifications of
     remake_test_target()
   * Increased patch version
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 13 Nov 2014 13:05:00 +0100
- 
+
 remake (1:0.7-270) lucid; urgency=low
 
   * Added DEPENDS argument to remake_test_python_nose() and
     remake_test_target(), allowing for the definition of additional
     file or target dependencies
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Nov 2014 16:50:00 +0100
- 
+
 remake (1:0.7-269) lucid; urgency=low
 
   * Fixed changelog version
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Nov 2014 15:08:00 +0100
- 
+
 remake (1:0.7-268) lucid; urgency=low
 
   * Fixed bug in remake_find_package() that would lead to the wrong FOUND
@@ -185,39 +192,39 @@ remake (1:0.7-268) lucid; urgency=low
     + Added remake_test_python_nose() macro
     + Testing logs now go into the top-level ReMakeFiles directory
     + Added remake_add_test() convenience wrapper
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 11 Nov 2014 15:05:00 +0100
- 
+
 remake (1:0.6.7-267) lucid; urgency=low
 
   * Added FROM argument to remake_add_headers(), allowing to specify the
     recursive search directory
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 07 Nov 2014 08:37:00 +0100
- 
+
 remake (1:0.6.7-266) lucid; urgency=low
 
   * Added destination arguments to remake_ros_stack() and remake_ros_package(),
     allowing to override some default install destinations
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Nov 2014 14:09:00 +0100
- 
+
 remake (1:0.6.7-265) lucid; urgency=low
 
   * Fixed another bug in remake-git2debcl such that only commits which are
     enough to explain how the files that match the specified path came to be
     are considered (removes commit messages from other branches)
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Nov 2014 08:13:00 +0100
- 
+
 remake (1:0.6.7-264) lucid; urgency=low
 
   * Fixed bug in remake-git2debcl which would cause the project version
     to be guessed wrong if the project name contained symbols other than
-    alphanumeric 
-  
+    alphanumeric
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Nov 2014 07:53:00 +0100
- 
+
 remake (1:0.6.7-263) lucid; urgency=low
 
   * Added BEFORE option to remake_include()
@@ -227,16 +234,16 @@ remake (1:0.6.7-263) lucid; urgency=low
     remake_ros_package_add_plugin(), and remake_ros_plugin_add_class()
     macros
   * Incremented patch version
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 06 Nov 2014 06:59:00 +0100
- 
+
 remake (1:0.6.6-262) lucid; urgency=low
 
   * Fixed bug in remake_ros_distribute_deb() which would cause the
     explicit build dependencies to be ignored
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 16 Oct 2014 09:38:00 +0100
- 
+
 remake (1:0.6.6-261) lucid; urgency=low
 
   * Added remake_ros_package_resolve_deb() macro for resolving Debian
@@ -247,7 +254,7 @@ remake (1:0.6.6-261) lucid; urgency=low
   * Revised remake_ros_package_add_configurations() to also work under
     fuerte (which does not provide the catkin parameter generator and
     outputs C++ headers in a different location)
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 16 Oct 2014 08:38:00 +0100
 
 remake (1:0.6.6-260) lucid; urgency=low
@@ -257,13 +264,13 @@ remake (1:0.6.6-260) lucid; urgency=low
     DISTRIBUTE option
   * Added remake_ros_package_python_distribute() macro which now
     handles the distribution of Python packages of a ROS package
-  * Added remake_ros_package_generate_configurations() macro along 
+  * Added remake_ros_package_generate_configurations() macro along
     with the remake_ros_package_add_configurations() wrapper which
     allow for generating dynamic reconfigure options
   * remake_ros_package_add_generated() now also generates configurations
   * Added DOCUMENTATION_DESTINATION argument to remake_component()
   * Increased patch version
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 14 Oct 2014 09:58:00 +0100
 
 remake (1:0.6.5-259) lucid; urgency=low
@@ -271,13 +278,13 @@ remake (1:0.6.5-259) lucid; urgency=low
   * Changed remake_ros_stack() and remake_ros_package() to only include
     ReMakeFile in the manifest generating script
   * Added ReMakeList to the includes of ReMakeFile
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 Oct 2014 18:18:00 +0100
 
 remake (1:0.6.5-258) lucid; urgency=low
 
   * Fixed project patch version in CMakeLists.txt
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 Oct 2014 10:21:00 +0100
 
 remake (1:0.6.5-257) lucid; urgency=low
@@ -291,28 +298,28 @@ remake (1:0.6.5-257) lucid; urgency=low
   * Incremented patch version
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 07 Oct 2014 10:14:00 +0100
- 
+
 remake (1:0.6.4-256) lucid; urgency=low
 
   * Added git2debcl script for converting Git logs into the Debian
     changelog format
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 06 Oct 2014 16:43:00 +0100
- 
+
 remake (1:0.6.4-255) lucid; urgency=low
 
   * Fixed syntax error in remake_add_files() which would give a CMake error
     for the use of install DIRECTORY
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 30 Sep 2014 13:07:00 +0100
- 
+
 remake (1:0.6.4-254) lucid; urgency=low
 
   * Fixed argument handling in remake_component_install() which would cause
     the PLUGIN keyword to not be subsituted correctly
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 29 Sep 2014 14:34:00 +0100
- 
+
 remake (1:0.6.4-253) lucid; urgency=low
 
   * Modified remake_doc_generate() to generate a component target name for
@@ -320,20 +327,20 @@ remake (1:0.6.4-253) lucid; urgency=low
     component-specific build rules for the same generator
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 29 Sep 2014 09:41:00 +0100
- 
+
 remake (1:0.6.4-252) lucid; urgency=low
 
   * Added EXTRA argument to remake_ros_pack_deb() such as to allow for
     the definition of extra control information for the project package
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 15 Sep 2014 10:47:00 +0100
- 
+
 remake (1:0.6.4-251) lucid; urgency=low
 
   * Release distribution for Ubuntu Trusty Tahr
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 29 Jul 2014 06:58:00 +0100
- 
+
 remake (1:0.6.4-250) lucid; urgency=low
 
   * Added REQUIRED argument to remake_qt4()
@@ -341,40 +348,40 @@ remake (1:0.6.4-250) lucid; urgency=low
     if already found through the standard CMake macros
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 25 Jul 2014 08:05:00 +0100
- 
+
 remake (1:0.6.4-249) lucid; urgency=low
 
   * Tiny documentation fix for remake_add_documentation()
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 25 Jul 2014 08:05:00 +0100
- 
+
 remake (1:0.6.4-248) lucid; urgency=low
 
   * Added MAN_SECTION argument to remake_doc_jade(), which now configures
     the input files
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 24 Jul 2014 15:26:00 +0100
- 
+
 remake (1:0.6.4-247) lucid; urgency=low
 
   * Added remake_doc_jade() documentation generating macro
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 24 Jul 2014 14:31:00 +0100
- 
+
 remake (1:0.6.4-246) lucid; urgency=low
 
   * Fixed bug in remake_component_install() that would lead to default
     COMPONENT argument not being passed to install rule
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Thu, 24 Jul 2014 10:51:00 +0100
- 
+
 remake (1:0.6.4-245) lucid; urgency=low
 
   * Now using install(DIRECTORY...) signature in remake_add_files() if
     RECURSE option and no SUFFIX is given, fixing efficiency issues
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 23 Jul 2014 13:33:00 +0100
- 
+
 remake (1:0.6.4-244) lucid; urgency=low
 
   * Extended remake_set() by a special initialization treatment for
@@ -382,7 +389,7 @@ remake (1:0.6.4-244) lucid; urgency=low
     command line
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 12 May 2014 09:09:00 +0100
- 
+
 remake (1:0.6.4-243) lucid; urgency=low
 
   * Added FORCE_LINK argument to remake_add_executable() and
@@ -390,14 +397,14 @@ remake (1:0.6.4-243) lucid; urgency=low
     --no-as-needed linker flag set
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 29 Mar 2014 07:21:00 +0100
- 
+
 remake (1:0.6.4-242) lucid; urgency=low
 
   * Automatically adding rosbuild to package build dependencies in
     remake_ros_package_generate() to avoid message generation errors
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Wed, 26 Mar 2014 14:07:00 +0100
- 
+
 remake (1:0.6.4-241) lucid; urgency=low
 
   * Fixed bug in remake_ros() that would lead to ROS environment variables
@@ -405,7 +412,7 @@ remake (1:0.6.4-241) lucid; urgency=low
     differently from if(VAR))
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 26 Nov 2013 14:39:00 +0100
- 
+
 remake (1:0.6.4-240) lucid; urgency=low
 
   * Added remake_push() and remake_pop() to ReMakePrivate module
@@ -417,7 +424,7 @@ remake (1:0.6.4-240) lucid; urgency=low
   * Increased minor version
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 19 Nov 2013 15:08:00 +0100
- 
+
 remake (1:0.6.3-239) lucid; urgency=low
 
   * Added LIST_SEPARATOR argument to remake_file_configure()
@@ -425,7 +432,7 @@ remake (1:0.6.3-239) lucid; urgency=low
     to remake_file_configure()
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sun, 17 Nov 2013 11:25:00 +0100
- 
+
 remake (1:0.6.3-238) lucid; urgency=low
 
   * Added LINK_ALTERNATIVES argument to remake_doc_targets() which allows
@@ -433,13 +440,13 @@ remake (1:0.6.3-238) lucid; urgency=low
     library dependency
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 16 Nov 2013 07:53:00 +0100
- 
+
 remake (1:0.6.3-237) lucid; urgency=low
 
   * Added remake_debian_get_alternatives() macro to ReMakeDebian
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 15 Nov 2013 12:04:00 +0100
- 
+
 remake (1:0.6.3-236) lucid; urgency=low
 
   * Changed default values in remake_doc_doxygen() to reflect that the
@@ -447,20 +454,20 @@ remake (1:0.6.3-236) lucid; urgency=low
     these files will not show up in the generated list of files)
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 08 Nov 2013 11:12:00 +0100
- 
+
 remake (1:0.6.3-235) lucid; urgency=low
 
   * Extended remake_doc_doxygen() by MAIN_PAGE argument to facilitate the
     automated generation of the Doxygen main page content
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 08 Nov 2013 10:49:00 +0100
- 
+
 remake (1:0.6.3-234) lucid; urgency=low
 
   * Minor change of documentation formatting
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 05 Nov 2013 08:53:00 +0100
- 
+
 remake (1:0.6.3-233) lucid; urgency=low
 
   * New features:
@@ -472,7 +479,7 @@ remake (1:0.6.3-233) lucid; urgency=low
     + Changed parameter naming of man_extension to man_section in
       gendocs script and configuration file
   * Increased minor version
-  
+
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 04 Nov 2013 17:20:00 +0100
 
 remake (1:0.6.2-232) lucid; urgency=low
@@ -542,7 +549,7 @@ remake (1:0.6.2-224) lucid; urgency=low
 
 remake (1:0.6.2-223) lucid; urgency=low
 
-  * Improved handling of empty revisions in svn2debcl 
+  * Improved handling of empty revisions in svn2debcl
   * Added revision renumbering to svn2debcl
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Fri, 09 Aug 2013 12:39:00 +0100
@@ -821,7 +828,7 @@ remake (1:0.6.2-190) lucid; urgency=low
 remake (1:0.6.2-189) lucid; urgency=low
 
   * Bug fixes:
-    + Fixed remake_ros_package_add_library() syntax 
+    + Fixed remake_ros_package_add_library() syntax
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 14 May 2013 12:21:00 +0100
 
@@ -906,7 +913,7 @@ remake (1:0.5.4-179) lucid; urgency=low
 
   * Finished revision of ReMakePython module:
     + Turned remake_python() into a pure configuration macro which does
-      not anymore include the Python sources directory 
+      not anymore include the Python sources directory
 
  -- Ralf Kaestner <ralf.kaestner@gmail.com>  Sat, 04 May 2013 09:47:00 +0100
 

@@ -18,15 +18,11 @@
 #    59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             #
 ############################################################################
 
-include(ReMakeDistribute)
-include(ReMakeFile)
-include(ReMakeFind)
-include(ReMakeTarget)
-
-include(ReMakePrivate)
-
 ### \brief ReMake testing macros
 #   The ReMake testing module provides unit testing support.
+
+include(ReMakePrivate)
+include(ReMakeFile)
 
 if(NOT DEFINED REMAKE_TEST_CMAKE)
   remake_set(REMAKE_TEST_CMAKE ON)
@@ -36,7 +32,13 @@ if(NOT DEFINED REMAKE_TEST_CMAKE)
 
   remake_set(REMAKE_TEST_DIR ReMakeTesting)
   remake_file_rmdir(${REMAKE_TEST_DIR} TOPLEVEL)
+else(NOT DEFINED REMAKE_TEST_CMAKE)
+  return()
 endif(NOT DEFINED REMAKE_TEST_CMAKE)
+
+include(ReMakeDistribute)
+include(ReMakeFind)
+include(ReMakeTarget)
 
 ### \brief Generate a test based on an executable target.
 #   This macro generates a unit test based on an executable target named
@@ -55,7 +57,7 @@ endif(NOT DEFINED REMAKE_TEST_CMAKE)
 #     testing command issued by remake_test().
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_add_executable(), defaults to
-#     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake 
+#     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake
 #     for details.
 #   \optional[list] TEST_DEPENDS:depend An optional list of additional file
 #     or target dependencies for the testing target.
@@ -65,12 +67,12 @@ macro(remake_test_target test_target)
   remake_component_name(test_default_component ${REMAKE_COMPONENT}
     ${REMAKE_COMPONENT_TESTING_SUFFIX})
   remake_set(test_component SELF DEFAULT ${test_default_component})
-    
+
   remake_add_executable(
     ${test_target}
     ${test_args}
     COMPONENT ${test_component})
-    
+
   get_target_property(test_command ${test_target} LOCATION)
   remake_test(
     "executable target"
@@ -94,7 +96,7 @@ endmacro(remake_test_target)
 #     testing command issued by remake_test().
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_add_executable(), defaults to
-#     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake 
+#     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake
 #     for details.
 #   \optional[option] LINK_MAIN With this option being present, the
 #     executable target will be linked against or built with a main
@@ -107,7 +109,7 @@ macro(remake_test_google test_target)
   remake_component_name(test_default_component ${REMAKE_COMPONENT}
     ${REMAKE_COMPONENT_TESTING_SUFFIX})
   remake_set(test_component SELF DEFAULT ${test_default_component})
-  
+
   if(NOT GTEST_FOUND)
     remake_find_package(GTest QUIET OPTIONAL)
     if(NOT GTEST_FOUND)
@@ -116,12 +118,12 @@ macro(remake_test_google test_target)
           OPTIONAL)
       endif(GTEST_INCLUDE_DIR)
     endif(NOT GTEST_FOUND)
-    
+
     if(NOT GTEST_FOUND)
       remake_find_result(GTest ${GTEST_FOUND} TYPE package)
     endif(NOT GTEST_FOUND)
   endif(NOT GTEST_FOUND)
-    
+
   remake_include(${GTEST_INCLUDE_DIR})
   if(GTEST_LIBRARY)
     if(test_link_main)
@@ -136,7 +138,7 @@ macro(remake_test_google test_target)
         ${test_args}
         LINK ${GTEST_LIBRARY}
         COMPONENT ${test_component})
-    endif(test_link_main)    
+    endif(test_link_main)
   else(GTEST_LIBRARY)
     remake_include(${GTEST_PATH})
     if(test_link_main)
@@ -152,8 +154,8 @@ macro(remake_test_google test_target)
         COMPONENT ${test_component})
     endif(test_link_main)
   endif(GTEST_LIBRARY)
-    
-  get_target_property(test_command ${test_target} LOCATION)  
+
+  get_target_property(test_command ${test_target} LOCATION)
   remake_test(
     "Google"
     ${test_target}
@@ -176,7 +178,7 @@ endmacro(remake_test_google)
 #     details.
 #   \optional[value] COMPONENT:component The optional name of the install
 #     component that is passed to remake_add_scripts(), defaults to
-#     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake 
+#     ${REMAKE_COMPONENT}-${REMAKE_COMPONENT_TESTING_SUFFIX}. See ReMake
 #     for details.
 #   \optional[value] MODULE_PATH:dir The optional name of the directory
 #     containing the required Python modules for the nose test, defaulting
@@ -190,19 +192,19 @@ macro(remake_test_python_nose test_name test_filename)
   remake_component_name(test_default_component ${REMAKE_COMPONENT}
     ${REMAKE_COMPONENT_TESTING_SUFFIX})
   remake_set(test_component SELF DEFAULT ${test_default_component})
-  
-  remake_find_executable(nosetests)  
+
+  remake_find_executable(nosetests)
   if(IS_ABSOLUTE ${test_filename})
     remake_set(test_script ${test_filename})
   else(IS_ABSOLUTE ${test_filename})
     remake_set(test_script ${CMAKE_CURRENT_SOURCE_DIR}/${test_filename})
   endif(IS_ABSOLUTE ${test_filename})
-  
+
   if(NOT IS_ABSOLUTE ${test_module_path})
     remake_set(test_module_path
       ${CMAKE_CURRENT_SOURCE_DIR}/${test_module_path})
   endif(NOT IS_ABSOLUTE ${test_module_path})
-  
+
   remake_add_scripts(
     ${test_filename}
     ${test_args}
@@ -237,7 +239,7 @@ macro(remake_test test_type test_name test_command)
   if(NOT EXISTS ${REMAKE_TEST_DIR})
     remake_file_mkdir(${REMAKE_TEST_DIR} TOPLEVEL)
   endif(NOT EXISTS ${REMAKE_TEST_DIR})
-  
+
   remake_target_name(test_target ${test_name} ${REMAKE_TEST_TARGET_SUFFIX})
   if(REMAKE_DISTRIBUTE_RELEASE_BUILD)
     remake_target(
