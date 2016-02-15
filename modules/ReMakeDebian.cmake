@@ -366,13 +366,14 @@ endmacro(remake_debian_get_alternatives)
 
 ### \brief Generate a binary Debian package from a ReMake project component.
 #   This macro configures package generation using CPack's DEB generator
-#   for binary Debian packages. It acquires all the information necessary
-#   from the current project and component settings and the arguments passed.
-#   In addition to creating a component-specific package build target through
-#   remake_pack(), the macro adds simplified package install and uninstall
-#   targets. Project-internal dependencies between these targets are
-#   automatically resolved. Also, the macro provides automated resolution of
-#   dependencies on packages installed on the build system.
+#   for binary Debian packages on Debian-related build systems. It acquires
+#   all the information necessary from the current project and component
+#   settings and the arguments passed. In addition to creating a
+#   component-specific package build target through remake_pack(), the macro
+#   adds simplified package install and uninstall targets. Project-internal
+#   dependencies between these targets are automatically resolved. Also, the
+#   macro provides automated resolution of  dependencies on packages installed
+#   on the build system.
 #   \optional[value] ARCH:architecture The package architecture that
 #     is inscribed into the package manifest, defaults to
 #     ${REMAKE_DEBIAN_ARCHITECTURE}.
@@ -464,6 +465,10 @@ endmacro(remake_debian_get_alternatives)
 #     thereby replacing CMake's list separators by shell-compliant space
 #     characters. See ReMakeFile for details.
 macro(remake_debian_pack)
+  if(NOT REMAKE_DEBIAN_FOUND)
+    return()
+  endif(NOT REMAKE_DEBIAN_FOUND)
+
   remake_arguments(PREFIX pack_ VAR ARCH VAR COMPONENT LIST EXTRA_COMPONENTS
     VAR DESCRIPTION LIST DEPENDS LIST PREDEPENDS LIST RECOMMENDS LIST SUGGESTS
     LIST ENHANCES LIST BREAKS LIST CONFLICTS LIST REPLACES LIST PROVIDES
@@ -594,13 +599,14 @@ endmacro(remake_debian_pack)
 
 ### \brief Distribute a ReMake project according to the Debian standards.
 #   This macro configures source package distribution for a ReMake project
-#   under the Debian standards. Therefore, it generates a TGZ source archive
-#   from the project by calling remake_pack_source_archive(). Moreover, the
-#   macro takes care of creating all configuration files commonly required
-#   for source packaging under the debian directory. The distribution is
-#   then build from the sources by calling 'dpkg-buildpackage -S'. Note
-#   that the distribution may define multiple binaries, one for each Debian
-#   package defined by remake_debian_pack().
+#   under the Debian standards on Debian-related build systems. Therefore,
+#   it generates a TGZ source archive from the project by calling
+#   remake_pack_source_archive(). Moreover, the macro takes care of creating
+#   all configuration files commonly required for source packaging under the
+#   debian directory. The distribution is then build from the sources by
+#   calling 'dpkg-buildpackage -S'. Note that the distribution may define
+#   multiple binaries, one for each Debian package defined by
+#   remake_debian_pack().
 #   \optional[value] DISTRIBUTION:distribution The name of the Debian
 #     distribution for which the packages should be built, defaults to
 #     ${REMAKE_DEBIAN_CODENAME}. This parameter is used for prefixing the
@@ -670,6 +676,10 @@ endmacro(remake_debian_pack)
 #     discouraged, except in rare cases where the changelog content needs
 #     to be adapted during the run of CMake.
 macro(remake_debian_distribute)
+  if(NOT REMAKE_DEBIAN_FOUND)
+    return()
+  endif(NOT REMAKE_DEBIAN_FOUND)
+
   remake_arguments(PREFIX debian_ VAR DISTRIBUTION VAR ALIAS
     VAR SECTION VAR ARCH VAR PRIORITY VAR CHANGELOG VAR URGENCY
     VAR COMPATIBILITY LIST DEPENDS LIST PASS LIST DEFINE LIST OVERRIDE

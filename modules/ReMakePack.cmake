@@ -231,12 +231,14 @@ endmacro(remake_pack_source)
 
 ### \brief Generate a binary Debian package from a ReMake project component.
 #   This macro configures package generation using CPack's DEB generator
-#   for binary Debian packages.  It is currently deprecated but kept for
-#   backward compatibility and simply invokes remake_debian_pack(),
-#   forwarding all arguments.
+#   for binary Debian packages on Debian-related build systems. It is currently
+#   deprecated but kept for backward compatibility and simply invokes
+#   remake_debian_pack(), forwarding all arguments.
 #   \required[list] arg The arguments to be passed on to remake_debian_pack().
 #     See ReMakePack for details.
 macro(remake_pack_deb)
+  message(DEPRECATION
+    "This macro is deprecated in favor of remake_debian_pack().")
   remake_debian_pack(${ARGN})
 endmacro(remake_pack_deb)
 

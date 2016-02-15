@@ -1,3 +1,10 @@
+remake (1:0.7.1-293) lucid; urgency=low
+
+  * Added remake_add_distribution() macro
+  * Revised remake_add_package() macro to expect mandatory generator argument
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Mon, 15 Feb 2016 15:49:00 +0100
+
 remake (1:0.7.1-292) lucid; urgency=low
 
   * Moved remake_pack_deb() and remake_distribute_deb() to ReMakeDebian

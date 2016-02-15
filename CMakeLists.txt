@@ -31,28 +31,32 @@ remake_doc(
   html
 )
 
-# remake_pack_deb(
-#   ARCH all
-#   DEPENDS "cmake (>= 2.6.2)" groff
-#   RECOMMENDS pkg-config
-# )
-# remake_pack_deb(
-#   ARCH all
-#   COMPONENT doc
-#   DESCRIPTION "documentation"
-# )
+remake_add_package(
+  DEBIAN
+  ARCH all
+  DEPENDS "cmake (>= 2.6.2)" groff
+  RECOMMENDS pkg-config
+)
+remake_add_package(
+  DEBIAN
+  ARCH all
+  COMPONENT doc
+  DESCRIPTION "documentation"
+)
 
-# remake_distribute_deb(
-#   DISTRIBUTION precise
-#   SECTION devel
-#   UPLOAD ppa:kralf/asl
-#   DEPENDS groff
-#   PASS CMAKE_BUILD_TYPE REMAKE_GIT_REVISION
-# )
-# remake_distribute_deb(
-#   DISTRIBUTION trusty
-#   SECTION devel
-#   UPLOAD ppa:kralf/asl
-#   DEPENDS groff
-#   PASS CMAKE_BUILD_TYPE REMAKE_GIT_REVISION
-# )
+remake_add_distribution(
+  DEBIAN
+  DISTRIBUTION precise
+  SECTION devel
+  UPLOAD ppa:kralf/asl
+  DEPENDS groff
+  PASS CMAKE_BUILD_TYPE REMAKE_GIT_REVISION
+)
+remake_add_distribution(
+  DEBIAN
+  DISTRIBUTION trusty
+  SECTION devel
+  UPLOAD ppa:kralf/asl
+  DEPENDS groff
+  PASS CMAKE_BUILD_TYPE REMAKE_GIT_REVISION
+)

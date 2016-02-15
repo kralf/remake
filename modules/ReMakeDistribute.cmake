@@ -65,5 +65,7 @@ include(ReMakeDebian)
 #   \required[list] arg The arguments to be passed on to
 #     remake_debian_distribute(). See ReMakeDistribute for details.
 macro(remake_distribute_deb)
+  message(DEPRECATION
+    "This macro is deprecated in favor of remake_debian_distribute().")
   remake_debian_distribute(${ARGN})
 endmacro(remake_distribute_deb)
