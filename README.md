@@ -10,7 +10,7 @@ A set of CMake macros for restructuring GNU Automake/Autoconf projects.
 
 **License:** GNU Lesser General Public License (LGPL)
 
-**Operating system(s):** Debian-based Linux
+**Operating system(s):** Debian-based Linux, Mac OS X
 
 **Package PPA:** ppa:ethz-asl/build-essential
 
@@ -51,7 +51,7 @@ core purposes:
 
 * **ReMakeDoc** - ReMake documentation macros
 
-  The ReMake documentation module has been designed for simple and 
+  The ReMake documentation module has been designed for simple and
   transparent intergration of project documentation tasks with CMake.
 
 * **ReMakeFile** - ReMake file macros
@@ -77,6 +77,11 @@ core purposes:
 
   The ReMake list macros are a set of helper macros to simplify
   operations over lists in ReMake.
+
+* **ReMakeOSX** - ReMake OS X macros
+
+  The ReMake OS X macros provide abstracted access to OS X-specific
+  build system facilities.
 
 * **ReMakePack** - ReMake packaging macros
 
@@ -137,9 +142,9 @@ core purposes:
 
 * **ReMakeTarget** - ReMake target macros
 
-  The ReMake target module provides useful workarounds addressing some 
+  The ReMake target module provides useful workarounds addressing some
   grave CMake limitations. In CMake, top-level target definition only
-  behaves correctly in the top-level source directory. The ReMake target 
+  behaves correctly in the top-level source directory. The ReMake target
   macros are specifically designed to also work in directories below the
   top-level.
 
@@ -175,7 +180,7 @@ you may follow these instructions:
 
   on the command line
 
-* To re-synchronize your package index files, run 
+* To re-synchronize your package index files, run
 
   ```
   sudo apt-get update
@@ -210,13 +215,13 @@ This project can be built the traditional CMake way. Assuming that you have
 cloned the project sources into `PROJECT_DIR`, a typical out-of-source build
 might look like this:
 
-* Create a build directory using 
+* Create a build directory using
 
   ```
   mkdir -p PROJECT_DIR/build
   ```
 
-* Switch into the build directoy by 
+* Switch into the build directoy by
 
   ```
   cd PROJECT_DIR/build

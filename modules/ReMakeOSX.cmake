@@ -19,7 +19,7 @@
 ############################################################################
 
 ### \brief ReMake OS X macros
-#   The ReMake OSX  macros provide abstracted access to OS X-specific
+#   The ReMake OS X macros provide abstracted access to OS X-specific
 #   build system facilities.
 #
 #   \variable REMAKE_OSX_FOUND Indicates if ReMake believes to run in an
