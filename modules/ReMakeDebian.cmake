@@ -392,7 +392,7 @@ endmacro(remake_debian_get_alternatives)
 #     The format of a dependency should comply to Debian conventions, meaning
 #     that an entry is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
 #     requires each dependency to match against another binary package
-#     defined in a previous call to remake_debian_pack() or an installed
+#     defined in a previous call to remake_debian_pack_deb() or an installed
 #     package reported by dpkg on the build system. In the first case,
 #     the version of the dependency should be omitted as it will be equated
 #     with ${REMAKE_PROJECT_VERSION}. In the second case, the dependency
@@ -406,7 +406,7 @@ endmacro(remake_debian_get_alternatives)
 #     of a pre-dependency should comply to Debian conventions, meaning
 #     that an entry is of the form ${PACKAGE} [(>= ${VERSION})]. The macro
 #     requires each pre-dependency to match against another binary package
-#     defined in a previous call to remake_debian_pack() or an installed
+#     defined in a previous call to remake_debian_pack_deb() or an installed
 #     package reported by dpkg on the build system. In the first case,
 #     the version of the pre-dependency should be omitted as it will be
 #     equated with ${REMAKE_PROJECT_VERSION}. In the second case, the
@@ -418,7 +418,7 @@ endmacro(remake_debian_get_alternatives)
 #     an entry is of the form ${PACKAGE} [(>= ${VERSION})]. As opposed to
 #     mandatory dependencies, recommended packages are not matched against
 #     the names of packages installed on the build system or defined in a
-#     previous call to remake_debian_pack(). Therefore, a recommendation
+#     previous call to remake_debian_pack_deb(). Therefore, a recommendation
 #     should generally be precise. As this is often difficult when
 #     attempting to build binary packages for several distributions, use
 #     of the DEPENDS argument is strongly encouraged. Note that recommended
@@ -429,7 +429,7 @@ endmacro(remake_debian_get_alternatives)
 #     suggestion should comply to Debian conventions, meaning that
 #     an entry is of the form ${PACKAGE} [(>= ${VERSION})]. Suggested packages
 #     are not matched against the names of packages installed on the build
-#     system or defined in a previous call to remake_debian_pack(). They may
+#     system or defined in a previous call to remake_debian_pack_deb(). They may
 #     perhaps enhance the usefulness of the defined package, but not installing
 #     is perfectly reasonable.
 #   \optional[list] ENHANCES:pkg An optional list of packages that are
@@ -464,7 +464,7 @@ endmacro(remake_debian_get_alternatives)
 #     calls remake_file_configure() to substitute variables within the files,
 #     thereby replacing CMake's list separators by shell-compliant space
 #     characters. See ReMakeFile for details.
-macro(remake_debian_pack)
+macro(remake_debian_pack_deb)
   if(NOT REMAKE_DEBIAN_FOUND)
     return()
   endif(NOT REMAKE_DEBIAN_FOUND)
@@ -595,7 +595,7 @@ macro(remake_debian_pack)
       endif(TARGET ${pack_uninstall_target_dep})
     endforeach(pack_component_dep)
   endif(pack_build)
-endmacro(remake_debian_pack)
+endmacro(remake_debian_pack_deb)
 
 ### \brief Distribute a ReMake project according to the Debian standards.
 #   This macro configures source package distribution for a ReMake project
@@ -606,7 +606,7 @@ endmacro(remake_debian_pack)
 #   debian directory. The distribution is then build from the sources by
 #   calling 'dpkg-buildpackage -S'. Note that the distribution may define
 #   multiple binaries, one for each Debian package defined by
-#   remake_debian_pack().
+#   remake_debian_pack_deb().
 #   \optional[value] DISTRIBUTION:distribution The name of the Debian
 #     distribution for which the packages should be built, defaults to
 #     ${REMAKE_DEBIAN_CODENAME}. This parameter is used for prefixing the
@@ -622,8 +622,8 @@ endmacro(remake_debian_pack)
 #     of valid areas and sections.
 #   \optional[value] ARCH:architecture For architecture-dependent packages
 #     in the distribution, this option may be used to explicitly specify
-#     or override the architecture previously defined by remake_debian_pack().
-#     The default value is any.
+#     or override the architecture previously defined by
+#     remake_debian_pack_deb(). The default value is any.
 #   \optional[value] PRIORITY:priority The priority of the distributed
 #     project, defaults to extra. See the Debian policies for valid priority
 #     levels.

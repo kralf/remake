@@ -1,3 +1,9 @@
+remake (1:0.7.1-294) lucid; urgency=low
+
+  * Added ReMakeOSX module with basic platform discovery
+
+ -- Ralf Kaestner <ralf.kaestner@gmail.com>  Tue, 16 Feb 2016 08:45:00 +0100
+
 remake (1:0.7.1-293) lucid; urgency=low
 
   * Added remake_add_distribution() macro

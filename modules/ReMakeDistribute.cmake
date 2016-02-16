@@ -63,7 +63,7 @@ include(ReMakeDebian)
 #   backward compatibility and simply invokes remake_debian_distribute(),
 #   forwarding all arguments.
 #   \required[list] arg The arguments to be passed on to
-#     remake_debian_distribute(). See ReMakeDistribute for details.
+#     remake_debian_distribute(). See ReMakeDebian for details.
 macro(remake_distribute_deb)
   message(DEPRECATION
     "This macro is deprecated in favor of remake_debian_distribute().")

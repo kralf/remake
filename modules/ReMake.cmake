@@ -40,6 +40,7 @@ include(ReMakeProject)
 include(ReMakeBranch)
 include(ReMakeComponent)
 include(ReMakeDebian)
+include(ReMakeOSX)
 include(ReMakeFind)
 include(ReMakeFile)
 include(ReMakeGenerate)
@@ -922,15 +923,16 @@ endmacro(remake_add_documentation)
 #   This macro adds a package build target, using the requested generator
 #   for package generation. Additional arguments passed to the macro are
 #   forwarded to the selected generator.
-#   \required[option] DEBIAN The generator to be used for package
-#     generation.
+#   \required[option] DEBIAN The platform for which to add the package
+#     build target.
+#   \optional[var] GENERATOR:generator The generator to be used for package
+#     generation, defaults to DEB for the DEBIAN platform.
 #   \required[list] arg The arguments to be forwared to the package
 #     generator. See ReMakePack for details.
 #   \optional[value] IF:variable The name of a variable that conditions
 #     package generation.
-macro(remake_add_package remake_generator)
-  remake_arguments(PREFIX remake_ VAR IF ARGN args ${ARGN})
-  remake_set(remake_generator SELF DEFAULT DEB)
+macro(remake_add_package remake_platform)
+  remake_arguments(PREFIX remake_ OPTION GENERATOR VAR IF ARGN args ${ARGN})
 
   if(remake_if)
     remake_set(remake_option FROM ${remake_if})
@@ -939,11 +941,18 @@ macro(remake_add_package remake_generator)
   endif(remake_if)
 
   if(remake_option)
-    if(${remake_generator} STREQUAL "DEBIAN")
-      remake_debian_pack(${remake_args})
-    else(${remake_generator} STREQUAL "DEBIAN")
-      message(FATAL_ERROR "Unknown package generator: ${remake_generator}")
-    endif(${remake_generator} STREQUAL "DEBIAN")
+    if(${remake_platform} STREQUAL "DEBIAN")
+      remake_set(remake_generator SELF DEFAULT DEB)
+
+      if(${remake_generator} STREQUAL "DEB")
+        remake_debian_pack_deb(${remake_args})
+      else(${remake_generator} STREQUAL "DEB")
+        message(FATAL_ERROR
+          "Unknown Debian package generator: ${remake_generator}")
+      endif(${remake_generator} STREQUAL "DEB")
+    else(${remake_platform} STREQUAL "DEBIAN")
+      message(FATAL_ERROR "Unknown platform: ${remake_platform}")
+    endif(${remake_platform} STREQUAL "DEBIAN")
   endif(remake_option)
 endmacro(remake_add_package)
 
@@ -951,15 +960,14 @@ endmacro(remake_add_package)
 #   This macro adds a source distribution target, using the requested
 #   generator for distribution generation. Additional arguments passed
 #   to the macro are forwarded to the selected generator.
-#   \required[option] DEBIAN The generator to be used for distribution
-#     generation.
+#   \required[option] DEBIAN The platform for which to add the distribution
+#     target.
 #   \required[list] arg The arguments to be forwared to the distribution
 #     generator. See ReMakeDistribute for details.
 #   \optional[value] IF:variable The name of a variable that conditions
 #     distribution generation.
-macro(remake_add_distribution remake_generator)
+macro(remake_add_distribution remake_platform)
   remake_arguments(PREFIX remake_ VAR IF ARGN args ${ARGN})
-  remake_set(remake_generator SELF DEFAULT DEB)
 
   if(remake_if)
     remake_set(remake_option FROM ${remake_if})
@@ -968,12 +976,11 @@ macro(remake_add_distribution remake_generator)
   endif(remake_if)
 
   if(remake_option)
-    if(${remake_generator} STREQUAL "DEBIAN")
+    if(${remake_platform} STREQUAL "DEBIAN")
       remake_debian_distribute(${remake_args})
-    else(${remake_generator} STREQUAL "DEBIAN")
-      message(FATAL_ERROR
-        "Unknown distribution generator: ${remake_generator}")
-    endif(${remake_generator} STREQUAL "DEBIAN")
+    else(${remake_platform} STREQUAL "DEBIAN")
+      message(FATAL_ERROR "Unknown platform: ${remake_platform}")
+    endif(${remake_platform} STREQUAL "DEBIAN")
   endif(remake_option)
 endmacro(remake_add_distribution)
 
